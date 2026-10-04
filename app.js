@@ -960,6 +960,107 @@
     setTimeout(() => { const h = $(".isle.here"); if (h) h.scrollIntoView({ block: "center" }); }, 60);
   }
 
+  // ---------- 🌍 Dunyo sayohati: haqiqiy xarita (Natural Earth), umumiy XP bilan davlatlar ochiladi ----------
+  // Davlatlar O'zbekistondan uzoqligi bo'yicha tartiblangan (worldmap.js). i-davlat uchun kerakli XP: 30·i + 1.6·i² (O'zbekiston — 0).
+  const WORLD_N = 236;
+  const worldNeed = i => i <= 0 ? 0 : Math.round(30 * i + 1.6 * i * i);
+  const worldOpened = xp => { let n = 0; while (n < WORLD_N && xp >= worldNeed(n)) n++; return n; };
+  const flag = code => code === "XK" ? "🏳️" : String.fromCodePoint(...[...code].map(ch => 127397 + ch.charCodeAt(0)));
+  let worldLoading = null;
+  const loadWorld = () => worldLoading || (worldLoading = new Promise((ok, bad) => {
+    if (window.DOD_WORLD) return ok(window.DOD_WORLD);
+    const s = document.createElement("script"); s.src = "worldmap.js?v=1"; s.onload = () => ok(window.DOD_WORLD); s.onerror = () => { worldLoading = null; bad(); };
+    document.head.appendChild(s);
+  }));
+
+  function renderWorldCard() {
+    const box = $("#world-card"); if (!box || !ME) return;
+    const n = worldOpened(ME.xp), next = worldNeed(n), prev = worldNeed(n - 1);
+    const pct = n >= WORLD_N ? 100 : Math.round((ME.xp - prev) * 100 / Math.max(1, next - prev));
+    box.innerHTML = `<button class="world-card" id="world-open"><span class="wc-ic">🌍</span><span class="t"><b>Dunyo sayohati · ${n}/${WORLD_N}</b>
+      <span class="bar"><i style="width:${pct}%"></i></span><small>${n >= WORLD_N ? "Butun dunyo zabt etildi! 👑" : `Keyingi davlatgacha: ${next - ME.xp} XP`}</small></span><span class="go">›</span></button>`;
+    $("#world-open").onclick = openWorld;
+    // Yangi davlat ochilgan bo'lsa — bir marta tabrik
+    const seen = S.c.world || 0;
+    if (n > seen) {
+      S.c.world = n;
+      if (seen > 0) loadWorld().then(W => { const c = W.c[n - 1]; toast(`🌍 Yangi davlat ochildi: ${flag(c.k)} ${c.n}!`); sfx("badge"); }).catch(() => {});
+    }
+  }
+
+  async function openWorld() {
+    let W;
+    try { W = await loadWorld(); } catch { return toast(ERRORS.NET); }
+    const n = worldOpened(ME.xp), PAL = ["#ffd6a5", "#caffbf", "#9bf6ff", "#bdb2ff", "#ffc6ff", "#fdffb6", "#a0c4ff", "#ffadad", "#d0f4de", "#fcd5ce"];
+    const ov = document.createElement("section"); ov.className = "world"; ov.id = "world";
+    const nextC = W.c[n];
+    ov.innerHTML = `<div class="world-top"><button class="x" id="w-close" aria-label="Yopish">✕</button>
+        <div class="t"><b>🌍 Dunyo sayohati</b><small>${n}/${W.c.length} davlat · ⭐ arab davlatlari: ${W.c.slice(0, n).filter(c => c.a).length}/${W.c.filter(c => c.a).length}</small></div></div>
+      <div class="world-map" id="w-map"><svg id="w-svg" viewBox="0 0 ${W.w} ${W.h}" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="w-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd8fb"/><stop offset="1" stop-color="#3a9ad9"/></linearGradient>
+          <pattern id="w-wave" width="24" height="12" patternUnits="userSpaceOnUse"><path d="M0 6 Q6 2 12 6 T24 6" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/></pattern></defs>
+        <path d="${W.sphere}" fill="url(#w-sea)"/><path d="${W.sphere}" fill="url(#w-wave)" stroke="#2c6e9e" stroke-width="2"/>
+        ${W.c.map((c, i) => `<path class="wc ${i < n ? "on" : ""} ${i === n ? "next" : ""}" data-i="${i}" d="${c.d}" ${i < n ? `style="fill:${PAL[i % PAL.length]}"` : ""}/>`).join("")}
+        ${W.c.map((c, i) => c.a ? `<text class="wstar ${i < n ? "on" : ""}" x="${c.x}" y="${c.y}">⭐</text>` : "").join("")}
+        <g id="w-pin"></g></svg>
+        <div class="w-zoom"><button data-z="1.6" aria-label="Kattalashtirish">＋</button><button data-z="0.62" aria-label="Kichraytirish">－</button><button data-z="home" aria-label="O'zim turgan joy">📍</button></div>
+      </div>
+      <div class="world-info" id="w-info"><span>${nextC ? `🎯 Keyingisi: <b>${flag(nextC.k)} ${esc(nextC.n)}</b>${nextC.a ? " ⭐" : ""} — yana <b>${worldNeed(n) - ME.xp} XP</b>` : "👑 Butun dunyo sizniki!"}</span>
+        <small>Dars, missiya, duel — har bir XP sayohatni davom ettiradi. Davlatni bosib ko'ring.</small></div>
+      <small class="w-credit">Xarita: Natural Earth (ochiq ma'lumot)</small>`;
+    document.body.appendChild(ov); document.body.style.overflow = "hidden";
+    $("#w-close").onclick = () => { ov.remove(); document.body.style.overflow = ""; };
+
+    // Surish va kattalashtirish (barmoq, sichqoncha, g'ildirak)
+    const svg = $("#w-svg"), home = W.c[Math.max(0, n - 1)];
+    let vb = { x: 0, y: 0, w: W.w, h: W.h };
+    const apply = () => {
+      svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+      const s = vb.w / W.w, r = 16 * s;   // avatar pin — ekranda bir xil kattalikda
+      const ava = avaSvg(S.avatar);
+      $("#w-pin").innerHTML = `<circle cx="${home.x}" cy="${home.y - r * 1.2}" r="${r}" fill="#fff" stroke="#ffd56b" stroke-width="${3 * s}"/>`
+        + (ava ? ava.replace("<svg ", `<svg x="${home.x - r * 0.9}" y="${home.y - r * 2.1}" width="${r * 1.8}" height="${r * 1.8}" `) : `<text x="${home.x}" y="${home.y - r * 0.8}" font-size="${r * 1.3}" text-anchor="middle">📍</text>`);
+      $$(".wstar").forEach(t => t.setAttribute("font-size", 9 * Math.max(0.35, s)));
+    };
+    const zoom = (k, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2) => {
+      const w = Math.min(W.w, Math.max(W.w / 14, vb.w / k)), h = w * W.h / W.w;
+      vb = { x: cx - (cx - vb.x) * (w / vb.w), y: cy - (cy - vb.y) * (h / vb.h), w, h };
+      vb.x = Math.min(Math.max(vb.x, -vb.w * 0.3), W.w - vb.w * 0.7); vb.y = Math.min(Math.max(vb.y, -vb.h * 0.3), W.h - vb.h * 0.7);
+      apply();
+    };
+    const focusHome = () => { vb = { x: 0, y: 0, w: W.w, h: W.h }; zoom(1.7, home.x, home.y); vb.x = home.x - vb.w / 2; vb.y = home.y - vb.h / 2; apply(); };
+    focusHome();
+    // ekran nuqtasi → xarita koordinatasi (preserveAspectRatio="slice": ortiqcha qismi kesiladi)
+    const pt = e => { const r = svg.getBoundingClientRect(), s = Math.min(vb.w / r.width, vb.h / r.height); return { x: vb.x + (vb.w - r.width * s) / 2 + (e.clientX - r.left) * s, y: vb.y + (vb.h - r.height * s) / 2 + (e.clientY - r.top) * s, s }; };
+    const pts = new Map(); let moved = 0, pinch = 0;
+    svg.addEventListener("pointerdown", e => { svg.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; });
+    svg.addEventListener("pointermove", e => {
+      if (!pts.has(e.pointerId)) return;
+      const p = pts.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y;
+      if (pts.size === 1) {
+        const { s } = pt(e); vb.x -= dx * s; vb.y -= dy * s; moved += Math.abs(dx) + Math.abs(dy); apply();
+      } else if (pts.size === 2) {
+        const [a, b] = [...pts.values()], d0 = Math.hypot(a.x - b.x, a.y - b.y);
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const [a2, b2] = [...pts.values()], d1 = Math.hypot(a2.x - b2.x, a2.y - b2.y);
+        if (d0 > 0) { const m = pt({ clientX: (a2.x + b2.x) / 2, clientY: (a2.y + b2.y) / 2 }); zoom(d1 / d0, m.x, m.y); }
+        moved = 99; pinch = 1; return;
+      }
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    });
+    const up = e => { pts.delete(e.pointerId); if (!pts.size) setTimeout(() => (pinch = 0), 50); };
+    svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", up);
+    svg.addEventListener("wheel", e => { e.preventDefault(); const m = pt(e); zoom(e.deltaY < 0 ? 1.25 : 0.8, m.x, m.y); }, { passive: false });
+    $$(".w-zoom button").forEach(b => (b.onclick = () => b.dataset.z === "home" ? focusHome() : zoom(+b.dataset.z)));
+    // Davlatni bosish — nomi va holati
+    svg.addEventListener("click", e => {
+      const p = e.target.closest(".wc"); if (!p || moved > 6 || pinch) return;
+      const i = +p.dataset.i, c = W.c[i];
+      $("#w-info").innerHTML = `<span>${flag(c.k)} <b>${esc(c.n)}</b>${c.a ? " ⭐ arab davlati" : ""}</span><small>${i < n ? `✅ Ochilgan · ${i + 1}-davlat` : `🔒 ${worldNeed(i)} XP kerak — yana ${worldNeed(i) - ME.xp} XP`}</small>`;
+      sfx("tap");
+    });
+  }
+
   // ---------- 🧪 SINOV: 🎁 sandiqlar ----------
   // Dars o'tsa — yog'och, kunlik missiya — kumush, duelda g'alaba — oltin (10% sehrli). 4 ta joy, bir vaqtda bittasi ochiladi.
   const CHESTS = {
@@ -1334,7 +1435,7 @@
     const mc = Object.keys(S.mistakes).length;
     $("#mist-count").hidden = !mc; $("#mist-count").textContent = mc;
 
-    renderWotd(); renderLessons(); renderWords(); renderProfile(); renderToday(); renderChests(); renderCardsBtn();
+    renderWotd(); renderLessons(); renderWords(); renderProfile(); renderToday(); renderChests(); renderCardsBtn(); renderWorldCard();
   }
   const showTab = name => $(`.tab[data-tab="${name}"]`).click();
 
