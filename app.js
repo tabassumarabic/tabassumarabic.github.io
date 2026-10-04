@@ -426,7 +426,7 @@
       const plain = line.replace(/<[^>]+>/g, "");
       const ar = (plain.match(/[؀-ۿ]/g) || []).length, lat = (plain.match(/[A-Za-z]/g) || []).length;
       // Aralash qator (o'zbekcha gap ichida arabcha ibora): o'zbekcha chapdan o'ngga, arabcha qismi alohida o'ngdan chapga
-      if (ar && lat >= 3) return `<div class="p-line mixed">${line.replace(/[؀-ۿ][؀-ۿ\s]*[؀-ۿ]|[؀-ۿ]/g, m => `<bdi class="ar ar-inline">${m}</bdi>`)}</div>`;
+      if (ar && lat >= 3) return `<div class="p-line mixed">${line.replace(/[؀-ۿ][؀-ۿ\s]*[؀-ۿ]|[؀-ۿ]/g, m => `&lrm;<bdi class="ar ar-inline">${m}</bdi>&lrm;`)}</div>`;
       if (ar > lat) return `<div class="ar ar-line ${plain.length < 14 ? "huge" : ""}">${line}</div>`;
       return `<div class="p-line">${line}</div>`;
     }).join("");
@@ -720,6 +720,7 @@
       } else pills.push(`<span class="pill soft">Bugungi missiya avval bajarilgan, bu mashq</span>`);
       flash = r.fast >= 5;
       actions = `<button class="btn btn-brand btn-block" data-again>➕ Yana 5 ta savol</button>` + actions;
+      if (!pushOn() && pushSupported() && store.get("tb_push") !== "0") actions += `<button class="btn btn-soft btn-block" data-push>🔔 Olovim o'chmasin — eslatmani yoqish</button>`;
     } else if (r.kind === "daily") {
       const { lesson: ln, day: k, part: p, date } = r, wasPassed = passed(ln);
       const best = (((S.days = S.days || {})[ln] = S.days[ln] || {})[k] = S.days[ln][k] || {});
@@ -813,6 +814,7 @@
     $("[data-home]").onclick = closeRun;
     const again = $("[data-again]"); if (again) again.onclick = () => ({ mission: startMission, listen: startListen, review: startReview, cards: startCards })[kind]();
     const nextL = $("[data-lesson]"); if (nextL) nextL.onclick = () => startLesson(+nextL.dataset.lesson);
+    const pu = $("[data-push]"); if (pu) pu.onclick = () => { pushEnable(); pu.remove(); };
     const dp = $("[data-dpart]"); if (dp) dp.onclick = () => startDaily(+dp.dataset.n, +dp.dataset.k, dp.dataset.dpart, dp.dataset.date || null);
     const gt = $("[data-gotoday]"); if (gt) gt.onclick = () => { closeRun(); showTab("today"); };
     const pb = $("[data-practice]"); if (pb) pb.onclick = () => { closeRun(); practiceSheet(); };
@@ -2428,6 +2430,40 @@
   const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   const inTelegram = /Telegram/i.test(navigator.userAgent) || !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // ---------- 🔔 Telefon bildirishnomalari (olov eslatmasi, har kuni 20:00 — faqat missiya bajarilmagan bo'lsa) ----------
+  const VAPID_PUBLIC = "BPFgzDNzYes7VPQFm0d405ukhTr_BnNur1Y4KZ0sIbTuCl6e2mpIm4bmw6IsPOEnlrnsKrmXcxNaLhB93OCmDTM";
+  const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const pushOn = () => pushSupported() && Notification.permission === "granted" && store.get("tb_push") === "1";
+  const b64u8 = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, ch => ch.charCodeAt(0)); };
+  async function pushEnable() {
+    if (!pushSupported()) return toast(isIOS && !standalone() ? "📲 iPhone'da avval ilovani ekranga qo'shing (Ulashish → «На экран «Домой»»), keyin shu yerdan yoqing" : "Bu brauzer bildirishnomani qo'llamaydi. Chrome'da oching");
+    let perm;
+    try { perm = await Notification.requestPermission(); } catch { perm = "denied"; }
+    if (perm !== "granted") return toast("🔕 Ruxsat berilmadi. Telefon sozlamalaridan bildirishnomaga ruxsat bering");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(VAPID_PUBLIC) });
+      const j = sub.toJSON();
+      await rpc("push_subscribe", { p_token: TOKEN, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+      store.set("tb_push", "1"); renderPushCard();
+      toast("🔔 Eslatma yoqildi! Missiyani unutsangiz, kechqurun 20:00 da eslatamiz 😊");
+    } catch (e) { toast("Eslatmani yoqib bo'lmadi. Keyinroq qayta urinib ko'ring"); }
+  }
+  async function pushDisable() {
+    try {
+      const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+      if (sub) { rpc("push_unsubscribe", { p_token: TOKEN, p_endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+    } catch { /* */ }
+    store.set("tb_push", "0"); renderPushCard(); toast("🔕 Eslatma o'chirildi");
+  }
+  function renderPushCard() {
+    const box = $("#push-card"); if (!box) return;
+    const on = pushOn();
+    box.innerHTML = `<b>🔔 Olov eslatmasi</b><small class="muted" style="display:block;margin:-2px 0 6px">Missiyani unutsangiz, har kuni 20:00 da telefoningizga eslatma keladi</small>
+      <button class="btn ${on ? "btn-soft" : "btn-brand"} btn-block" id="push-btn">${on ? "✅ Yoqilgan · o'chirish" : "🔔 Eslatmani yoqish"}</button>`;
+    $("#push-btn").onclick = () => (on ? pushDisable() : pushEnable());
+  }
+  renderPushCard();
   function showInstallCard() {
     const hidden = standalone() || inTelegram || store.get("dod_install_hide") === "1";
     $("#install").hidden = hidden;
