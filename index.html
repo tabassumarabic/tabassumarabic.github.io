@@ -488,6 +488,13 @@
   .logo.logo-img { padding: 0; overflow: hidden; background: none; border: 0; }
   .logo.logo-img img { width: 100%; height: 100%; display: block; }
   .tb-motto { text-align: center; color: var(--gold); font-weight: 700; margin: 6px 0 2px; }
+  /* 😊 Bosh sahifa: «تَبَسُّم» yozuvi, «ت»-tabassum belgisi va shior (avvalgi «لُغَةُ الضَّادِ» o'rnida) */
+  .mission::after, [data-style="premium"] .mission::after { content: none; display: none; }
+  .mission, [data-style="premium"] .mission { padding-top: 22px !important; }
+  .tb-hero { display: grid; justify-items: center; gap: 2px; margin-bottom: 12px; }
+  .tb-emblem { width: 58px; height: 58px; filter: drop-shadow(0 4px 12px rgba(214,169,78,.3)); }
+  .tb-word { font-family: var(--f-ar); font-size: 58px; font-weight: 400; line-height: 1.6; color: #E9C877; text-shadow: 0 4px 18px rgba(214,169,78,.3); margin: 8px 0 -2px; white-space: nowrap; }
+  .tb-motto2 { font-size: 13.5px; font-weight: 600; color: #E9CD84; opacity: .95; }
   .m-stat { text-align: center; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .result { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 20px; }
@@ -669,6 +676,12 @@
     </header>
 
     <article class="mission">
+      <div class="tb-hero">
+        <svg class="tb-emblem" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D58A"/><stop offset=".6" stop-color="#D6A94E"/><stop offset="1" stop-color="#B8862E"/></linearGradient></defs>
+          <path d="M108 238 C112 330 170 376 256 376 C342 376 400 330 404 246" fill="none" stroke="url(#tbg)" stroke-width="46" stroke-linecap="round"/><circle cx="210" cy="196" r="28" fill="url(#tbg)"/><circle cx="302" cy="196" r="28" fill="url(#tbg)"/></svg>
+        <div class="ar tb-word" lang="ar">تَبَسُّم</div>
+        <div class="tb-motto2">😊 Bu yerga faqat tabassum bilan kiriladi</div>
+      </div>
       <div class="eyebrow">Kunlik missiya</div>
       <h2 id="m-title"></h2>
       <p id="m-sub"></p>
@@ -891,8 +904,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=24d6fa6e90"></script>
-<script src="avatar.js?v=24d6fa6e90"></script>
-<script src="app.js?v=24d6fa6e90"></script>
+<script src="data.js?v=4e6bd32931"></script>
+<script src="avatar.js?v=4e6bd32931"></script>
+<script src="app.js?v=4e6bd32931"></script>
 </body>
 </html>
