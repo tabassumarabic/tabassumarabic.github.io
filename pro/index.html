@@ -60,6 +60,8 @@
   .sheet-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; align-items: end; z-index: 20; }
   .sheet { background: var(--surface); border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; max-width: 520px; width: 100%; margin: 0 auto; }
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #F2EDE1; color: #17120A; padding: 10px 16px; border-radius: 12px; font-weight: 700; z-index: 30; box-shadow: var(--shadow); max-width: 90vw; text-align: center; }
+  .fee-due { background: linear-gradient(150deg, #3a2f12, #2d2616); border-color: #8a6a26; }
+  .fee-due b { color: var(--gold); } .fee-ok { color: var(--good); font-weight: 600; padding: 10px 14px; }
   .link { color: var(--gold); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 6px; justify-self: center; }
 </style>
 </head>
@@ -136,7 +138,13 @@
     if (!ME.group.journal) { store.del(K_TOKEN); TOKEN = null; return auth("Bu hisob Dod Pro guruhiga tegishli emas."); }
     let b;
     try { b = await rpc("journal_board", { p_token: TOKEN }); } catch (e) { return fail(e); }
-    $("#app").innerHTML = header("Dod Pro · jurnal", ME.name) + table(b, false)
+    let tu = null;
+    try { tu = await rpc("tuition_mine", { p_token: TOKEN }); } catch { /* eslatmasiz davom */ }
+    const monNow = tu ? MONTHS[+tu.month.slice(5, 7) - 1] : "";
+    const tuition = tu && tu.due ? `<div class="card fee-due"><b>🌿 Assalomu alaykum, ${esc(ME.name.split(" ")[0])}!</b>
+        <p style="margin:6px 0 0">${monNow[0].toUpperCase() + monNow.slice(1)} oyi uchun to'lov vaqti keldi${tu.fee ? `: <b>${som(tu.fee)}</b>` : ""}. Iltimos, imkoningiz bo'lganda to'lab qo'ying. Rahmat! 🙏</p></div>`
+      : tu && tu.paid ? `<div class="card fee-ok">✅ ${monNow[0].toUpperCase() + monNow.slice(1)} oyi to'lovi qabul qilindi. Rahmat! 🌿</div>` : "";
+    $("#app").innerHTML = header("Dod Pro · jurnal", ME.name) + tuition + table(b, false)
       + (b.mine.length ? `<div class="card"><h3 style="font-size:15px;margin-bottom:4px">🗒 Mening yozuvlarim</h3>${b.mine.map(x => `<div class="row"><span class="nm"><b>${x.att ? ATT[x.att][0] : "▫️"} ${dayName(x.day)}</b>
           <small>${[x.att ? ATT[x.att][1] : "", x.active ? `⭐ faol ×${x.active}` : "", x.assist ? `💡 ×${x.assist}` : "", x.hw === "full" ? "📝 100%" : x.hw === "none" ? "📝 bajarilmagan" : "", x.words ? `📚 ${x.words} so'z` : ""].filter(Boolean).join(" · ")}</small></span>
           <span class="val">+${x.pts}<small class="${x.fine ? "debt" : "ok"}">${x.fine ? `−${som(x.fine)}` : "—"}</small></span></div>`).join("")}</div>` : "")
@@ -148,10 +156,28 @@
   // ---------- Ustoz ----------
   let view = "day", day = null;
   async function teacher() {
-    const tabs = `<div class="seg"><button data-v="day" aria-pressed="${view === "day"}">✏️ Kunlik belgilash</button><button data-v="table" aria-pressed="${view === "table"}">📊 Jadval va kassa</button></div>`;
+    const tabs = `<div class="seg"><button data-v="day" aria-pressed="${view === "day"}">✏️ Kunlik</button><button data-v="table" aria-pressed="${view === "table"}">📊 Jadval</button><button data-v="fee" aria-pressed="${view === "fee"}">💳 Oylik</button></div>`;
     let body = "";
     try {
-      if (view === "table") {
+      if (view === "fee") {
+        const r = await rpc("teacher_tuition", { p_token: TT });
+        const mon = MONTHS[+r.month.slice(5, 7) - 1], paid = r.students.filter(s => s.paid), withFee = r.students.filter(s => s.fee);
+        body = `<div class="kassa"><span class="ci">💳</span><div><small>${mon[0].toUpperCase() + mon.slice(1)} · oylik to'lov</small><b>${paid.length}/${withFee.length} to'ladi</b>
+            <small>Tushum: ${som(paid.reduce((a, s) => a + (s.fee || 0), 0))} · kutilmoqda: ${som(withFee.filter(s => !s.paid).reduce((a, s) => a + s.fee, 0))}</small></div></div>
+          <p class="muted" style="font-size:12.5px;margin:0">🔒 Bu ro'yxat faqat sizga ko'rinadi. Har oyning 3-sanasidan to'lamaganlarga muloyim eslatma o'zi chiqadi. Summani o'zgartirish uchun ✏️ ni bosing.</p>
+          <div class="card">${r.students.map(s => `<div class="row"><span class="ava">${esc(s.name[0].toUpperCase())}</span>
+            <span class="nm"><b>${esc(s.name)}</b><small>${s.fee ? som(s.fee) : "summa yozilmagan"} <button class="link" style="padding:0 4px" data-fee="${s.id}" aria-label="Summani o'zgartirish">✏️</button></small></span>
+            ${s.fee ? `<button class="btn ${s.paid ? "btn-soft ok" : "btn-brand"}" style="padding:8px 12px;font-size:13px" data-paid="${s.id}">${s.paid ? "✅ To'ladi" : "⏳ To'lanmadi"}</button>` : ""}</div>`).join("")}</div>`;
+        $("#app").innerHTML = header("Dod Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
+        $$("[data-paid]").forEach(b => (b.onclick = async () => {
+          const s = r.students.find(x => x.id === b.dataset.paid);
+          b.disabled = true;
+          try { await rpc("teacher_mark_tuition", { p_token: TT, p_student: s.id, p_paid: !s.paid }); toast(s.paid ? `↩️ ${s.name}: to'lanmadi deb belgilandi` : `✅ ${s.name}: ${som(s.fee)} qabul qilindi`); }
+          catch (e) { toast(errText(e)); }
+          teacher();
+        }));
+        $$("[data-fee]").forEach(b => (b.onclick = () => feeSheet(r.students.find(x => x.id === b.dataset.fee))));
+      } else if (view === "table") {
         const b = await rpc("teacher_journal_board", { p_token: TT });
         body = `<p class="muted" style="font-size:12.5px;margin:0">To'lov yozish yoki PIN yangilash uchun o'quvchini bosing.</p>` + table(b, true);
         $("#app").innerHTML = header("Dod Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
@@ -185,6 +211,18 @@
     $$("[data-v]").forEach(b => (b.onclick = () => { view = b.dataset.v; teacher(); }));
     $("#refresh").onclick = teacher;
     $("#logout").onclick = () => { store.del(K_TEACHER); TT = null; auth(); };
+  }
+  function feeSheet(s) {
+    sheet(`<h3>💳 ${esc(s.name)}: oylik to'lov</h3>
+      <input class="input" id="fee" inputmode="numeric" placeholder="Masalan: 800000" value="${s.fee || ""}">
+      <button class="btn btn-brand btn-block" id="fee-ok">💾 Saqlash</button>
+      <button class="btn btn-soft btn-block" data-close>Bekor qilish</button>`);
+    $("#fee-ok").onclick = async () => {
+      const n = parseInt(($("#fee").value || "0").replace(/\D/g, ""), 10) || 0;
+      try { await rpc("teacher_set_fee", { p_token: TT, p_student: s.id, p_fee: n }); toast(n ? `💾 ${som(n)}` : "Summa olib tashlandi"); }
+      catch (e) { return toast(errText(e)); }
+      closeSheet(); teacher();
+    };
   }
   function paySheet(s) {
     sheet(`<h3>💸 ${esc(s.name)}</h3>
