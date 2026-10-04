@@ -107,7 +107,9 @@
   const addDays = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   const yesterday = () => addDays(today(), -1);
   const bump = (k, by = 1) => (S.c[k] = (S.c[k] || 0) + by);
-  const streakNow = () => (S.lastMission && S.lastMission >= yesterday() ? S.streak : 0);
+  // Olov musobaqasi ustoz «0 dan boshlagan» sanadan (group.olov_since) oldingi kunlarni hisoblamaydi
+  const olovSince = () => (ME && ME.group && ME.group.olov_since) || "";
+  const streakNow = () => (S.lastMission && S.lastMission >= yesterday() && S.lastMission >= olovSince() ? S.streak : 0);
   const rankOf = xp => RANKS.filter(r => xp >= r[0]).pop()[1];
 
   // Natija saqlanmay qolsa (internet yo'q), navbatga qo'yiladi va keyin yuboriladi
@@ -710,7 +712,7 @@
     if (r.kind === "mission") {
       if (r.fast) pills.push(`<span class="pill gold">⚡ ${r.fast} ta tez javob</span>`);
       if (S.lastMission !== today()) {
-        S.streak = S.lastMission === yesterday() ? S.streak + 1 : 1;
+        S.streak = S.lastMission === yesterday() && S.lastMission >= olovSince() ? S.streak + 1 : 1;
         S.lastMission = today(); bonus += XP_MISSION;
         pills.push(`<span class="pill gold">🔥 Olov yondi: ${S.streak} kun</span>`, `<span class="pill gold">🎁 +${XP_MISSION} bonus</span>`, chestPill(giveChest("silver")));
       } else pills.push(`<span class="pill soft">Bugungi missiya avval bajarilgan, bu mashq</span>`);
@@ -726,7 +728,7 @@
         t.parts[p] = Math.max(t.parts[p] || 0, pct);
         if (!t.bonus && DAILY.every(([q]) => (t.parts[q] || 0) >= PASS)) {
           t.bonus = true; bonus += XP_MISSION;
-          if (S.lastMission !== today()) { S.streak = S.lastMission === yesterday() ? S.streak + 1 : 1; S.lastMission = today(); }
+          if (S.lastMission !== today()) { S.streak = S.lastMission === yesterday() && S.lastMission >= olovSince() ? S.streak + 1 : 1; S.lastMission = today(); }
           pills.push(`<span class="pill gold">🔥 Olov: ${S.streak} kun</span>`, `<span class="pill gold">🎁 Daily Tasks bonusi +${XP_MISSION}</span>`);
         }
       } else pills.push(`<span class="pill soft">🧺 Practice box: bu mashq uchun ball berilmaydi</span>`);
@@ -1986,15 +1988,26 @@
     const top = [...rows].sort((a, b) => b.best - a.best || b.streak - a.streak).filter(s => s.best > 0).slice(0, 3);
     const show = s => ({ best: `🔥 ${s.best}`, month_xp: `⭐ ${s.month_xp}`, course: `${s.course}%`, att: s.attp == null ? "—" : `${s.attp}%`, active: `${s.active}/${days}` })[progSort];
     box.innerHTML = `
-      <div class="prize"><small>🏆 ${cap(mon)} sovrini · eng uzun olov</small><b>Oy oxirida 1-o'rindagi g'olib bo'ladi 🎁</b>
+      <div class="prize"><small>🏆 ${cap(mon)} sovrini · eng uzun olov · ${r.olov_since > r.month_start ? `${dayName(r.olov_since)}dan` : "oy boshidan"}</small><b>Oy oxirida 1-o'rindagi g'olib bo'ladi 🎁</b>
         ${top.length ? `<div class="podium">${top.map((s, i) => `<div><small>${["🥇", "🥈", "🥉"][i]}</small>${avaHtml(s.ava, s.name)}<b>${esc(s.name)}</b><small>🔥 ${s.best} kun</small></div>`).join("")}</div>`
           : `<p style="margin:8px 0 0;opacity:.9">Bu oy hali hech kim olov yoqmadi.</p>`}</div>
+      <button class="btn btn-soft btn-block" id="olov-reset" style="margin:-4px 0 10px">🔄 Olov musobaqasini 0 dan boshlash</button>
       <div class="seg" role="group" aria-label="Saralash" style="margin:0 0 10px">${PROG_SORTS.map(([k, n]) => `<button type="button" data-ps="${k}" aria-pressed="${k === progSort}">${n}</button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin:0 2px 8px">🔥 olov: oy rekordi (hozirgisi) · 📚 o'tilgan darslar · 📅 ${cap(mon)}da faol kunlar · 📝 jonli darslarga qatnashish</p>
       <div class="card">${rows.length ? rows.map((s, i) => `<div class="prog-row"><span class="rk">${i + 1}</span>${avaHtml(s.ava, s.name)}
         <span class="nm"><b>${esc(s.name)}</b><small>🔥 ${s.best} (${s.streak}) · 📚 ${s.course}% · 📅 ${s.active}/${days} · 📝 ${s.attp == null ? "—" : s.attp + "%"}${s.idle >= 2 ? ` · <span class="idle">😴 ${s.idle} kun kirmadi</span>` : ""}</small></span>
         <span class="val">${show(s)}</span></div>`).join("") : `<p class="muted">Guruhda hali o'quvchi yo'q.</p>`}</div>`;
     $$("[data-ps]").forEach(b => (b.onclick = () => { progSort = b.dataset.ps; teacherProgLoad(); }));
+    $("#olov-reset").onclick = () => {
+      sheet(`<h3>🔄 Olov musobaqasini 0 dan boshlash</h3>
+        <p>Guruhdagi <b style="color:var(--ink)">hammaning olovi bugundan noldan</b> hisoblanadi: sovrin kartasi ham, o'quvchilardagi 🔥 raqami ham. Musobaqa oy oxirigacha davom etadi, keyingi oyning 1-sanasida o'zi yana boshlanadi.</p>
+        <button class="btn btn-danger btn-block" id="olov-yes">Ha, 0 dan boshlash</button><button class="btn btn-soft btn-block" data-close>Bekor qilish</button>`);
+      $("#olov-yes").onclick = async () => {
+        try { await rpc("teacher_reset_olov", { p_token: TT }); toast("🔥 Olov musobaqasi bugundan boshlandi!"); }
+        catch (e) { return toast(errText(e)); }
+        closeSheet(); teacherProgLoad();
+      };
+    };
   }
 
   // O'quvchi: profildagi «Mening progressim»
