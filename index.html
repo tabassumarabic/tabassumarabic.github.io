@@ -491,7 +491,12 @@
   /* 😊 Bosh sahifa: «تَبَسُّم» yozuvi, «ت»-tabassum belgisi va shior (avvalgi «لُغَةُ الضَّادِ» o'rnida) */
   .mission::after, [data-style="premium"] .mission::after { content: none; display: none; }
   .mission, [data-style="premium"] .mission { padding-top: 22px !important; }
-  .tb-hero { display: grid; justify-items: center; gap: 6px; margin-bottom: 12px; }
+  .tb-hero { display: grid; justify-items: center; gap: 6px; }
+  .mcard { display: flex; align-items: center; gap: 12px; margin-top: 12px; background: var(--surface); border: 1px solid var(--gold-line, var(--line)); border-radius: var(--r-lg); padding: 12px 14px; box-shadow: var(--shadow); }
+  .mc-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; background: var(--gold-soft); flex: none; }
+  .mc-t { flex: 1; min-width: 0; display: grid; gap: 2px; } .mc-t b { font-size: 15.5px; } .mc-t span { font-size: 12.5px; color: var(--muted); }
+  .mc-t .eyebrow { font-size: 10.5px; } .mc-t .dots { justify-content: flex-start; margin-top: 4px; }
+  .mc-go { flex: none; padding: 10px 14px; font-size: 14px; white-space: nowrap; }
   .tb-seal { width: min(70%, 240px); height: auto; filter: drop-shadow(0 4px 16px rgba(214,169,78,.28)); }
   .tb-emblem { width: 58px; height: 58px; filter: drop-shadow(0 4px 12px rgba(214,169,78,.3)); }
   .tb-word { font-family: var(--f-ar); font-size: 58px; font-weight: 400; line-height: 1.6; color: #E9C877; text-shadow: 0 4px 18px rgba(214,169,78,.3); margin: 8px 0 -2px; white-space: nowrap; }
@@ -691,14 +696,15 @@
         </svg>
         <div class="tb-motto2">Bu yerga faqat tabassum bilan kiriladi 😊</div>
       </div>
-      <div class="eyebrow">Kunlik missiya</div>
-      <h2 id="m-title"></h2>
-      <p id="m-sub"></p>
-      <div class="mission-row">
-        <button class="btn btn-light" id="m-start"></button>
-        <div class="dots" id="m-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
     </article>
+
+    <!-- Kunlik missiya — brend yuzidan alohida, ixcham karta (ustoz taklifi) -->
+    <div class="mcard">
+      <span class="mc-ic" aria-hidden="true">🎯</span>
+      <div class="mc-t"><small class="eyebrow">Kunlik missiya</small><b id="m-title"></b><span id="m-sub"></span>
+        <div class="dots" id="m-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <button class="btn btn-light mc-go" id="m-start"></button>
+    </div>
 
     <div class="rankline" id="rankline"></div>
     <div id="world-card"></div>
@@ -913,8 +919,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=4c97bde563"></script>
-<script src="avatar.js?v=4c97bde563"></script>
-<script src="app.js?v=4c97bde563"></script>
+<script src="data.js?v=6d3b3955ef"></script>
+<script src="avatar.js?v=6d3b3955ef"></script>
+<script src="app.js?v=6d3b3955ef"></script>
 </body>
 </html>
