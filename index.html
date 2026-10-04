@@ -16,9 +16,9 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Dod">
+<meta name="apple-mobile-web-app-title" content="Tabassum">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Dod — arab tili</title>
+<title>Tabassum — arab tili</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230E5A4A'/%3E%3Ctext x='32' y='44' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E%D8%B6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -484,6 +484,10 @@
   .world-info small { color: var(--muted); font-size: 12.5px; }
   .new-badge.lost { background: var(--bad-soft); color: var(--bad); }
   .w-credit { color: var(--muted); font-size: 11px; text-align: center; }
+  /* 😊 Tabassum brendi */
+  .logo.logo-img { padding: 0; overflow: hidden; background: none; border: 0; }
+  .logo.logo-img img { width: 100%; height: 100%; display: block; }
+  .tb-motto { text-align: center; color: var(--gold); font-weight: 700; margin: 6px 0 2px; }
   .m-stat { text-align: center; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .result { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 20px; }
@@ -655,7 +659,7 @@
   <section id="screen-home">
     <header class="top">
       <div class="hello">
-        <div class="logo ar" aria-hidden="true">ض</div>
+        <div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div>
         <div style="min-width:0"><small>Assalomu alaykum,</small><strong id="h-name"></strong></div>
       </div>
       <div class="chips">
@@ -680,7 +684,7 @@
 
     <button class="card install" id="install" hidden>
       <img src="icon-192.png" alt="" width="44" height="44">
-      <span><b>📲 Telefonga o'rnating</b><small>Dod ekraningizda alohida ilova bo'lib turadi, bir bosishda ochiladi</small></span>
+      <span><b>📲 Telefonga o'rnating</b><small>Tabassum ekraningizda alohida ilova bo'lib turadi, bir bosishda ochiladi</small></span>
       <span aria-hidden="true">→</span>
     </button>
 
@@ -801,7 +805,8 @@
 <!-- KIRISH -->
 <section class="auth" id="auth" hidden>
   <div class="auth-in">
-    <div class="auth-brand"><div class="logo ar" aria-hidden="true">ض</div><div><b>Dod</b><small>Arab tilini o'yin orqali o'rganing</small></div></div>
+    <div class="auth-brand"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><b>Tabassum</b><small>Arab tilini o'yin orqali o'rganing</small></div></div>
+    <p class="tb-motto">😊 Bu yerga faqat tabassum bilan kiriladi</p>
     <div class="seg auth-tabs" role="tablist">
       <button type="button" id="auth-tab-join" aria-pressed="true">Birinchi marta</button>
       <button type="button" id="auth-tab-login" aria-pressed="false">Menda hisob bor</button>
@@ -825,7 +830,7 @@
 <section class="teacher" id="teacher" hidden>
   <div class="app" style="padding-bottom:40px">
     <header class="top">
-      <div class="hello"><div class="logo ar" aria-hidden="true">ض</div><div><small>Ustoz paneli</small><strong id="tc-group">Dod</strong></div></div>
+      <div class="hello"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><small>Ustoz paneli</small><strong id="tc-group">Tabassum</strong></div></div>
       <button class="btn btn-soft" id="tc-refresh" style="padding:10px 12px" aria-label="Yangilash">🔄</button>
     </header>
     <div class="card tc-pass" id="tc-pass-card" hidden>
@@ -886,8 +891,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=8da1c6b9bf"></script>
-<script src="avatar.js?v=8da1c6b9bf"></script>
-<script src="app.js?v=8da1c6b9bf"></script>
+<script src="data.js?v=24d6fa6e90"></script>
+<script src="avatar.js?v=24d6fa6e90"></script>
+<script src="app.js?v=24d6fa6e90"></script>
 </body>
 </html>

@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0C1218">
-<title>Dod Pro · Jurnal</title>
+<title>Tabassum Pro · Jurnal</title>
 <link rel="apple-touch-icon" href="../icon-180.png">
 <link rel="icon" href="../icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Dod Pro">
+<meta name="apple-mobile-web-app-title" content="Tabassum Pro">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  /* Dod Pro — DOD_PRO guruhi uchun alohida sahifa: davomat, ball, jarima va kassa. Dod Arabic ilovasiga bog'liq emas. */
+  /* Tabassum Pro — DOD_PRO guruhi uchun alohida sahifa: davomat, ball, jarima va kassa. Dod Arabic ilovasiga bog'liq emas. */
   :root {
     --bg: #0C1218; --surface: #141C25; --surface-2: #1C2631; --ink: #F2EDE1; --muted: #98A2AC; --line: #243040;
     --brand: #D6A94E; --brand-ink: #17120A; --gold: #E2B75C; --gold-soft: #2D2616;
@@ -80,7 +80,7 @@
   const API = "https://fstmvfroylwyelmaxhzh.supabase.co/rest/v1/rpc/";
   const API_KEY = "sb_publishable_dNWgUrggq3AEbr4Ifu74Cg_8iq3K1Nm";   // ochiq kalit — sahifada turishi xavfsiz
   const CODE = "DOD_PRO";
-  const K_TOKEN = "pro_token", K_TEACHER = "pro_teacher";   // asosiy Dod ilovasi kalitlaridan alohida
+  const K_TOKEN = "pro_token", K_TEACHER = "pro_teacher";   // asosiy Tabassum ilovasi kalitlaridan alohida
   const ERR = {
     BAD_NAME: "Ismingizni to'liq yozing (2–30 harf).", BAD_PIN: "PIN 4 ta raqamdan iborat bo'lishi kerak.",
     NAME_TAKEN: "Bu ism guruhda band. «Kirish» bo'limidan kiring yoki familiyangizni qo'shing.",
@@ -121,7 +121,7 @@
   const m = location.hash.match(/ustoz=([0-9a-f]{40})/);   // ustoz havolasi
   if (m) { TT = m[1]; store.set(K_TEACHER, TT); history.replaceState(null, "", location.pathname); }
 
-  const header = (sub, name) => `<div class="top"><div class="logo">D</div><div class="t"><small>${sub}</small><b>${esc(name)}</b></div>
+  const header = (sub, name) => `<div class="top"><div class="logo"><img src="../icon-192.png" alt="" style="width:100%;height:100%;border-radius:inherit;display:block"></div><div class="t"><small>${sub}</small><b>${esc(name)}</b></div>
     <button class="btn btn-soft" id="refresh" aria-label="Yangilash">🔄</button></div>`;
 
   // Guruh jadvali (o'quvchilar ham, ustoz ham ko'radi)
@@ -140,7 +140,7 @@
   // ---------- O'quvchi ----------
   async function student() {
     try { ME = await rpc("me", { p_token: TOKEN }); } catch (e) { if (e.message === "AUTH") { store.del(K_TOKEN); TOKEN = null; return auth(); } return fail(e); }
-    if (!ME.group.journal) { store.del(K_TOKEN); TOKEN = null; return auth("Bu hisob Dod Pro guruhiga tegishli emas."); }
+    if (!ME.group.journal) { store.del(K_TOKEN); TOKEN = null; return auth("Bu hisob Tabassum Pro guruhiga tegishli emas."); }
     let b;
     try { b = await rpc("journal_board", { p_token: TOKEN }); } catch (e) { return fail(e); }
     let tu = null;
@@ -149,7 +149,7 @@
     const tuition = tu && tu.due ? `<div class="card fee-due"><b>🌿 Assalomu alaykum, ${esc(ME.name.split(" ")[0])}!</b>
         <p style="margin:6px 0 0">${monNow[0].toUpperCase() + monNow.slice(1)} oyi uchun to'lov vaqti keldi${tu.fee ? `: <b>${som(tu.fee)}</b>` : ""}. Iltimos, imkoningiz bo'lganda to'lab qo'ying. Rahmat! 🙏</p></div>`
       : tu && tu.paid ? `<div class="card fee-ok">✅ ${monNow[0].toUpperCase() + monNow.slice(1)} oyi to'lovi qabul qilindi. Rahmat! 🌿</div>` : "";
-    $("#app").innerHTML = header("Dod Pro · jurnal", ME.name) + tuition + table(b, false)
+    $("#app").innerHTML = header("Tabassum Pro · jurnal", ME.name) + tuition + table(b, false)
       + (b.mine.length ? `<div class="card"><h3 style="font-size:15px;margin-bottom:4px">🗒 Mening yozuvlarim</h3>${b.mine.map(x => `<div class="row"><span class="nm"><b>${x.att ? ATT[x.att][0] : "▫️"} ${dayName(x.day)}</b>
           <small>${[x.att ? ATT[x.att][1] : "", x.active ? `⭐ faol ×${x.active}` : "", x.assist ? `💡 ×${x.assist}` : "", x.hw === "full" ? "📝 100%" : x.hw === "none" ? "📝 bajarilmagan" : "", x.words ? `📚 ${x.words} so'z` : ""].filter(Boolean).join(" · ")}</small></span>
           <span class="val">+${x.pts}<small class="${x.fine ? "debt" : "ok"}">${x.fine ? `−${som(x.fine)}` : "—"}</small></span></div>`).join("")}</div>` : "")
@@ -173,7 +173,7 @@
           <div class="card">${r.students.map(s => `<div class="row"><span class="ava">${esc(s.name[0].toUpperCase())}</span>
             <span class="nm"><b>${esc(s.name)}</b><small>${s.fee ? som(s.fee) : "summa yozilmagan"} <button class="link" style="padding:0 4px" data-fee="${s.id}" aria-label="Summani o'zgartirish">✏️</button></small></span>
             ${s.fee ? `<button class="btn ${s.paid ? "btn-soft ok" : "btn-brand"}" style="padding:8px 12px;font-size:13px" data-paid="${s.id}">${s.paid ? "✅ To'ladi" : "⏳ To'lanmadi"}</button>` : ""}</div>`).join("")}</div>`;
-        $("#app").innerHTML = header("Dod Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
+        $("#app").innerHTML = header("Tabassum Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
         $$("[data-paid]").forEach(b => (b.onclick = async () => {
           const s = r.students.find(x => x.id === b.dataset.paid);
           b.disabled = true;
@@ -185,7 +185,7 @@
       } else if (view === "table") {
         const b = await rpc("teacher_journal_board", { p_token: TT });
         body = `<p class="muted" style="font-size:12.5px;margin:0">To'lov yozish yoki PIN yangilash uchun o'quvchini bosing.</p>` + table(b, true);
-        $("#app").innerHTML = header("Dod Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
+        $("#app").innerHTML = header("Tabassum Pro · ustoz", "Jurnal") + tabs + body + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
         $$("[data-pay]").forEach(el => (el.onclick = () => paySheet(b.students.find(s => s.id === el.dataset.pay))));
       } else {
         const r = await rpc("teacher_journal_day", { p_token: TT, p_day: day });
@@ -198,7 +198,7 @@
             <div class="cnt">${[["active", "⭐ Faol"], ["assist", "💡 Yordam"], ["words", "📚 So'z"]].map(([f, n]) => `<div><button data-f="${f}" data-step="-1" aria-label="Kamaytirish">−</button><span>${n} ${s[f]}</span><button data-f="${f}" data-step="1" aria-label="Qo'shish">+</button></div>`).join("")}</div>
             <div class="btns"><button class="good" data-f="hw" data-val="full" aria-pressed="${s.hw === "full"}">📝 Uy vazifasi 100%</button><button class="bad" data-f="hw" data-val="none" aria-pressed="${s.hw === "none"}">✖️ Bajarmadi</button></div>
           </div>`).join("") : `<div class="card"><p class="muted" style="margin:0">Hali o'quvchilar yo'q. Ularga shu sahifa havolasini yuboring — ism va PIN bilan ro'yxatdan o'tishadi.</p></div>`);
-        $("#app").innerHTML = header("Dod Pro · ustoz", "Jurnal") + tabs + `<p class="muted" style="font-size:12.5px;margin:0">Xato bosilsa, o'sha tugmani qayta bosing — belgi olib tashlanadi.</p>` + body
+        $("#app").innerHTML = header("Tabassum Pro · ustoz", "Jurnal") + tabs + `<p class="muted" style="font-size:12.5px;margin:0">Xato bosilsa, o'sha tugmani qayta bosing — belgi olib tashlanadi.</p>` + body
           + `<button class="link" id="logout">🚪 Ustoz rejimidan chiqish</button>`;
         $$("[data-d]").forEach(b => (b.onclick = () => { day = addDays(day, +b.dataset.d); teacher(); }));
         $$(".jr button[data-f]").forEach(b => (b.onclick = async () => {
@@ -255,7 +255,7 @@
   function auth(msg) {
     let mode = "login";
     const draw = () => {
-      $("#app").innerHTML = `<div class="top"><div class="logo">D</div><div class="t"><small>Davomat · ball · jarima</small><b>Dod Pro</b></div></div>
+      $("#app").innerHTML = `<div class="top"><div class="logo"><img src="../icon-192.png" alt="" style="width:100%;height:100%;border-radius:inherit;display:block"></div><div class="t"><small>Davomat · ball · jarima</small><b>Tabassum Pro</b></div></div>
         <div class="seg"><button data-m="login" aria-pressed="${mode === "login"}">Kirish</button><button data-m="join" aria-pressed="${mode === "join"}">Ro'yxatdan o'tish</button><button data-m="teacher" aria-pressed="${mode === "teacher"}">👨‍🏫 Ustoz</button></div>
         <div class="card" style="display:grid;gap:10px">
           ${mode === "teacher" ? `<input class="input" id="pass" type="password" placeholder="Ustoz paroli" autocomplete="current-password">`
