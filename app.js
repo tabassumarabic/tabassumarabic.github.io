@@ -657,9 +657,10 @@
     if (!run || run.locked === run.i) return;
     run.locked = run.i;
     sfx(ok ? "ok" : "bad");
-    if (ok) { if (q.type === "match") q.pairs.forEach(p => cardHit(p.ar)); else cardHit(q.topic); }
     clearInterval(run.timer);
     const q = run.qs[run.i];
+    // kartalar hisobi xato bersa ham, test to'xtab qolmasin
+    if (ok) { try { if (q.type === "match") q.pairs.forEach(p => cardHit(p.ar)); else cardHit(q.topic); } catch { /* */ } }
     const secs = Math.min(TIMER, (Date.now() - run.t0) / 1000);
     run.timeUsed += secs;
     let gain = 0;
