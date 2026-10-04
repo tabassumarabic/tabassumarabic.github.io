@@ -909,8 +909,10 @@
   }
 
   // ---------- 🧪 SINOV: 🏆 kuboklar va arenalar (faqat ustoz o'quvchi sifatida kirganda ko'rinadi) ----------
-  const BETA = () => !!TT;          // sandiq va kartalar: hali sinovda (faqat ustoz ko'radi)
-  const TROPHY_ON = () => true;     // kubok va xarita: 2026-10-04 dan hammaga ochiq (ustoz qarori)
+  // 2026-10-04: Clash Royale'dan olingan narsalar (kubok/arenalar, sandiqlar, kartalar) vaqtincha yashirildi (ustoz qarori).
+  // Kod saqlangan — qaytarish uchun quyidagilarni yoqish kifoya.
+  const BETA = () => false;         // sandiq va kartalar (oldin: !!TT — faqat ustoz ko'rardi)
+  const TROPHY_ON = () => false;    // kubok va arena yo'li
   // Sayohat xaritasi: O'zbekistondan arab dunyosigacha. [kubok, bayroq, davlat, belgisi]
   const ARENAS = [[0, "🇺🇿", "O'zbekiston", "🏺"], [150, "🇰🇿", "Qozog'iston", "🦅"], [300, "🇹🇲", "Turkmaniston", "🐎"],
     [500, "🇦🇿", "Ozarbayjon", "🔥"], [750, "🇹🇷", "Turkiya", "🎈"], [1050, "🇯🇴", "Iordaniya", "🏜️"], [1400, "🇪🇬", "Misr", "🐫"],
@@ -973,43 +975,43 @@
     document.head.appendChild(s);
   }));
 
-  function renderWorldCard() {
-    const box = $("#world-card"); if (!box || !ME) return;
-    const n = worldOpened(ME.xp), next = worldNeed(n), prev = worldNeed(n - 1);
-    const pct = n >= WORLD_N ? 100 : Math.round((ME.xp - prev) * 100 / Math.max(1, next - prev));
-    box.innerHTML = `<button class="world-card" id="world-open"><span class="wc-ic">🌍</span><span class="t"><b>Dunyo sayohati · ${n}/${WORLD_N}</b>
-      <span class="bar"><i style="width:${pct}%"></i></span><small>${n >= WORLD_N ? "Butun dunyo zabt etildi! 👑" : `Keyingi davlatgacha: ${next - ME.xp} XP`}</small></span><span class="go">›</span></button>`;
-    $("#world-open").onclick = openWorld;
-    // Yangi davlat ochilgan bo'lsa — bir marta tabrik
-    const seen = S.c.world || 0;
-    if (n > seen) {
-      S.c.world = n;
-      if (seen > 0) loadWorld().then(W => { const c = W.c[n - 1]; toast(`🌍 Yangi davlat ochildi: ${flag(c.k)} ${c.n}!`); sfx("badge"); }).catch(() => {});
-    }
+  // 2026-10-04: xarita DUEL bilan ochiladi (ustoz qarori): yutsa +1 davlat, yutqazsa −1, har 10-davlat «qal'a» (pastga tushmaydi)
+  let WORLDB = null;
+  async function loadWorldPos() { try { WORLDB = await rpc("world_board", { p_token: TOKEN }); } catch { /* keyinroq */ } return WORLDB; }
+  const worldPos = () => (WORLDB ? WORLDB.mine.pos : 1);
+  const fortOf = p => Math.max(1, Math.floor(p / 10) * 10);
+  function renderWorldCard() { const box = $("#world-card"); if (box) box.innerHTML = ""; }   // bosh sahifada endi yo'q — duelda
+  function worldDuelCard() {
+    const p = worldPos(), best = WORLDB ? WORLDB.mine.best : 1, nextFort = Math.min(WORLD_N, (Math.floor(p / 10) + 1) * 10);
+    return `<button class="world-card" id="world-open"><span class="wc-ic">🌍</span><span class="t"><b>Dunyo xaritasi · ${p}/${WORLD_N}</b>
+      <span class="bar"><i style="width:${Math.round(p * 100 / WORLD_N)}%"></i></span>
+      <small>Yutsangiz +1 davlat, yutqazsangiz −1 · 🏰 ${best >= 10 ? `himoya: ${fortOf(best)}-davlat` : `birinchi qal'a: 10-davlat`} · keyingi qal'a: ${nextFort}</small></span><span class="go">›</span></button>`;
   }
-
   async function openWorld() {
     let W;
     try { W = await loadWorld(); } catch { return toast(ERRORS.NET); }
-    const n = worldOpened(ME.xp), PAL = ["#ffd6a5", "#caffbf", "#9bf6ff", "#bdb2ff", "#ffc6ff", "#fdffb6", "#a0c4ff", "#ffadad", "#d0f4de", "#fcd5ce"];
+    const fromDuel = !!$("#duel-new"); closeSheet();
+    const n = worldPos(), PAL = ["#ffd6a5", "#caffbf", "#9bf6ff", "#bdb2ff", "#ffc6ff", "#fdffb6", "#a0c4ff", "#ffadad", "#d0f4de", "#fcd5ce"];
     const ov = document.createElement("section"); ov.className = "world"; ov.id = "world";
     const nextC = W.c[n];
     ov.innerHTML = `<div class="world-top"><button class="x" id="w-close" aria-label="Yopish">✕</button>
-        <div class="t"><b>🌍 Dunyo sayohati</b><small>${n}/${W.c.length} davlat · ⭐ arab davlatlari: ${W.c.slice(0, n).filter(c => c.a).length}/${W.c.filter(c => c.a).length}</small></div></div>
+        <div class="t"><b>🌍 Dunyo sayohati</b><small>${n}/${W.c.length} davlat · 🏰 himoya: ${fortOf(WORLDB ? WORLDB.mine.best : 1)} · ⭐ arab: ${W.c.slice(0, n).filter(c => c.a).length}/${W.c.filter(c => c.a).length}</small></div></div>
       <div class="world-map" id="w-map"><svg id="w-svg" viewBox="0 0 ${W.w} ${W.h}" preserveAspectRatio="xMidYMid slice">
         <defs><linearGradient id="w-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd8fb"/><stop offset="1" stop-color="#3a9ad9"/></linearGradient>
           <pattern id="w-wave" width="24" height="12" patternUnits="userSpaceOnUse"><path d="M0 6 Q6 2 12 6 T24 6" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/></pattern></defs>
         <path d="${W.sphere}" fill="url(#w-sea)"/><path d="${W.sphere}" fill="url(#w-wave)" stroke="#2c6e9e" stroke-width="2"/>
         ${W.c.map((c, i) => `<path class="wc ${i < n ? "on" : ""} ${i === n ? "next" : ""}" data-i="${i}" d="${c.d}" ${i < n ? `style="fill:${PAL[i % PAL.length]}"` : ""}/>`).join("")}
         ${W.c.map((c, i) => c.a ? `<text class="wstar ${i < n ? "on" : ""}" x="${c.x}" y="${c.y}">⭐</text>` : "").join("")}
+        ${W.c.map((c, i) => (i + 1) % 10 === 0 ? `<text class="wstar wfort ${i < n ? "on" : ""}" x="${c.x}" y="${c.y}">🏰</text>` : "").join("")}
         <g id="w-pin"></g></svg>
         <div class="w-zoom"><button data-z="1.6" aria-label="Kattalashtirish">＋</button><button data-z="0.62" aria-label="Kichraytirish">－</button><button data-z="home" aria-label="O'zim turgan joy">📍</button></div>
       </div>
-      <div class="world-info" id="w-info"><span>${nextC ? `🎯 Keyingisi: <b>${flag(nextC.k)} ${esc(nextC.n)}</b>${nextC.a ? " ⭐" : ""} — yana <b>${worldNeed(n) - ME.xp} XP</b>` : "👑 Butun dunyo sizniki!"}</span>
-        <small>Dars, missiya, duel — har bir XP sayohatni davom ettiradi. Davlatni bosib ko'ring.</small></div>
+      <div class="world-info" id="w-info"><span>${nextC ? `🎯 Keyingisi: <b>${flag(nextC.k)} ${esc(nextC.n)}</b>${nextC.a ? " ⭐" : ""} — <b>1 ta duel g'alabasi</b>` : "👑 Butun dunyo sizniki!"}</span>
+        <small>⚔️ Yutsangiz yangi davlat, yutqazsangiz oxirgisi qo'ldan ketadi. 🏰 Har 10-davlat — qal'a: undan pastga tushmaysiz.</small>
+        ${WORLDB && WORLDB.board.length > 1 ? `<small>👥 Guruhda: ${WORLDB.board.slice(0, 3).map((r, i) => `${["🥇", "🥈", "🥉"][i]} ${esc(r.name)} — ${r.pos}`).join(" · ")}</small>` : ""}</div>
       <small class="w-credit">Xarita: Natural Earth (ochiq ma'lumot)</small>`;
     document.body.appendChild(ov); document.body.style.overflow = "hidden";
-    $("#w-close").onclick = () => { ov.remove(); document.body.style.overflow = ""; };
+    $("#w-close").onclick = () => { ov.remove(); document.body.style.overflow = ""; if (fromDuel) duelSheet(); };
 
     // Surish va kattalashtirish (barmoq, sichqoncha, g'ildirak)
     const svg = $("#w-svg"), home = W.c[Math.max(0, n - 1)];
@@ -1056,7 +1058,7 @@
     svg.addEventListener("click", e => {
       const p = e.target.closest(".wc"); if (!p || moved > 6 || pinch) return;
       const i = +p.dataset.i, c = W.c[i];
-      $("#w-info").innerHTML = `<span>${flag(c.k)} <b>${esc(c.n)}</b>${c.a ? " ⭐ arab davlati" : ""}</span><small>${i < n ? `✅ Ochilgan · ${i + 1}-davlat` : `🔒 ${worldNeed(i)} XP kerak — yana ${worldNeed(i) - ME.xp} XP`}</small>`;
+      $("#w-info").innerHTML = `<span>${flag(c.k)} <b>${esc(c.n)}</b>${c.a ? " ⭐ arab davlati" : ""}</span><small>${i < n ? `✅ Ochilgan · ${i + 1}-davlat` : `🔒 ${i + 1}-davlat — yana ${i + 1 - n} ta duel g'alabasi`}${(i + 1) % 10 === 0 ? " · 🏰 qal'a" : ""}</small>`;
       sfx("tap");
     });
   }
@@ -1194,6 +1196,7 @@
         <span class="t"><b>${esc(d.vs)}</b><small>${d.my} : ${d.their}</small></span>
         <span class="tag ${d.outcome}">${{ win: "🏆 G'alaba", lose: "Mag'lubiyat", draw: "🤝 Durang" }[d.outcome]}</span></div>`).join("");
     sheet(`<h3>⚔️ Duel</h3>
+      <div id="duel-world">${worldDuelCard()}</div>
       ${TROPHY_ON() ? `<div id="duel-arena">${TROPHIES ? arenaCard(TROPHIES.mine) : ""}</div>` : ""}
       <p>${DUEL_QUESTIONS} ta savol, har biriga ${TIMER} soniya. Ikkalangizga bir xil savollar. Ko'p topgan yutadi, teng bo'lsa tezrog'i. G'olibga +30 XP.</p>
       <button class="btn btn-brand btn-block" id="duel-new">➕ Yangi duel: raqib tanlash</button>
@@ -1202,6 +1205,9 @@
       ${res ? `<h3 style="font-size:15px;margin-top:6px">📜 So'nggi natijalar</h3><div>${res}</div>` : ""}
       <button class="btn btn-soft btn-block" data-close>Yopish</button>`);
     $("#duel-new").onclick = pickOpponent;
+    const bindWorld = () => { const w = $("#world-open"); if (w) w.onclick = openWorld; };
+    bindWorld();
+    loadWorldPos().then(() => { const box = $("#duel-world"); if (box) { box.innerHTML = worldDuelCard(); bindWorld(); } });
     if (TROPHY_ON()) {
       const bindArena = () => { const a = $("#arena-open"); if (a) a.onclick = trophySheet; };
       bindArena();
@@ -1255,6 +1261,14 @@
     if (res.status === "done") {
       head = { win: "🎉 Siz yutdingiz!", lose: "😤 Bu safar yutqazdingiz. Revansh?", draw: "🤝 Durang! Kuchlar teng." }[res.outcome];
       pill = `<span class="pill green">⭐ +${{ win: 30, draw: 15, lose: 5 }[res.outcome]} XP</span>`;
+      // 🌍 xaritadagi o'zgarish
+      const before = worldPos(); await loadWorldPos(); const after = worldPos();
+      try {
+        const W = await loadWorld();
+        if (after > before) { const c = W.c[after - 1]; pill += `<div class="new-badge">🌍 Yangi davlat: ${flag(c.k)} ${esc(c.n)}${c.a ? " ⭐" : ""}${after % 10 === 0 ? " · 🏰 qal'a!" : ""}</div>`; sfx("badge"); }
+        else if (after < before) { const c = W.c[before - 1]; pill += `<div class="new-badge lost">🌍 ${flag(c.k)} ${esc(c.n)} qo'ldan ketdi 😢 Revansh oling!</div>`; }
+        else if (res.outcome === "lose") pill += `<span class="pill soft">🏰 Qal'a sizni himoya qildi</span>`;
+      } catch { /* xaritasiz */ }
       if (TROPHY_ON()) {
         const before = TROPHIES ? TROPHIES.mine : null, d = TROPHY[res.outcome];
         pill += `<span class="pill gold">🏆 ${d > 0 ? "+" : ""}${d}</span>` + chestPill(chest);
