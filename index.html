@@ -491,10 +491,11 @@
   /* 😊 Bosh sahifa: «تَبَسُّم» yozuvi, «ت»-tabassum belgisi va shior (avvalgi «لُغَةُ الضَّادِ» o'rnida) */
   .mission::after, [data-style="premium"] .mission::after { content: none; display: none; }
   .mission, [data-style="premium"] .mission { padding-top: 22px !important; }
-  .tb-hero { display: grid; justify-items: center; gap: 2px; margin-bottom: 12px; }
+  .tb-hero { display: grid; justify-items: center; gap: 6px; margin-bottom: 12px; }
+  .tb-seal { width: min(70%, 240px); height: auto; filter: drop-shadow(0 4px 16px rgba(214,169,78,.28)); }
   .tb-emblem { width: 58px; height: 58px; filter: drop-shadow(0 4px 12px rgba(214,169,78,.3)); }
   .tb-word { font-family: var(--f-ar); font-size: 58px; font-weight: 400; line-height: 1.6; color: #E9C877; text-shadow: 0 4px 18px rgba(214,169,78,.3); margin: 8px 0 -2px; white-space: nowrap; }
-  .tb-motto2 { font-size: 13.5px; font-weight: 600; color: #E9CD84; opacity: .95; }
+  .tb-motto2 { font-size: 16.5px; font-weight: 700; color: #E9CD84; margin-top: 6px; text-wrap: balance; }
   .m-stat { text-align: center; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .result { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 20px; }
@@ -677,10 +678,18 @@
 
     <article class="mission">
       <div class="tb-hero">
-        <svg class="tb-emblem" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D58A"/><stop offset=".6" stop-color="#D6A94E"/><stop offset="1" stop-color="#B8862E"/></linearGradient></defs>
-          <path d="M108 238 C112 330 170 376 256 376 C342 376 400 330 404 246" fill="none" stroke="url(#tbg)" stroke-width="46" stroke-linecap="round"/><circle cx="210" cy="196" r="28" fill="url(#tbg)"/><circle cx="302" cy="196" r="28" fill="url(#tbg)"/></svg>
-        <div class="ar tb-word" lang="ar">تَبَسُّم</div>
-        <div class="tb-motto2">😊 Bu yerga faqat tabassum bilan kiriladi</div>
+        <!-- Tabassum muhri: qo'sh oltin halqa ichida yoysimon «تَبَسُّم», ostida ko'zlar va tabassum, pastda TABASSUM (ustoz tanlagan) -->
+        <svg class="tb-seal" viewBox="0 0 260 260" role="img" aria-label="Tabassum">
+          <defs><linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D58A"/><stop offset=".6" stop-color="#D6A94E"/><stop offset="1" stop-color="#B8862E"/></linearGradient>
+            <path id="tb-arc-top" d="M46 136 A86 86 0 0 1 214 136"/><path id="tb-arc-bot" d="M36 136 A94 94 0 0 0 224 136"/></defs>
+          <circle cx="130" cy="130" r="122" fill="none" stroke="url(#tbg)" stroke-width="4"/>
+          <circle cx="130" cy="130" r="113" fill="none" stroke="url(#tbg)" stroke-width="1.5" opacity=".45"/>
+          <text x="130" y="100" text-anchor="middle" font-family="Amiri, 'Noto Naskh Arabic', serif" font-size="46" fill="url(#tbg)">تَبَسُّم</text>
+          <circle cx="106" cy="156" r="10" fill="url(#tbg)"/><circle cx="154" cy="156" r="10" fill="url(#tbg)"/>
+          <path d="M86 172 C90 202 108 210 130 210 C152 210 170 202 174 176" fill="none" stroke="url(#tbg)" stroke-width="12" stroke-linecap="round"/>
+          <text font-family="Onest, sans-serif" font-weight="700" font-size="12" letter-spacing="5" fill="#E9C877" text-anchor="middle"><textPath href="#tb-arc-bot" startOffset="50%">TABASSUM</textPath></text>
+        </svg>
+        <div class="tb-motto2">Bu yerga faqat tabassum bilan kiriladi 😊</div>
       </div>
       <div class="eyebrow">Kunlik missiya</div>
       <h2 id="m-title"></h2>
@@ -904,8 +913,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=4e6bd32931"></script>
-<script src="avatar.js?v=4e6bd32931"></script>
-<script src="app.js?v=4e6bd32931"></script>
+<script src="data.js?v=4c97bde563"></script>
+<script src="avatar.js?v=4c97bde563"></script>
+<script src="app.js?v=4c97bde563"></script>
 </body>
 </html>
