@@ -425,6 +425,8 @@
     return text.split("\n").filter(l => l.trim()).map(line => {
       const plain = line.replace(/<[^>]+>/g, "");
       const ar = (plain.match(/[؀-ۿ]/g) || []).length, lat = (plain.match(/[A-Za-z]/g) || []).length;
+      // Aralash qator (o'zbekcha gap ichida arabcha ibora): o'zbekcha chapdan o'ngga, arabcha qismi alohida o'ngdan chapga
+      if (ar && lat >= 3) return `<div class="p-line mixed">${line.replace(/[؀-ۿ][؀-ۿ\s]*[؀-ۿ]|[؀-ۿ]/g, m => `<bdi class="ar ar-inline">${m}</bdi>`)}</div>`;
       if (ar > lat) return `<div class="ar ar-line ${plain.length < 14 ? "huge" : ""}">${line}</div>`;
       return `<div class="p-line">${line}</div>`;
     }).join("");
@@ -2417,6 +2419,9 @@
     else if (e.key === "Enter" && $("#next")) $("#next").click();
   });
   document.addEventListener("visibilitychange", () => { if (!document.hidden && TOKEN && $("#teacher").hidden) { loadInbox(); flushPending(); } });
+
+  // ---------- Xizmat fayli (to'liq o'rnatish, tez ochilish) ----------
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => { /* ishlamasa ham ilova ishlayveradi */ });
 
   // ---------- Telefonga o'rnatish ----------
   let installPrompt = null;

@@ -3,6 +3,7 @@
   "short_name": "Tabassum",
   "description": "Arab tilini o'yin orqali o'rganing: kunlik missiya, duel, tinglash va reyting.",
   "lang": "uz",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
