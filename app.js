@@ -9,7 +9,7 @@
   const K_TOKEN = "dod_token", K_TEACHER = "dod_teacher", K_MODE = "dod_mode", K_REF = "dod_ref",K_PENDING = "dod_pending", K_CACHE = "dod_cache";
 
   const TIMER = 15, FAST = 5, PASS = 80, XP_OK = 10, XP_FAST = 5, XP_MISSION = 20, XP_EXAM = 50, XP_WOTD = 5, DAILY_CAP = 700;
-  const REVIEW_NEEDED = 2, DUEL_QUESTIONS = 7, DUEL_LAST_LESSONS = 3;
+  const REVIEW_NEEDED = 2, DUEL_QUESTIONS = 10, DUEL_LAST_LESSONS = 3;   // duel: 10 ta, turlari aralash (ustoz, 2026-10-05)
 
   const RANKS = [[0, "🌱 Yangi boshlovchi"], [100, "📖 Harf ovchisi"], [300, "⭐ So'z ustasi"], [700, "🏅 Tabassum bilimdoni"], [1500, "👑 Tabassum qiroli"]];
   const SIMILAR = ["بتثني", "جحخ", "دذ", "رز", "سش", "صض", "طظ", "عغ", "فق", "كلمهـوأ"];
@@ -409,6 +409,22 @@
       seen.add(q.key); out.push(q);
     }
     return out;
+  }
+  // Duel uchun: savol turlari aralash — eng kam ishlatilgan tur tanlanadi, bir xil tur ketma-ket kelmaydi
+  function buildVaried(lessons, count, skills = ["reading", "grammar", "listening"]) {
+    lessons = lessons.filter(l => makers(l, skills).length);
+    const out = [], seen = new Set(), used = {};
+    let last = null;
+    for (let t = 0; lessons.length && out.length < count && t < count * 40; t++) {
+      const d = pick(lessons), ms = [...new Set(makers(d, skills))];
+      const low = Math.min(...ms.map(m => used[m] || 0));
+      const cand = ms.filter(m => (used[m] || 0) === low && m !== last);
+      const mk = pick(cand.length ? cand : ms.filter(m => m !== last).length ? ms.filter(m => m !== last) : ms);
+      const q = M[mk](d);
+      if (seen.has(q.key)) continue;
+      seen.add(q.key); out.push(q); used[mk] = (used[mk] || 0) + 1; last = mk;
+    }
+    return shuffle(out);
   }
   const buildExam = lessons => EXAM_PLAN.flatMap(([sk, n]) => build(lessons, n, [sk]));
   function reshuffle(q) {
@@ -1238,7 +1254,7 @@
       <button class="btn btn-soft btn-block" data-close>Bekor qilish</button>`);
     $$("[data-opp]").forEach(b => (b.onclick = async () => {
       const lessons = groupLessons().slice(-DUEL_LAST_LESSONS);
-      const qs = build(lessons, DUEL_QUESTIONS);
+      const qs = buildVaried(lessons, DUEL_QUESTIONS);
       try {
         const d = await rpc("duel_create", { p_token: TOKEN, p_opponent: b.dataset.opp, p_questions: qs });
         closeSheet();
@@ -2394,9 +2410,14 @@
     document.documentElement.dataset.style = s;
     $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : "#0C1218";
     $$("[data-style-pick]").forEach(b => b.setAttribute("aria-pressed", b.dataset.stylePick === s));
+    const tb = $("#theme-tg"); if (tb) tb.textContent = s === "krem" ? "🌙" : "☀️";
   }
   $$("[data-style-pick]").forEach(b => (b.onclick = () => { store.set("dod_style", b.dataset.stylePick); applyStyle(b.dataset.stylePick); }));
   applyStyle(document.documentElement.dataset.style || "premium");
+  // ☀️/🌙 Bosh sahifadagi tezkor almashtirgich: qorong'u (premium) ↔ yorug' (krem)
+  const themeBtn = () => { const b = $("#theme-tg"); if (b) b.textContent = document.documentElement.dataset.style === "krem" ? "🌙" : "☀️"; };
+  $("#theme-tg").onclick = () => { const s = document.documentElement.dataset.style === "krem" ? "premium" : "krem"; store.set("dod_style", s); applyStyle(s); themeBtn(); };
+  themeBtn();
   const applySfx = () => $$("[data-sfx]").forEach(b => b.setAttribute("aria-pressed", (b.dataset.sfx === "1") === sfxOn()));
   $$("[data-sfx]").forEach(b => (b.onclick = () => { store.set("dod_sfx", b.dataset.sfx); applySfx(); sfx("ok"); }));
   applySfx();
