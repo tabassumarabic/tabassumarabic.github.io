@@ -392,6 +392,8 @@
     ["C1", "Yuqori", "الْمُتَقَدِّمُ", "navy"], ["C2", "Mukammal", "الْإِتْقَانُ", "goldl"],
   ];
   const certUrl = code => "sertifikat.html#" + encodeURIComponent(code);
+  // Ustoz qarori (2026-10-05): darsliklar to'liq tayyor bo'lgach beriladi. Shu paytgacha nomzodlar va eslatmalar ko'rinmaydi.
+  const CERT_OPEN = false;
   const uzDate = d => String(d || "").split("-").reverse().join(".");
   // Darajadagi o'tilgan darslar (Pre-A1: 1–13-darslar, A1: 101–112-bo'limlar)
   const levelProgress = (code, lessons) => {
@@ -425,7 +427,11 @@
   async function dirCerts(main) {
     main.innerHTML = topBar("🎓 Sertifikatlar") + `<div class="card"><p>Yuklanmoqda…</p></div>`; bindTop();
     try { CERTS = await rpc("teacher_certs", { p_token: TT() }); } catch (e) { main.innerHTML = topBar("🎓 Sertifikatlar") + `<div class="card"><p>${esc(errText(e))}</p></div>`; bindTop(); return; }
-    const cand = CERTS.candidates || [], issued = CERTS.issued || [];
+    const cand = CERT_OPEN ? CERTS.candidates || [] : [], issued = CERTS.issued || [];
+    if (!CERT_OPEN) {
+      main.innerHTML = topBar("🎓 Sertifikatlar") + `<div class="card"><h4>⏸ Hozircha yopiq</h4><p>Sertifikat tizimi tayyor. Darsliklar to'liq tayyor bo'lgach ochiladi — shunda imtihondan 80%+ olgan talabalar shu yerda ko'rinadi va siz bir bosishda sertifikat berasiz.</p></div>`;
+      bindTop(); return;
+    }
     main.innerHTML = topBar("🎓 Sertifikatlar") + `
       <div class="card"><h4>⏳ Tasdiqlash kutilmoqda ${cand.length ? `<span class="cnt">${cand.length}</span>` : ""}</h4>
         ${cand.length ? `<p>Bu talabalar imtihondan 80%+ oldi. Ismini arabchada yozib, «Berish» ni bosing.</p>` + cand.map(s => `
@@ -494,12 +500,13 @@
       const pend = sp.filter(x => x.pending).length;
       if (pend) todo.push(["terra", `${pend} ta gapirish yozuvi baholanmagan`, "Ovozlar", "../"]);
     } catch { /* */ }
-    try {
+    if (CERT_OPEN) try {
       const cr = await rpc("teacher_certs", { p_token: TT() }), n = (cr.candidates || []).length;
       const t = $("#cert-tile");
       if (t) t.innerHTML = `<span class="deco">⭐</span><small>Sertifikatlar</small><b>${(cr.issued || []).length}</b><i>${n ? `${n} ta tasdiqlash kutmoqda` : "berilgan"}</i>`;
       if (n) todo.push(["palm", `${n} ta talaba sertifikat olishga haqli — tasdiqlang`, "Sertifikat", "#cert"]);
     } catch { /* */ }
+    else { const t = $("#cert-tile"); if (t) t.innerHTML = `<span class="deco">⭐</span><small>Sertifikatlar</small><b>⏸</b><i>darsliklardan keyin</i>`; }
     if (away.length) todo.push(["saff", `${away.length} ta talaba 3 kundan beri kirmadi: ${away.slice(0, 3).map(s => esc(s.name)).join(", ")}${away.length > 3 ? "…" : ""}`, "Nazorat", "../"]);
     if (PT()) {
       try {
