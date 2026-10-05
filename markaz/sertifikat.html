@@ -32,8 +32,17 @@
   .stage { width: 100%; position: relative; }
   .cert { width: 990px; height: 700px; background: var(--cream); position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; color: var(--coffee2); direction: rtl;
           background-image: radial-gradient(circle at 50% 40%, #fffdf7 0, #FFF8EC 55%, #f6ead4 100%); font-family: Amiri, serif; font-weight: 400; box-shadow: 0 8px 30px rgba(74,46,23,.25); }
-  .b1 { position: absolute; inset: 18px; border: 3px solid var(--gold); border-radius: 6px; }
+  .b1 { position: absolute; inset: 18px; border: 3px solid var(--acc, var(--gold)); border-radius: 6px; }
   .b2 { position: absolute; inset: 28px; border: 1px solid var(--gold2); border-radius: 4px; }
+  /* Har daraja — o'z rangidagi qog'oz (--paper) va ramka (--acc) */
+  .cert { background-color: var(--paper, var(--cream)); background-image: radial-gradient(circle at 50% 42%, rgba(255,255,255,.62) 0, rgba(255,255,255,.18) 58%, rgba(0,0,0,.04) 100%); }
+  .cert .b1 { box-shadow: inset 0 0 0 5px var(--paper, var(--cream)), inset 0 0 0 7px var(--acc, var(--gold)); }
+  .cert .name { border-bottom-color: var(--acc, var(--gold2)); }
+  .cert .lvl { background: var(--acc, var(--coffee)); }
+  .wm { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .wm span { transform: rotate(-18deg); font-family: Nunito, sans-serif; font-weight: 900; font-size: 120px; letter-spacing: .2em; color: rgba(74,46,23,.07); white-space: nowrap; direction: ltr; }
+  .embed .wrap { padding: 0; max-width: none; } .embed .wrap > :not(.stage) { display: none !important; } .embed body, body.embed { background: transparent; }
+  body.embed .cert { box-shadow: none; }
   .corner { position: absolute; width: 70px; height: 70px; }
   .scene { position: absolute; left: 28px; bottom: 28px; width: 934px; height: 60px; opacity: .45; }
   .in { position: absolute; inset: 34px 60px 160px; display: grid; justify-items: center; align-content: start; text-align: center; }
@@ -95,6 +104,11 @@
     "A2": ["Asosiy", "الْمُسْتَوَى الْأَسَاسِيَّ"], "B1": ["O'rta", "الْمُسْتَوَى الْمُتَوَسِّطَ"],
     "B2": ["O'rtadan yuqori", "الْمُسْتَوَى فَوْقَ الْمُتَوَسِّطِ"], "C1": ["Yuqori", "الْمُسْتَوَى الْمُتَقَدِّمَ"], "C2": ["Mukammal", "مُسْتَوَى الْإِتْقَانِ"],
   };
+  // Qog'oz rangi va ramka rangi — har daraja uchun alohida
+  const PAPER = {
+    "Pre-A1": ["#F7D8CA", "#C8553D"], "A1": ["#CDEBE3", "#2A9D8F"], "A2": ["#F9E1B2", "#E09A2B"], "B1": ["#DCEACA", "#5B8C3A"],
+    "B2": ["#E4D6F1", "#7a5a9c"], "C1": ["#D3E2F3", "#3c6e9c"], "C2": ["#F6E3A2", "#B8862E"],
+  };
   const arNum = n => Number(n).toLocaleString("ar-EG", { useGrouping: false });
   const arDate = d => new Date(d + "T12:00:00Z").toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const uzDate = d => d.split("-").reverse().join(".");
@@ -106,8 +120,10 @@
     } catch { return { error: "NET" }; }
   }
 
-  function render(c) {
+  function render(c, sample) {
     const f = c.gender === "f", [uzLvl, arLvl] = LEVELS[c.level] || [c.level, c.level];
+    const [paper, acc] = PAPER[c.level] || PAPER["Pre-A1"];
+    document.documentElement.style.setProperty("--paper", paper); document.documentElement.style.setProperty("--acc", acc);
     $("#status").className = "ok";
     $("#status").innerHTML = `<span class="big">✅</span><div style="flex:1;min-width:200px"><h3>Haqiqiy sertifikat</h3><p>Bu sertifikat «Tabassum» online markazi tomonidan berilgan</p></div>
       <div class="rows">
@@ -138,15 +154,16 @@
         <div class="given">تُمْنَحُ هَذِهِ الشَّهَادَةُ ${f ? "لِلطَّالِبَةِ" : "لِلطَّالِبِ"}</div>
         <div class="name">${esc(c.name_ar)}</div>
         <div class="latin">${esc(c.name_lat)}</div>
-        <div class="what">${f ? "لِإِتْمَامِهَا" : "لِإِتْمَامِهِ"} بِنَجَاحٍ <b>${arLvl}</b> <span class="lvl">CEFR ${esc(c.level)}</span><br>${f ? "وَحُصُولِهَا" : "وَحُصُولِهِ"} عَلَى <b>${arNum(c.score)}٪</b> فِي الِاخْتِبَارِ النِّهَائِيِّ</div>
+        <div class="what">${f ? "لِإِتْمَامِهَا" : "لِإِتْمَامِهِ"} بِنَجَاحٍ <b>${arLvl}</b> <span class="lvl">CEFR ${esc(c.level)}</span><br>${f ? "وَحُصُولِهَا" : "وَحُصُولِهِ"} عَلَى <b>${sample ? "…" : arNum(c.score)}٪</b> فِي الِاخْتِبَارِ النِّهَائِيِّ</div>
       </div>
+      ${sample ? `<div class="wm"><span>NAMUNA</span></div>` : ""}
       <div class="foot">
         <div class="sig"><div class="line">${esc(c.teacher_ar)}</div><small>الْمُعَلِّمُ · مُدِيرُ الْمَرْكَزِ</small></div>
         <div class="sig"><div class="line">${arDate(c.issued_at)}</div><small>تَارِيخُ الْمَنْحِ</small></div>
         <div class="qr"><div class="q" id="qr"></div><b>${esc(c.code)}</b><small>تَحَقَّقْ مِنْ صِحَّتِهَا</small></div>
       </div>
     </div>`;
-    try {
+    if (!sample) try {
       const q = qrcode(0, "M"); q.addData(location.origin + location.pathname + "#" + c.code); q.make();
       $("#qr").innerHTML = q.createSvgTag({ cellSize: 2, margin: 0 });
     } catch { /* QR kutubxonasi yuklanmasa ham sertifikat ko'rinadi */ }
@@ -164,6 +181,17 @@
 
   (async () => {
     const code = decodeURIComponent(location.hash.slice(1)).trim();
+    // Ismsiz namuna (galereya rasmlari uchun): sertifikat.html?embed#namuna=A1
+    if (location.search.includes("embed")) document.body.classList.add("embed");
+    const sm = code.match(/^namuna=(Pre-A1|A1|A2|B1|B2|C1|C2)$/);
+    if (sm) {
+      render({ code: "TB-2026-0000-XXXX", level: sm[1], score: 0, name_ar: "اِسْمُكَ هُنَا", name_lat: "Ismingiz shu yerda bo'ladi", gender: "m",
+               teacher_ar: "مُحَمَّد إِبْرَاهِيم", issued_at: new Date().toISOString().slice(0, 10) }, true);
+      $("#status").className = "ok"; $("#status").innerHTML = `<span class="big">👀</span><div><h3 style="color:var(--mu)">Namuna</h3><p>Darajani tugatsangiz, shu sertifikat sizning ismingiz bilan beriladi.</p></div>`;
+      $("#actions").hidden = true; document.title = "Sertifikat namunasi — " + sm[1];
+      $("#qr").innerHTML = `<div style="width:66px;height:66px;display:grid;place-items:center;font-size:30px">🔒</div>`;
+      return;
+    }
     if (!code) { $("#status").className = "ok bad"; $("#status").innerHTML = `<span class="big">🔎</span><div><h3>Sertifikat raqami ko'rsatilmagan</h3><p>QR-kodni qayta skanerlang.</p></div>`; return; }
     const c = await load(code);
     if (c && !c.error) return render(c);
