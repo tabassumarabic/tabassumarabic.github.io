@@ -1554,9 +1554,21 @@
         ${cls === "current" ? `<span class="lv-here">Boshlash</span>` : ""}
         <span class="ln-dot">${cls === "done" ? "✓" : n > 100 ? n - 100 : n}</span><span class="ln-lab ${side} ar ${n > 100 ? "long" : ""}">${esc(it.title)}</span></button>`;
     };
+    // 🗺 Manzara: har daraja o'z hududida (fon + chetlardagi bezaklar). Bezaklar faqat chetlarda — doirachalarga tegmaydi
+    const ZONES = { "Pre-A1": ["oasis", "🌴 Alifbo vohasi", ["🌴", "🐪", "⛺", "🏺", "🌙", "✨", "🌵", "⭐"]],
+      "A1": ["city", "🏙️ Shahar", ["🏙️", "🚕", "☕", "🏪", "📚", "🚌", "🌇", "🛍️"]] };
+    const lvItems = items.filter(x => x.kind === "level");
+    const zones = lvItems.map((lv, i) => {
+      const end = i + 1 < lvItems.length ? lvItems[i + 1].y - 40 : h;
+      const [cls, title, deco] = ZONES[lv.code] || ["fog", "☁️ Tez orada", ["☁️", "🏔️", "☁️", "🌫️"]];
+      const ds = [];
+      for (let y = lv.y + 150, k = 0; y < end - 40; y += 118, k++)
+        ds.push(`<span class="mz-deco" style="left:${k % 2 ? 91 : 9}%;top:${y + (k % 3) * 14}px">${deco[k % deco.length]}</span>`);
+      return `<div class="mz mz-${cls}" style="top:${lv.y - 70}px;height:${end - lv.y + 70}px"><span class="mz-title">${title}</span></div>${ds.join("")}`;
+    }).join("");
     const box = $("#lvmap");
     box.style.height = h + "px";
-    box.innerHTML = `<svg viewBox="0 0 100 ${h}" preserveAspectRatio="none" aria-hidden="true">${items.slice(1).map((b, i) => seg(items[i], b)).join("")}</svg>`
+    box.innerHTML = zones + `<svg viewBox="0 0 100 ${h}" preserveAspectRatio="none" aria-hidden="true">${items.slice(1).map((b, i) => seg(items[i], b)).join("")}</svg>`
       + items.map(node).join("");
     $$(".lv").forEach(b => (b.onclick = () => {
       const it = items.find(x => x.kind === "level" && x.li === +b.dataset.lv);
