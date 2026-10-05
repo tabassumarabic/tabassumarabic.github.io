@@ -78,6 +78,29 @@
   .sunday .cd { margin-left: auto; text-align: center; background: rgba(255,255,255,.12); border-radius: 12px; padding: 8px 12px; font-weight: 900; font-size: 18px; white-space: nowrap; }
   .sunday .cd small { display: block; font-size: 11px; font-weight: 800; }
 
+  /* 🎓 Sertifikatlar */
+  .violet { background: #7a5a9c; } .navy { background: #3c6e9c; } .goldl { background: #B8862E; }
+  .levels { display: grid; gap: 10px; }
+  .lv { display: flex; gap: 12px; align-items: center; background: var(--cream); border-radius: 16px; padding: 10px 14px; box-shadow: 0 5px 0 rgba(107,68,35,.18); }
+  .lv-b { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; color: #fff; font-size: 14px; flex: none; border: 3px solid rgba(255,255,255,.6); box-shadow: 0 0 0 2px #E9C877; }
+  .lv-t { flex: 1; display: grid; gap: 2px; min-width: 0; } .lv-t b { font-size: 15.5px; color: var(--coffee2); } .lv-t small { color: var(--mu); font-size: 12.5px; }
+  .lv-ar { font-family: Amiri, serif; font-size: 17px; color: #C9962E; }
+  .lv-bar { display: block; height: 7px; border-radius: 5px; background: #ead9bb; overflow: hidden; margin-top: 4px; } .lv-bar i { display: block; height: 100%; background: var(--saff); }
+  .lv.cur { box-shadow: 0 0 0 3px var(--saff), 0 5px 0 rgba(107,68,35,.18); }
+  .lv.off { opacity: .42; filter: grayscale(.85); }
+  .lv-go { background: var(--oasis); color: #fff; font-weight: 900; font-size: 13px; padding: 8px 12px; border-radius: 10px; box-shadow: 0 3px 0 #1d6f65; text-decoration: none; white-space: nowrap; }
+  .cnt { background: var(--terra); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 12px; margin-left: 4px; }
+  .issue { background: var(--cream2); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+  .iss-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tag2 { background: var(--coffee); color: var(--cream); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+  .iss-g { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; align-items: end; }
+  .iss-g .btn { width: auto; padding: 12px 16px; }
+  .ar-in { font-family: Amiri, serif; font-size: 20px; padding: 8px 12px; }
+  .sexes { display: grid; gap: 4px; font-size: 13.5px; } .sexes label { display: flex; flex-direction: row; align-items: center; gap: 6px; color: var(--ink); }
+  .ar-s { font-family: Amiri, serif; font-size: 16px; }
+  .x-btn { background: transparent; color: var(--mu); font-size: 16px; padding: 6px 8px; border-radius: 8px; }
+  @media (max-width: 860px) { .iss-g { grid-template-columns: 1fr; } .iss-g .btn { width: 100%; } .sexes { grid-auto-flow: column; justify-content: start; gap: 18px; } }
+
   .frame { width: 100%; height: 100vh; border: 0; display: block; background: #0C1218; }
 
   /* Kirish */
@@ -313,15 +336,7 @@
       bindTop();
     },
 
-    cert(main) {
-      main.innerHTML = topBar(role === "director" ? "🎓 Sertifikatlar" : "🎓 Sertifikatlarim") +
-        (role === "director"
-          ? soonCard("Sertifikatlar bo'limi tayyorlanmoqda", "Talaba darajani (Pre-A1, A1 …) imtihon bilan tugatganda, unga chiroyli PDF sertifikat beriladi. Sertifikatda maxsus raqam bo'ladi — uni saytda tekshirib, haqiqiyligini bilish mumkin.",
-              ["📄 PDF sertifikat", "🔢 Tekshirish raqami", "📋 Berilganlar ro'yxati"])
-          : `<div class="card"><h4>Hali sertifikat yo'q</h4><p>Darajani tugatib, imtihondan o'tsangiz, sertifikatingiz shu yerda paydo bo'ladi. ${ME && ME.state && ME.state.examBest ? `Pre-A1 imtihon natijangiz: <b>${ME.state.examBest}%</b>.` : ""}</p>
-             <button class="btn" data-go="arab">📚 Darslarni davom ettirish</button></div>`);
-      bindTop(); bindGo();
-    },
+    cert(main) { return role === "director" ? dirCerts(main) : stuCerts(main); },
 
     sunday(main) {
       main.innerHTML = topBar("🎮 Yakshanba o'yini") + sundayCard() +
@@ -369,6 +384,85 @@
   };
   const bindGo = () => $$("[data-go]").forEach(b => (b.onclick = () => go(b.dataset.go)));
 
+  // ---------- 🎓 Sertifikatlar ----------
+  // Har bir CEFR daraja — alohida sertifikat. Olinmaganlari xira; hozirgi daraja — progress bilan.
+  const LEVELS = [
+    ["Pre-A1", "Boshlang'ich (A0)", "الْمُسْتَوَى التَّمْهِيدِيُّ", "terra"], ["A1", "Boshlovchi", "الْمُبْتَدِئُ", "oasis"],
+    ["A2", "Asosiy", "الْأَسَاسِيُّ", "saff"], ["B1", "O'rta", "الْمُتَوَسِّطُ", "palm"], ["B2", "O'rtadan yuqori", "فَوْقَ الْمُتَوَسِّطِ", "violet"],
+    ["C1", "Yuqori", "الْمُتَقَدِّمُ", "navy"], ["C2", "Mukammal", "الْإِتْقَانُ", "goldl"],
+  ];
+  const certUrl = code => "sertifikat.html#" + encodeURIComponent(code);
+  const uzDate = d => String(d || "").split("-").reverse().join(".");
+  // Darajadagi o'tilgan darslar (Pre-A1: 1–13-darslar, A1: 101–112-bo'limlar)
+  const levelProgress = (code, lessons) => {
+    const nums = code === "Pre-A1" ? Array.from({ length: 13 }, (_, i) => i + 1) : code === "A1" ? Array.from({ length: 12 }, (_, i) => 101 + i) : [];
+    return [nums.filter(n => (lessons[n] || 0) >= 80).length, nums.length];
+  };
+  async function stuCerts(main) {
+    main.innerHTML = topBar("🎓 Sertifikatlarim") + `<div class="card"><p>Yuklanmoqda…</p></div>`; bindTop();
+    let mine = [];
+    try { mine = await rpc("cert_mine", { p_token: ST() }); } catch { main.innerHTML = topBar("🎓 Sertifikatlarim") + `<div class="card"><p>📶 Internet yo'q. Qayta urinib ko'ring.</p></div>`; bindTop(); return; }
+    const have = Object.fromEntries(mine.map(c => [c.level, c]));
+    const lessons = (ME.state || {}).lessons || {}, exam = (ME.state || {}).examBest || 0;
+    const cur = LEVELS.find(l => !have[l[0]]);   // birinchi olinmagan daraja — hozirgi
+    main.innerHTML = topBar("🎓 Sertifikatlarim") + `<div class="levels">${LEVELS.map(([code, uz, ar, cls]) => {
+      const c = have[code], isCur = cur && cur[0] === code;
+      let sub, right = "";
+      if (c) { sub = `✅ Olingan · ${c.score}% · ${uzDate(c.issued_at)}`; right = `<a class="lv-go" href="${certUrl(c.code)}" target="_blank" rel="noopener">📄 Ochish</a>`; }
+      else if (isCur) {
+        const [done, total] = levelProgress(code, lessons);
+        sub = code === "Pre-A1" && exam >= 80 ? `⏳ Imtihondan ${exam}% oldingiz — ustoz tasdiqlashi kutilmoqda`
+          : total ? `Jarayonda · ${done}/${total} ${code === "Pre-A1" ? "dars" : "bo'lim"}` : "Jarayonda";
+        if (total) sub += `<span class="lv-bar"><i style="width:${Math.round(done * 100 / total)}%"></i></span>`;
+      } else sub = "🔒 Oldingi darajadan keyin";
+      return `<div class="lv ${c ? "got" : isCur ? "cur" : "off"}"><span class="lv-b ${cls}">${code}</span>
+        <span class="lv-t"><b>${uz}</b><span class="lv-ar">${ar}</span><small>${sub}</small></span>${right}</div>`;
+    }).join("")}</div>`;
+    bindTop();
+  }
+
+  let CERTS = null;
+  async function dirCerts(main) {
+    main.innerHTML = topBar("🎓 Sertifikatlar") + `<div class="card"><p>Yuklanmoqda…</p></div>`; bindTop();
+    try { CERTS = await rpc("teacher_certs", { p_token: TT() }); } catch (e) { main.innerHTML = topBar("🎓 Sertifikatlar") + `<div class="card"><p>${esc(errText(e))}</p></div>`; bindTop(); return; }
+    const cand = CERTS.candidates || [], issued = CERTS.issued || [];
+    main.innerHTML = topBar("🎓 Sertifikatlar") + `
+      <div class="card"><h4>⏳ Tasdiqlash kutilmoqda ${cand.length ? `<span class="cnt">${cand.length}</span>` : ""}</h4>
+        ${cand.length ? `<p>Bu talabalar imtihondan 80%+ oldi. Ismini arabchada yozib, «Berish» ni bosing.</p>` + cand.map(s => `
+          <form class="issue" data-id="${s.id}">
+            <div class="iss-h"><b>${esc(s.name)}</b><span class="tag2">CEFR ${s.level} · ${s.score}%</span></div>
+            <div class="iss-g">
+              <label>Ism (arabcha)<input class="in ar-in" name="ar" dir="rtl" required placeholder="مَدِينَة كَرِيمُوفَا"></label>
+              <label>Ism (lotincha)<input class="in" name="lat" required value="${esc(s.name)}"></label>
+              <div class="sexes"><label><input type="radio" name="g" value="m" required> 👦 O'g'il</label><label><input type="radio" name="g" value="f"> 👧 Qiz</label></div>
+              <button class="btn">🎓 Berish</button>
+            </div>
+          </form>`).join("") : `<p>Hozircha yangi nomzod yo'q. Talaba imtihondan 80%+ olsa, shu yerda paydo bo'ladi.</p>`}
+      </div>
+      <div class="card"><h4>📋 Berilgan sertifikatlar (${issued.length})</h4>
+        ${issued.length ? issued.map(c => `<div class="li"><i class="dot palm"></i><span>${esc(c.name_lat)} · <bdi class="ar-s">${esc(c.name_ar)}</bdi><br><small>CEFR ${esc(c.level)} · ${c.score}% · ${uzDate(c.issued_at)} · ${esc(c.code)}</small></span>
+          <a class="lv-go" href="${certUrl(c.code)}" target="_blank" rel="noopener">📄</a><button class="x-btn" data-revoke="${esc(c.code)}" title="Bekor qilish">✕</button></div>`).join("")
+          : `<p>Hali sertifikat berilmagan.</p>`}
+      </div>
+      <div class="card"><h4>ℹ️ Qanday ishlaydi</h4><p>Sertifikat arabcha, A4 o'lchamda. Talaba uni «Sertifikatlarim» bo'limida ko'radi va PDF qilib saqlaydi. QR-kodni kim skanerlasa, «✅ Haqiqiy sertifikat» degan sahifa ochiladi. Ism xato yozilgan bo'lsa — ✕ bilan bekor qilib, qayta bering.</p></div>`;
+    bindTop();
+    $$(".issue").forEach(f => (f.onsubmit = async e => {
+      e.preventDefault();
+      const b = f.querySelector(".btn"); b.disabled = true;
+      try {
+        const c = await rpc("teacher_cert_issue", { p_token: TT(), p_student: f.dataset.id, p_level: "Pre-A1",
+          p_name_ar: f.ar.value.trim(), p_name_lat: f.lat.value.trim(), p_gender: f.g.value });
+        toast(`🎉 Sertifikat berildi: ${c.code}`);
+        window.open(certUrl(c.code), "_blank", "noopener");
+        dirCerts(main);
+      } catch (err) { b.disabled = false; toast({ ALREADY: "Bu talabaga bu daraja sertifikati allaqachon berilgan", BAD_NAME: "Ismni to'liq yozing", NOT_PASSED: "Talaba imtihondan 80% olmagan" }[err.message] || errText(err)); }
+    }));
+    $$("[data-revoke]").forEach(b => (b.onclick = async () => {
+      if (!confirm(`${b.dataset.revoke} sertifikatini bekor qilasizmi? QR tekshiruvi «topilmadi» deb ko'rsatadi.`)) return;
+      try { await rpc("teacher_cert_revoke", { p_token: TT(), p_code: b.dataset.revoke }); toast("Bekor qilindi"); dirCerts(main); } catch (err) { toast(errText(err)); }
+    }));
+  }
+
   // ---------- Direktor bosh sahifasi ----------
   async function dirHome(main) {
     const st = T.students || [], today = T.today;
@@ -381,7 +475,7 @@
         <div class="k terra"><span class="deco">🐪</span><small>Talabalar</small><b>${st.length}</b><i>+${newMonth} bu oy</i></div>
         <div class="k oasis"><span class="deco">🌴</span><small>Bugun faol</small><b>${activeToday}</b><i>${st.length ? Math.round(activeToday * 100 / st.length) : 0}%</i></div>
         <div class="k saff" id="pay-tile"><span class="deco">☀️</span><small>Oylik to'lov (Pro)</small><b>…</b><i>yuklanmoqda</i></div>
-        <div class="k palm"><span class="deco">⭐</span><small>Sertifikatlar</small><b>0</b><i>tez orada</i></div>
+        <button class="k palm" id="cert-tile" data-go="cert"><span class="deco">⭐</span><small>Sertifikatlar</small><b>…</b><i>yuklanmoqda</i></button>
       </div>
       <div class="row2">
         <div class="card"><h4>📋 Bugungi ishlar</h4><div id="todo" style="display:grid;gap:8px"><p>Yuklanmoqda…</p></div></div>
@@ -400,6 +494,12 @@
       const pend = sp.filter(x => x.pending).length;
       if (pend) todo.push(["terra", `${pend} ta gapirish yozuvi baholanmagan`, "Ovozlar", "../"]);
     } catch { /* */ }
+    try {
+      const cr = await rpc("teacher_certs", { p_token: TT() }), n = (cr.candidates || []).length;
+      const t = $("#cert-tile");
+      if (t) t.innerHTML = `<span class="deco">⭐</span><small>Sertifikatlar</small><b>${(cr.issued || []).length}</b><i>${n ? `${n} ta tasdiqlash kutmoqda` : "berilgan"}</i>`;
+      if (n) todo.push(["palm", `${n} ta talaba sertifikat olishga haqli — tasdiqlang`, "Sertifikat", "#cert"]);
+    } catch { /* */ }
     if (away.length) todo.push(["saff", `${away.length} ta talaba 3 kundan beri kirmadi: ${away.slice(0, 3).map(s => esc(s.name)).join(", ")}${away.length > 3 ? "…" : ""}`, "Nazorat", "../"]);
     if (PT()) {
       try {
@@ -412,7 +512,7 @@
     const box = $("#todo"); if (!box) return;
     box.innerHTML = todo.length ? todo.map(([c, t, tag, href]) => `<button class="li" data-href="${href}"><i class="dot ${c}"></i><span>${t}</span><small>${tag} ›</small></button>`).join("")
       : `<div class="li"><i class="dot palm"></i><span>Bugun hammasi bajarilgan 🎉</span></div>`;
-    $$("[data-href]").forEach(b => (b.onclick = () => window.open(b.dataset.href, "_blank", "noopener")));
+    $$("[data-href]").forEach(b => (b.onclick = () => b.dataset.href[0] === "#" ? go(b.dataset.href.slice(1)) : window.open(b.dataset.href, "_blank", "noopener")));
   }
 
   // ---------- Talaba bosh sahifasi ----------
