@@ -289,8 +289,8 @@
   const MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
   const tashNow = () => new Date(Date.now() + (5 * 60 + new Date().getTimezoneOffset()) * 60000);   // UTC+5
   const todayLabel = () => { const d = tashNow(); return `${d.getDate()}-${MONTHS[d.getMonth()]}`; };
-  // Yakshanba o'yini: har yakshanba soat 11:00 da (Toshkent) — vaqtini keyin ustoz o'zgartiradi
-  const SUNDAY_HOUR = 11;
+  // Yakshanba o'yini: har yakshanba kechki soat 20:00 da (Toshkent) — ustoz qarori
+  const SUNDAY_HOUR = 20;
   function untilSunday() {
     const n = tashNow(), t = new Date(n);
     t.setDate(n.getDate() + ((7 - n.getDay()) % 7)); t.setHours(SUNDAY_HOUR, 0, 0, 0);
