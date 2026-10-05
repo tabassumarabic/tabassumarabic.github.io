@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tabassum — online markaz</title>
+<meta name="theme-color" content="#6B4423">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<!-- «Tabassum» online markaz sayti (1-qadam: qobiq). Chap menyu + kim kirganiga qarab bo'limlar.
+     Dizayn: och qahva/qum, sahro manzarasi (ustoz tasdiqlagan maket_markaz3). Ma'lumotlar — Tabassum bazasidan, o'sha xavfsiz funksiyalar orqali. -->
+<style>
+  :root { --sand:#EBD9BC; --cream:#FFF8EC; --cream2:#F4E8D3; --coffee:#6B4423; --coffee2:#4A2E17; --ink:#3B2614; --mu:#8A6E52;
+          --terra:#C8553D; --oasis:#2A9D8F; --saff:#E09A2B; --palm:#5B8C3A; --line:#E2CBA4; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--sand); font-family: Nunito, system-ui, sans-serif; color: var(--ink); font-weight: 700; }
+  button { font: inherit; cursor: pointer; border: 0; }
+  [hidden] { display: none !important; }
+
+  /* Sahro manzarasi — har doim pastda, mazmun ostida */
+  .scene { position: fixed; left: 0; right: 0; bottom: 0; height: 170px; pointer-events: none; z-index: 0; }
+  .scene svg { width: 100%; height: 100%; display: block; }
+
+  .shell { position: relative; z-index: 1; display: flex; min-height: 100%; }
+  .side { width: 248px; flex: none; background: var(--coffee); padding: 18px 12px; display: flex; flex-direction: column; gap: 8px;
+          background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.025) 0 10px, transparent 10px 20px); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { display: flex; align-items: center; gap: 10px; padding: 0 6px 14px; color: var(--cream); }
+  .logo .m { width: 46px; height: 46px; border-radius: 50%; background: var(--cream); border: 3px solid var(--saff); display: grid; place-items: center; font-family: Amiri, serif; font-size: 30px; color: var(--coffee); line-height: 1; padding-bottom: 8px; flex: none; }
+  .logo b { font-weight: 900; font-size: 21px; display: block; } .logo small { font-size: 11.5px; opacity: .75; }
+  .it { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 14px; font-weight: 800; font-size: 14.5px; color: var(--cream); background: rgba(255,255,255,.07); box-shadow: 0 4px 0 rgba(0,0,0,.22); text-align: left; width: 100%; transition: transform .08s; }
+  .it:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.22); }
+  .it .sh { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; font-size: 16px; }
+  .it.on { background: var(--cream); color: var(--coffee); }
+  .it .tag { margin-left: auto; font-size: 10px; background: var(--saff); color: #2a1700; padding: 2px 7px; border-radius: 999px; }
+  .grp { font-size: 11px; letter-spacing: .12em; color: rgba(255,248,236,.5); font-weight: 900; padding: 8px 8px 0; }
+  .side .foot { margin-top: auto; padding-top: 14px; display: grid; gap: 8px; }
+  .who { color: var(--cream); font-size: 13px; padding: 8px 10px; border-radius: 12px; background: rgba(0,0,0,.18); }
+  .who small { display: block; opacity: .7; font-size: 11.5px; }
+  .ghost { background: transparent; color: rgba(255,248,236,.75); font-size: 13px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,248,236,.2); }
+
+  .terra { background: var(--terra); } .oasis { background: var(--oasis); } .saff { background: var(--saff); } .palm { background: var(--palm); }
+
+  .main { flex: 1; min-width: 0; padding: 22px 26px 190px; display: grid; gap: 16px; align-content: start; }
+  .main.full { padding: 0; }
+  .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .top h2 { margin: 0; font-weight: 900; font-size: 26px; flex: 1; color: var(--coffee2); min-width: 200px; }
+  .burger { display: none; width: 42px; height: 42px; border-radius: 12px; background: var(--coffee); color: var(--cream); font-size: 20px; }
+  .pill { background: var(--cream); color: var(--coffee); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 900; box-shadow: 0 4px 0 rgba(107,68,35,.22); }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .k { border-radius: 18px; padding: 16px; color: #fff; display: grid; gap: 6px; box-shadow: 0 6px 0 rgba(0,0,0,.2); position: relative; overflow: hidden; min-height: 118px; text-align: left; align-content: start; }
+  button.k:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.2); }
+  .k .deco { position: absolute; right: 8px; bottom: 4px; font-size: 46px; opacity: .35; }
+  .k small { font-weight: 800; font-size: 12.5px; } .k b { font-size: 32px; font-weight: 900; line-height: 1.05; }
+  .k i { font-style: normal; font-weight: 800; font-size: 12px; background: rgba(0,0,0,.18); border-radius: 999px; padding: 2px 8px; justify-self: start; }
+  .k .ic { font-size: 26px; }
+
+  .row2 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; align-items: start; }
+  .card { background: var(--cream); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; box-shadow: 0 6px 0 rgba(107,68,35,.2); }
+  .card h4 { margin: 0; font-size: 15.5px; font-weight: 900; color: var(--coffee); }
+  .card p { margin: 0; color: var(--mu); font-size: 14px; line-height: 1.45; }
+  .li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 800; padding: 9px 10px; background: var(--cream2); border-radius: 10px; text-align: left; width: 100%; color: var(--ink); }
+  .li span { flex: 1; } .li small { font-weight: 800; color: var(--mu); font-size: 11.5px; }
+  .li .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .btn { background: var(--oasis); color: #fff; font-weight: 900; text-align: center; padding: 13px; border-radius: 12px; box-shadow: 0 5px 0 #1d6f65; font-size: 15px; width: 100%; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #1d6f65; }
+  .btn.brown { background: var(--coffee); box-shadow: 0 5px 0 var(--coffee2); }
+  .btn:disabled { opacity: .6; }
+  .soon { border: 3px dashed #dcc7a6; border-radius: 12px; padding: 10px; font-size: 13px; font-weight: 800; color: var(--mu); text-align: center; }
+  .plan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .muted { color: var(--mu); }
+
+  .sunday { background: linear-gradient(135deg, #7a4e2a, #4A2E17); color: var(--cream); border-radius: 18px; padding: 16px; display: flex; gap: 14px; align-items: center; box-shadow: 0 6px 0 rgba(0,0,0,.2); }
+  .sunday .big { font-size: 38px; } .sunday b { font-size: 17px; font-weight: 900; display: block; } .sunday small { opacity: .85; font-size: 13px; }
+  .sunday .cd { margin-left: auto; text-align: center; background: rgba(255,255,255,.12); border-radius: 12px; padding: 8px 12px; font-weight: 900; font-size: 18px; white-space: nowrap; }
+  .sunday .cd small { display: block; font-size: 11px; font-weight: 800; }
+
+  .frame { width: 100%; height: 100vh; border: 0; display: block; background: #0C1218; }
+
+  /* Kirish */
+  .auth { min-height: 100vh; display: grid; place-items: center; padding: 20px 16px 190px; position: relative; z-index: 1; }
+  .auth .box { width: 100%; max-width: 400px; background: var(--cream); border-radius: 22px; padding: 22px; display: grid; gap: 12px; box-shadow: 0 8px 0 rgba(107,68,35,.22); }
+  .auth .brand { text-align: center; display: grid; justify-items: center; gap: 4px; }
+  .auth .brand .m { width: 64px; height: 64px; border-radius: 50%; background: var(--coffee); border: 3px solid var(--saff); display: grid; place-items: center; font-family: Amiri, serif; font-size: 42px; color: var(--cream); line-height: 1; padding-bottom: 10px; }
+  .auth h1 { margin: 6px 0 0; font-size: 26px; font-weight: 900; color: var(--coffee2); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--cream2); padding: 5px; border-radius: 14px; }
+  .seg button { padding: 10px; border-radius: 10px; background: transparent; color: var(--mu); font-weight: 900; }
+  .seg button.on { background: var(--coffee); color: var(--cream); }
+  .in { width: 100%; padding: 13px 14px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font: inherit; font-size: 16px; color: var(--ink); }
+  .in:focus { outline: none; border-color: var(--oasis); }
+  .err { background: #f8dcd5; color: #8a2b1a; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; }
+  label { font-size: 13px; color: var(--mu); display: grid; gap: 5px; }
+
+  .veil { display: none; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--coffee2); color: var(--cream); padding: 11px 16px; border-radius: 12px; z-index: 50; font-size: 14px; max-width: 92vw; }
+
+  @media (max-width: 860px) {
+    .side { position: fixed; left: 0; top: 0; bottom: 0; z-index: 30; transform: translateX(-105%); transition: transform .2s; }
+    .shell.open .side { transform: none; box-shadow: 10px 0 30px rgba(0,0,0,.35); }
+    .shell.open .veil { display: block; position: fixed; inset: 0; background: rgba(30,18,8,.45); z-index: 25; }
+    .burger { display: grid; place-items: center; }
+    .main { padding: 14px 16px 180px; }
+    .tiles { grid-template-columns: 1fr 1fr; }
+    .row2, .plan { grid-template-columns: 1fr; }
+    .top h2 { font-size: 21px; }
+    .frame-bar { display: flex !important; }
+    .frame { height: calc(100vh - 52px); }
+  }
+  .frame-bar { display: none; align-items: center; gap: 10px; padding: 6px 10px; height: 52px; background: var(--coffee); color: var(--cream); }
+  .frame-bar b { flex: 1; font-weight: 900; }
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+  <svg viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <symbol id="camel" viewBox="0 0 100 80"><path d="M18 42C20 37 24 35 28 34 31 22 37 13 45 13 53 13 57 22 59 32 63 37 70 40 76 38 79 34 80 26 84 18 86 14 92 14 95 18L96 22C93 24 90 24 87 24 84 30 82 40 76 48 72 52 68 53 66 54L66 78 63 78 62 56 59 56 58 78 55 78 54 55 37 55 36 78 33 78 32 55 29 55 28 78 25 78 24 54C20 52 18 48 18 40Z"/><path d="M18 40C14 44 13 50 14 56L16 56C16 50 17 46 19 43Z"/></symbol>
+      <symbol id="palm" viewBox="0 0 60 90"><path d="M29 88C30 70 31 50 30 30L33 30C35 50 34 70 33 88Z"/><path d="M31 30C22 18 10 16 2 22 12 20 20 24 28 32ZM31 30C40 18 52 16 58 22 48 20 40 24 33 32ZM31 30C28 16 20 6 10 4 18 10 24 18 29 31ZM31 30C34 16 42 6 52 4 44 10 38 18 33 31ZM31 30C24 26 12 30 6 40 14 32 22 30 29 32ZM31 30C38 26 50 30 56 40 48 32 40 30 33 32Z"/></symbol>
+    </defs>
+    <circle cx="1080" cy="90" r="64" fill="#F2B84B" opacity=".5"/>
+    <path d="M0 110C170 60 340 80 480 105 640 135 800 75 980 85 1080 92 1150 105 1200 110V170H0Z" fill="#DDBF8E"/>
+    <path d="M0 140C230 110 430 150 640 135 840 120 1000 150 1200 135V170H0Z" fill="#CFAE78"/>
+    <g fill="#8A5A33" opacity=".7"><use href="#camel" x="640" y="58" width="66" height="53"/><use href="#camel" x="705" y="64" width="60" height="48"/><use href="#camel" x="765" y="69" width="54" height="43"/></g>
+    <g fill="#6E8F4E" opacity=".75"><use href="#palm" x="300" y="34" width="56" height="84"/><use href="#palm" x="342" y="54" width="44" height="66"/></g>
+  </svg>
+</div>
+
+<!-- Kirish oynasi -->
+<section class="auth" id="auth" hidden>
+  <div class="box">
+    <div class="brand"><span class="m">ت</span><h1>Tabassum</h1><span class="muted">online markaz · bu yerga faqat tabassum bilan kiriladi 😊</span></div>
+    <div class="seg"><button id="s-stu" class="on">🎓 Talaba</button><button id="s-tch">⭐ Ustoz</button></div>
+    <form id="f-stu" class="box" style="padding:0;box-shadow:none">
+      <label>Guruh kodi<input class="in" id="a-code" autocomplete="off" autocapitalize="characters" placeholder="Masalan: DOD_ARABIC" required></label>
+      <label>Ismingiz<input class="in" id="a-name" autocomplete="username" required></label>
+      <label>PIN (4 raqam)<input class="in" id="a-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" required></label>
+      <button class="btn" id="a-go">Kirish</button>
+      <small class="muted">Hisobingiz yo'qmi? Avval <a href="../">Tabassum ilovasida</a> ro'yxatdan o'ting.</small>
+    </form>
+    <form id="f-tch" class="box" style="padding:0;box-shadow:none" hidden>
+      <label>Guruh kodi<input class="in" id="t-code" autocomplete="off" autocapitalize="characters" required></label>
+      <label>Ustoz paroli<input class="in" id="t-pass" type="password" autocomplete="current-password" required></label>
+      <button class="btn brown" id="t-go">Kirish</button>
+    </form>
+    <div class="err" id="a-err" hidden></div>
+  </div>
+</section>
+
+<div class="shell" id="shell" hidden>
+  <aside class="side" id="side">
+    <div class="logo"><span class="m">ت</span><div><b>Tabassum</b><small>online markaz</small></div></div>
+    <nav id="nav" style="display:grid;gap:8px"></nav>
+    <div class="foot">
+      <div class="who" id="who"></div>
+      <button class="ghost" id="logout">Chiqish</button>
+    </div>
+  </aside>
+  <div class="veil" id="veil"></div>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const API = "https://fstmvfroylwyelmaxhzh.supabase.co/rest/v1/rpc/";
+  const API_KEY = "sb_publishable_dNWgUrggq3AEbr4Ifu74Cg_8iq3K1Nm";   // ochiq kalit — saytda turishi xavfsiz
+  // Tabassum ilovasi bilan bir xil kalitlar: u yerda kirgan odam bu yerda qayta kirmaydi
+  const K_TOKEN = "dod_token", K_TEACHER = "dod_teacher", K_PRO = "pro_teacher";
+
+  const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* */ } },
+    del(k) { try { localStorage.removeItem(k); } catch { /* */ } },
+  };
+  function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3200); }
+  async function rpc(fn, args) {
+    let res;
+    try { res = await fetch(API + fn, { method: "POST", headers: { apikey: API_KEY, "Content-Type": "application/json" }, body: JSON.stringify(args || {}) }); }
+    catch { throw new Error("NET"); }
+    const text = await res.text(), body = text ? JSON.parse(text) : null;
+    if (!res.ok) throw new Error((body && body.message) || "NET");
+    if (body && body.error) throw new Error(body.error);
+    return body;
+  }
+  const ERR = {
+    BAD_LOGIN: "Ism yoki PIN noto'g'ri.", BAD_CODE: "Guruh kodi noto'g'ri.", LOCKED: "Ko'p marta xato kiritildi. 10 daqiqadan keyin urinib ko'ring.",
+    BAD_TEACHER_LOGIN: "Guruh kodi yoki ustoz paroli noto'g'ri.", NO_PASSWORD: "Bu guruhga ustoz paroli hali o'rnatilmagan.",
+    NET: "Internet bilan aloqa yo'q.",
+  };
+  const errText = e => ERR[e.message] || "Xatolik yuz berdi. Qayta urinib ko'ring.";
+
+  // ---------- Kim kirdi ----------
+  // role: "director" (ustoz tokeni bor) yoki "student"
+  let role = null, ME = null, T = null, view = "home";
+  const TT = () => store.get(K_TEACHER), ST = () => store.get(K_TOKEN), PT = () => store.get(K_PRO);
+
+  async function boot() {
+    if (TT()) {
+      try { T = await rpc("teacher_overview", { p_token: TT() }); role = "director"; return show(); }
+      catch (e) { if (e.message !== "NET") store.del(K_TEACHER); else return offline(); }
+    }
+    if (ST()) {
+      try { ME = await rpc("me", { p_token: ST() }); role = "student"; return show(); }
+      catch (e) { if (e.message !== "NET") store.del(K_TOKEN); else return offline(); }
+    }
+    $("#shell").hidden = true; $("#auth").hidden = false;
+  }
+  function offline() { $("#auth").hidden = true; $("#shell").hidden = false; $("#main").innerHTML = `<div class="card"><h4>📶 Internet yo'q</h4><p>Ulanib, sahifani yangilang.</p></div>`; }
+
+  // ---------- Kirish oynasi ----------
+  const seg = which => {
+    $("#s-stu").classList.toggle("on", which === "stu"); $("#s-tch").classList.toggle("on", which === "tch");
+    $("#f-stu").hidden = which !== "stu"; $("#f-tch").hidden = which !== "tch"; $("#a-err").hidden = true;
+  };
+  $("#s-stu").onclick = () => seg("stu"); $("#s-tch").onclick = () => seg("tch");
+  const authErr = m => { $("#a-err").textContent = m; $("#a-err").hidden = false; };
+  $("#f-stu").onsubmit = async e => {
+    e.preventDefault(); $("#a-go").disabled = true;
+    try {
+      const r = await rpc("login", { p_code: $("#a-code").value.trim().toUpperCase(), p_name: $("#a-name").value.trim(), p_pin: $("#a-pin").value.trim() });
+      store.set(K_TOKEN, r.token); $("#auth").hidden = true; await boot();
+    } catch (err) { authErr(errText(err)); } finally { $("#a-go").disabled = false; }
+  };
+  $("#f-tch").onsubmit = async e => {
+    e.preventDefault(); $("#t-go").disabled = true;
+    try {
+      const r = await rpc("teacher_login", { p_code: $("#t-code").value.trim().toUpperCase(), p_password: $("#t-pass").value });
+      if (r.error) throw new Error(r.error);
+      store.set(K_TEACHER, r.token); $("#auth").hidden = true; await boot();
+    } catch (err) { authErr(errText(err)); } finally { $("#t-go").disabled = false; }
+  };
+  $("#logout").onclick = () => {
+    if (!confirm("Saytdan chiqasizmi? (Tabassum ilovasidan ham chiqiladi)")) return;
+    if (role === "director") store.del(K_TEACHER); else store.del(K_TOKEN);
+    role = null; location.reload();
+  };
+
+  // ---------- Menyu ----------
+  const MENU = {
+    director: [
+      ["home", "🏠", "Bosh sahifa", ""],
+      ["G", "O'QISH"],
+      ["arab", "📚", "Arab tili", "terra"],
+      ["cert", "🎓", "Sertifikatlar", "oasis"],
+      ["sunday", "🎮", "Yakshanba o'yini", "saff", "keyin"],
+      ["G", "BOSHQARUV"],
+      ["teach", "👩‍🏫", "Ustozlar", "saff"],
+      ["sec", "🛡", "Xavfsizlik", "palm", "keyin"],
+      ["ai", "🤖", "AI yordamchilar", "", "keyin"],
+    ],
+    student: [
+      ["home", "🏠", "Bosh sahifa", ""],
+      ["arab", "📚", "Arab tili", "terra"],
+      ["hw", "📝", "Uyga vazifa", "oasis", "keyin"],
+      ["sunday", "🎮", "Yakshanba o'yini", "saff", "keyin"],
+      ["cert", "🎓", "Sertifikatlarim", "palm"],
+    ],
+  };
+  function renderNav() {
+    $("#nav").innerHTML = MENU[role].map(([id, ic, name, cls, tag]) => id === "G" ? `<div class="grp">${ic}</div>`
+      : `<button class="it ${view === id ? "on" : ""}" data-v="${id}"><span class="sh ${cls || ""}" ${cls ? "" : 'style="background:#9b6b43"'}>${ic}</span>${name}${tag ? `<span class="tag">${tag}</span>` : ""}</button>`).join("");
+    $$("#nav [data-v]").forEach(b => (b.onclick = () => go(b.dataset.v)));
+    $("#who").innerHTML = role === "director" ? `⭐ Direktor<small>${esc((T.group || {}).name || "")}</small>` : `🎓 ${esc(ME.name)}<small>${esc((ME.group || {}).name || "")}</small>`;
+  }
+  function go(v) {
+    view = v; $("#shell").classList.remove("open"); renderNav();
+    const main = $("#main"); main.classList.toggle("full", v === "arab");
+    (VIEWS[v] || VIEWS.home)(main);
+    window.scrollTo(0, 0);
+    try { history.replaceState(null, "", "#" + v); } catch { /* */ }
+  }
+  function show() {
+    $("#auth").hidden = true; $("#shell").hidden = false;
+    const h = location.hash.slice(1);
+    go(MENU[role].some(m => m[0] === h) ? h : "home");
+  }
+  $("#veil").onclick = () => $("#shell").classList.remove("open");
+  const topBar = title => `<div class="top"><button class="burger" data-burger aria-label="Menyu">☰</button><h2>${title}</h2><span class="pill">📅 ${todayLabel()}</span></div>`;
+  const bindTop = () => { const b = $("[data-burger]"); if (b) b.onclick = () => $("#shell").classList.add("open"); };
+
+  // ---------- Vaqt (Toshkent) ----------
+  const MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
+  const tashNow = () => new Date(Date.now() + (5 * 60 + new Date().getTimezoneOffset()) * 60000);   // UTC+5
+  const todayLabel = () => { const d = tashNow(); return `${d.getDate()}-${MONTHS[d.getMonth()]}`; };
+  // Yakshanba o'yini: har yakshanba soat 11:00 da (Toshkent) — vaqtini keyin ustoz o'zgartiradi
+  const SUNDAY_HOUR = 11;
+  function untilSunday() {
+    const n = tashNow(), t = new Date(n);
+    t.setDate(n.getDate() + ((7 - n.getDay()) % 7)); t.setHours(SUNDAY_HOUR, 0, 0, 0);
+    if (t <= n) t.setDate(t.getDate() + 7);
+    const ms = t - n, d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+    return d ? `${d} kun ${h} soat` : h ? `${h} soat ${m} daq` : `${m} daqiqa`;
+  }
+  const sundayCard = () => `<div class="sunday"><span class="big">🎮</span><div><b>Yakshanba jamoaviy o'yini</b><small>Har yakshanba soat ${SUNDAY_HOUR}:00 · jamoalarga bo'linib, PIN bilan kiriladi</small></div>
+    <div class="cd">${untilSunday()}<small>qoldi</small></div></div>`;
+
+  // ---------- Bo'limlar ----------
+  const soonCard = (title, text, items) => `<div class="card"><h4>${title}</h4><p>${text}</p>${items ? `<div class="plan">${items.map(x => `<div class="soon">${x}</div>`).join("")}</div>` : ""}</div>`;
+  const VIEWS = {
+    home(main) { return role === "director" ? dirHome(main) : stuHome(main); },
+
+    // 📚 Arab tili — hozirgi Tabassum ilovasining o'zi (ichida)
+    arab(main) {
+      main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>📚 Arab tili</b><a href="../" target="_top" class="pill" style="text-decoration:none">To'liq ekran ↗</a></div>
+        <iframe class="frame" src="../" title="Tabassum — arab tili"></iframe>`;
+      bindTop();
+    },
+
+    cert(main) {
+      main.innerHTML = topBar(role === "director" ? "🎓 Sertifikatlar" : "🎓 Sertifikatlarim") +
+        (role === "director"
+          ? soonCard("Sertifikatlar bo'limi tayyorlanmoqda", "Talaba darajani (Pre-A1, A1 …) imtihon bilan tugatganda, unga chiroyli PDF sertifikat beriladi. Sertifikatda maxsus raqam bo'ladi — uni saytda tekshirib, haqiqiyligini bilish mumkin.",
+              ["📄 PDF sertifikat", "🔢 Tekshirish raqami", "📋 Berilganlar ro'yxati"])
+          : `<div class="card"><h4>Hali sertifikat yo'q</h4><p>Darajani tugatib, imtihondan o'tsangiz, sertifikatingiz shu yerda paydo bo'ladi. ${ME && ME.state && ME.state.examBest ? `Pre-A1 imtihon natijangiz: <b>${ME.state.examBest}%</b>.` : ""}</p>
+             <button class="btn" data-go="arab">📚 Darslarni davom ettirish</button></div>`);
+      bindTop(); bindGo();
+    },
+
+    sunday(main) {
+      main.innerHTML = topBar("🎮 Yakshanba o'yini") + sundayCard() +
+        soonCard("Qanday bo'ladi?", "Ustoz ekranga savol chiqaradi. Talabalar jamoalarga bo'linadi va telefondan PIN kod bilan kirib, tezlikda javob beradi. Tez va to'g'ri javob — ko'proq ball. Oxirida g'olib jamoa e'lon qilinadi 🏆",
+          ["👥 Jamoalar", "⏱ Tezlik bo'yicha ball", "🏆 Haftalik g'olib"]);
+      bindTop();
+    },
+
+    hw(main) {
+      main.innerHTML = topBar("📝 Uyga vazifa") + soonCard("Tez orada", "Ustoz har dars oxirida vazifa beradi, siz shu yerda bajarasiz. Muddati va bahosi ham shu yerda ko'rinadi.");
+      bindTop();
+    },
+
+    teach(main) {
+      main.innerHTML = topBar("👩‍🏫 Ustozlar") + `
+        <div class="tiles" style="grid-template-columns:repeat(2,1fr)">
+          <button class="k terra" data-open="../"><span class="deco">🐪</span><span class="ic">📊</span><b style="font-size:19px">Tabassum ustoz paneli</b><small>Davomat, progress, ovozlar, talabalar</small></button>
+          <button class="k oasis" data-open="../pro/"><span class="deco">🌴</span><span class="ic">📒</span><b style="font-size:19px">Tabassum Pro jurnali</b><small>Ball, jarima, kassa, oylik to'lov</small></button>
+        </div>` +
+        soonCard("Keyingi qadamlar", "Bu bo'limda markazning hamma ustozlik ishlari bir joyga yig'iladi. Keyinchalik ba'zi qismlarini boshqa ustozlarga ham ochib berish mumkin bo'ladi.",
+          ["🗓 Dars jadvali", "📈 Oylik hisobot", "👥 Boshqa ustozlar"]);
+      bindTop();
+      $$("[data-open]").forEach(b => (b.onclick = () => window.open(b.dataset.open, "_blank", "noopener")));
+    },
+
+    sec(main) {
+      main.innerHTML = topBar("🛡 Xavfsizlik") + `
+        <div class="card"><h4>Hozir saytni nima himoya qiladi</h4>
+          <div class="li"><i class="dot palm"></i><span>Har bir so'rovda token tekshiriladi — boshqaning ma'lumotini ko'rib bo'lmaydi</span></div>
+          <div class="li"><i class="dot palm"></i><span>PIN ko'p marta xato kiritilsa, 10 daqiqaga bloklanadi</span></div>
+          <div class="li"><i class="dot palm"></i><span>Baza faqat xavfsiz funksiyalar orqali ochiladi (to'g'ridan-to'g'ri kirish yopiq)</span></div>
+          <div class="li"><i class="dot palm"></i><span>Sayt faqat shifrlangan (https) aloqada ishlaydi</span></div>
+        </div>` +
+        soonCard("🛡 Xavfsizlik paneli — keyingi qadam", "Bu yerda kim, qachon va qaysi qurilmadan kirgani, noto'g'ri parol urinishlari va bloklanganlar ko'rinib turadi. Shubhali holat bo'lsa, sizga xabar keladi.",
+          ["👁 Kirishlar tarixi", "🚫 Xato urinishlar", "🔔 Ogohlantirish"]);
+      bindTop();
+    },
+
+    ai(main) {
+      main.innerHTML = topBar("🤖 AI yordamchilar") +
+        soonCard("Oxirgi bosqichda qo'shiladi", "Har bir so'rov oz miqdorda pul turadi, shuning uchun bu qismni sayt to'liq tayyor bo'lgach qo'shamiz.",
+          ["📝 Dars rejasi", "💬 Xabar yozuvchi", "📊 Hisobotchi"]);
+      bindTop();
+    },
+  };
+  const bindGo = () => $$("[data-go]").forEach(b => (b.onclick = () => go(b.dataset.go)));
+
+  // ---------- Direktor bosh sahifasi ----------
+  async function dirHome(main) {
+    const st = T.students || [], today = T.today;
+    const monthStart = today.slice(0, 8) + "01";
+    const activeToday = st.filter(s => (s.today_xp || 0) > 0 || (s.days || {})[today]).length;
+    const newMonth = st.filter(s => (s.created_at || "").slice(0, 10) >= monthStart).length;
+    const away = st.filter(s => !s.last_seen || Date.now() - new Date(s.last_seen) > 3 * 864e5);
+    main.innerHTML = topBar("Salom, ustoz! 👋") + `
+      <div class="tiles">
+        <div class="k terra"><span class="deco">🐪</span><small>Talabalar</small><b>${st.length}</b><i>+${newMonth} bu oy</i></div>
+        <div class="k oasis"><span class="deco">🌴</span><small>Bugun faol</small><b>${activeToday}</b><i>${st.length ? Math.round(activeToday * 100 / st.length) : 0}%</i></div>
+        <div class="k saff" id="pay-tile"><span class="deco">☀️</span><small>Oylik to'lov (Pro)</small><b>…</b><i>yuklanmoqda</i></div>
+        <div class="k palm"><span class="deco">⭐</span><small>Sertifikatlar</small><b>0</b><i>tez orada</i></div>
+      </div>
+      <div class="row2">
+        <div class="card"><h4>📋 Bugungi ishlar</h4><div id="todo" style="display:grid;gap:8px"><p>Yuklanmoqda…</p></div></div>
+        <div class="card"><h4>🛡 Xavfsizlik</h4>
+          <div class="li"><i class="dot palm"></i><span>Hammasi joyida ✅</span></div>
+          <div class="li"><i class="dot saff"></i><span>Batafsil panel tez orada</span><small>keyin</small></div>
+          <button class="btn" data-go="sunday">🎮 Yakshanba o'yini</button>
+        </div>
+      </div>
+      ${sundayCard()}`;
+    bindTop(); bindGo();
+
+    const todo = [];
+    try {
+      const sp = await rpc("teacher_speaking", { p_token: TT() });
+      const pend = sp.filter(x => x.pending).length;
+      if (pend) todo.push(["terra", `${pend} ta gapirish yozuvi baholanmagan`, "Ovozlar", "../"]);
+    } catch { /* */ }
+    if (away.length) todo.push(["saff", `${away.length} ta talaba 3 kundan beri kirmadi: ${away.slice(0, 3).map(s => esc(s.name)).join(", ")}${away.length > 3 ? "…" : ""}`, "Nazorat", "../"]);
+    if (PT()) {
+      try {
+        const tu = await rpc("teacher_tuition", { p_token: PT() });
+        const s = tu.students || [], paid = s.filter(x => x.paid).length;
+        $("#pay-tile").innerHTML = `<span class="deco">☀️</span><small>Oylik to'lov (Pro)</small><b>${paid}/${s.length}</b><i>${s.length - paid} ta to'lamagan</i>`;
+        if (s.length - paid && tu.day >= 3) todo.push(["oasis", `Pro guruh: ${s.length - paid} ta talaba oylikni to'lamagan`, "To'lov", "../pro/"]);
+      } catch { $("#pay-tile").querySelector("i").textContent = "Pro'ga kirilmagan"; $("#pay-tile").querySelector("b").textContent = "—"; }
+    } else { $("#pay-tile").querySelector("i").textContent = "Pro paneliga kiring"; $("#pay-tile").querySelector("b").textContent = "—"; }
+    const box = $("#todo"); if (!box) return;
+    box.innerHTML = todo.length ? todo.map(([c, t, tag, href]) => `<button class="li" data-href="${href}"><i class="dot ${c}"></i><span>${t}</span><small>${tag} ›</small></button>`).join("")
+      : `<div class="li"><i class="dot palm"></i><span>Bugun hammasi bajarilgan 🎉</span></div>`;
+    $$("[data-href]").forEach(b => (b.onclick = () => window.open(b.dataset.href, "_blank", "noopener")));
+  }
+
+  // ---------- Talaba bosh sahifasi ----------
+  function stuHome(main) {
+    const s = ME.state || {}, streak = s.lastMission ? s.streak || 0 : 0;
+    main.innerHTML = topBar(`Xush kelibsiz, ${esc(ME.name)} 🌟`) + `
+      <div class="tiles">
+        <button class="k terra" data-go="arab"><span class="deco">🐪</span><span class="ic">📚</span><b style="font-size:18px">Darslar</b><small>Arab tili</small></button>
+        <button class="k oasis" data-go="hw"><span class="deco">🌴</span><span class="ic">📝</span><b style="font-size:18px">Uyga vazifa</b><small>tez orada</small></button>
+        <button class="k saff" data-go="arab"><span class="deco">☀️</span><span class="ic">⚔️</span><b style="font-size:18px">Duel</b><small>guruhdoshlar bilan</small></button>
+        <button class="k palm" data-go="cert"><span class="deco">⭐</span><span class="ic">🎓</span><b style="font-size:18px">Sertifikatlarim</b><small>yutuqlarim</small></button>
+      </div>
+      ${sundayCard()}
+      <div class="card"><h4>📊 Qisqacha</h4>
+        <div class="li"><i class="dot saff"></i><span>⭐ Jami XP</span><small>${ME.xp || 0}</small></div>
+        <div class="li"><i class="dot terra"></i><span>🔥 Olov</span><small>${streak} kun</small></div>
+        <div class="li"><i class="dot oasis"></i><span>📚 O'tilgan darslar</span><small>${Object.values(s.lessons || {}).filter(v => v >= 80).length} ta</small></div>
+      </div>`;
+    bindTop(); bindGo();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
