@@ -1753,14 +1753,14 @@
     const s = avaSvg(cfg);
     return s ? `<span class="${cls} has-img">${s}</span>` : `<span class="${cls}">${esc((name || "?")[0].toUpperCase())}</span>`;
   };
-  const AV_TABS = [["h", "Soch / ro'mol"], ["hc", "Soch rangi"], ["hj", "Ro'mol rangi"], ["s", "Yuz rangi"], ["e", "Ko'z"], ["b", "Qosh"],
+  const AV_TABS = [["h", "Soch / ro'mol"], ["hc", "Soch rangi"], ["hat", "Bosh kiyim"], ["hj", "Ro'mol / shapka rangi"], ["bd", "Soqol"], ["s", "Yuz rangi"], ["e", "Ko'z"], ["b", "Qosh"],
     ["m", "Og'iz"], ["g", "Ko'zoynak"], ["er", "Sirg'a"], ["f", "Belgi"], ["bg", "Fon"]];
   const AV_COLORS = new Set(["s", "hc", "hj", "bg"]);
   function avatarEditor() {
     if (!AV) return toast("Avatar yuklanmadi. Sahifani yangilang");
     let draft = AV.clean(S.avatar || AV.random()), tab = "h";
     const hj = () => draft.h === "hijab";
-    const tabs = () => AV_TABS.filter(([k]) => (k === "hj" ? hj() : !(hj() && (k === "hc" || k === "er"))));
+    const tabs = () => AV_TABS.filter(([k]) => k === "hj" ? hj() || ["cap", "beanie"].includes(draft.hat) : !(hj() && ["hc", "er", "hat", "bd"].includes(k)));
     const draw = () => {
       $("#av-prev").innerHTML = avaSvg(draft);
       if (!tabs().some(([k]) => k === tab)) tab = "h";
