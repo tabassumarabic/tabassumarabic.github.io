@@ -785,6 +785,26 @@
     } else if (r.kind === "cards") {
       headline = pct >= PASS ? "Kartalaringiz kuchaydi! 🃏💪" : "Yana mashq qiling, kartalar kuchayadi 💪";
       actions = `<button class="btn btn-brand btn-block" data-again>🃏 Yana 10 ta</button>` + actions;
+    } else if (r.kind === "lis") {
+      // 🎧 Darajali tinglash: bosqichning eng yaxshi natijasi saqlanadi, 80% — keyingi bosqich ochiladi
+      const { lesson: ln, stage: k } = r, was = lisDone(ln);
+      const a = ((S.lis = S.lis || {})[ln] = S.lis[ln] || []);
+      a[k] = Math.max(a[k] || 0, pct);
+      if (pct >= PASS) {
+        if (k < 3) {
+          headline = `✅ ${k + 1}-bosqich o'tildi! Endi: ${LIS_ST[k + 1]}`;
+          actions = `<button class="btn btn-brand btn-block" data-lstage="${k + 1}">${k + 2}-bosqichga o'tish →</button>` + actions;
+        } else {
+          const st = starsOf(a.slice(0, 4)), nx = nextOf(ln);
+          headline = `🎉 ${lname(ln)} tinglash darsi tugadi! ${"★".repeat(st)}${"☆".repeat(3 - st)}`;
+          if (!was && nx && courseOpen(nx, lisDone)) actions = `<button class="btn btn-brand btn-block" data-lnext="${nx}">🎧 ${lname(nx)}ga o'tish →</button>` + actions;
+          if (st < 3) pills.push(`<span class="pill soft">⭐ 3 yulduz uchun bosqichlarni 95%+ bilan qayta ishlang</span>`);
+        }
+      } else {
+        headline = `Keyingi bosqich uchun ${PASS}% kerak`;
+        actions = `<button class="btn btn-brand btn-block" data-lstage="${k}">🔁 Qayta tinglash</button>` + actions;
+      }
+      actions += `<button class="btn btn-soft btn-block" data-lpath>🎧 Tinglash darslari</button>`;
     } else if (r.kind === "listen") {
       headline = pct >= 70 ? "Qulog'ingiz arabchaga o'rganyapti 🎧" : "Yana tinglang, har safar osonlashadi 💪";
       actions = `<button class="btn btn-brand btn-block" data-again>🎧 Yana tinglash</button>` + actions;
@@ -834,6 +854,9 @@
     const dp = $("[data-dpart]"); if (dp) dp.onclick = () => startDaily(+dp.dataset.n, +dp.dataset.k, dp.dataset.dpart, dp.dataset.date || null);
     const gt = $("[data-gotoday]"); if (gt) gt.onclick = () => { closeRun(); showTab("today"); };
     const pb = $("[data-practice]"); if (pb) pb.onclick = () => { closeRun(); practiceSheet(); };
+    const ls = $("[data-lstage]"); if (ls) { const ln = run.lesson; ls.onclick = () => startLisStage(ln, +ls.dataset.lstage); }
+    const lx = $("[data-lnext]"); if (lx) lx.onclick = () => { closeRun(); lisLessonSheet(+lx.dataset.lnext); };
+    const lp = $("[data-lpath]"); if (lp) lp.onclick = () => { closeRun(); lisPath(); };
   }
 
   // ---------- Do'stni taklif qilish ----------
@@ -890,6 +913,168 @@
   // ---------- Boshlash tugmalari ----------
   const startMission = () => startRun("mission", build(groupLessons(), 5));
   const startListen = () => startRun("listen", build(groupLessons(), 8, ["listening"]));
+
+  // ---------- 🎧 Darajali tinglash va 🎤 gapirish darslari (2026-10-05, ustoz tasdiqlagan maket) ----------
+  // Har bir darslik bo'limiga mos, 4 bosqichdan. Bo'lim ketma-ket ochiladi (darajaning birinchisi — ustoz ochgani yetarli).
+  const LIS_ST = ["Tovushni farqlash", "So'zni topish", "Ibora ma'nosi", "Suhbatni tushunish"];
+  const SPK_ST = ["Tinglab takrorlash", "Savolga javob", "Vaziyat haqida gapirish", "Erkin mavzu"];
+  const lisOf = n => ((S.lis || {})[n] || []);
+  const lisDone = n => [0, 1, 2, 3].every(k => (lisOf(n)[k] || 0) >= PASS);
+  const starsOf = arr => { const a = arr.filter(x => x != null); if (a.length < 4) return 0; const avg = a.reduce((s, x) => s + x, 0) / a.length; return avg >= 95 ? 3 : avg >= 88 ? 2 : 1; };
+  const courseOpen = (n, done) => teacherOpened(n) && (!prevOf(n) || levelOf(prevOf(n)) !== levelOf(n) || done(prevOf(n)));
+
+  // Tinglash bosqichlari uchun savollar (mavjud dars ma'lumotidan)
+  const lPhrase = d => { const p = pick(d.phrases); return Q("l_phrase", "listening", p.ar, "🎧 Eshiting. Bu ibora nima degani?", options(p.uz, d.phrases.map(x => x.uz)), { audio: p.ar, hint: `${p.ar}: ${p.uz}` }); };
+  function lisStageQs(n, k) {
+    const d = lesson(n), seen = new Set(), out = [];
+    // ovozi bor savollargina olinadi (ma'lumot yetmasa — xato emas, shunchaki kamroq savol)
+    const take = (fn, cnt) => { for (let t = 0; out.length < cnt && t < cnt * 25; t++) { let q; try { q = fn(); } catch { continue; } if (q && !seen.has(q.key) && (!q.audio || D.audio[q.audio])) { seen.add(q.key); out.push(q); } } };
+    if (k === 0) take(() => (d.letters && d.letters.length ? M.l_letter(d) : M.l_word(d)), 6);
+    if (k === 1) take(() => (Math.random() < 0.5 ? M.l_word(d) : M.l_mean(d)), 6);
+    if (k === 2) { if ((d.phrases || []).length >= 4) take(() => lPhrase(d), 6); take(() => M.l_dialog(d), 6); take(() => M.l_mean(d), 6); }
+    if (k === 3) {
+      // Mini suhbat: 4 juft «savol (erkak) — javob (ayol)», keyin har biri bo'yicha savol
+      const pairs = shuffle(d.dialogs || []).slice(0, 4);
+      if (pairs.length < 2) { take(() => M.l_mean(d), 6); return out; }
+      const dialog = pairs.flatMap(p => [p.say, "F|" + p.reply]);
+      pairs.forEach((p, i) => out.push({ ...Q("l_conv", "listening", p.say, `Suhbatda <b>«${p.say}»</b> deyildi.\n\nUnga qanday javob berildi?`, options(p.reply, (d.dialogs || []).map(x => x.reply))),
+        dialog, ins: INS.lmc, hint: `${p.say} — ${p.reply}` }));
+    }
+    return out;
+  }
+  function startLisStage(n, k) {
+    const qs = lisStageQs(n, k);
+    if (!qs.length) return toast("Bu bosqich uchun ovozli material yo'q");
+    const conv = !!qs[0].dialog;
+    startRun("lis", qs, { lesson: n, stage: k, title: `🎧 ${lname(n)} · ${k + 1}/4 · ${LIS_ST[k]}`, intro: conv, hadIntro: conv });
+  }
+  function lisPath() {
+    const ls = groupLessons();
+    sheet(`<h3>🎧 Tinglash darslari</h3><p>Har bir dars 4 bosqich: tovush → so'z → ibora → suhbat. Har bosqichdan ${PASS}% oling.</p>
+      <div class="parts">${ls.map(l => {
+        const n = l.number, open = courseOpen(n, lisDone), sc = lisOf(n), done = lisDone(n), st = starsOf(sc.slice(0, 4));
+        const prog = [0, 1, 2, 3].filter(k => (sc[k] || 0) >= PASS).length;
+        return `<button class="part ${done ? "done" : open ? "next" : ""} ${open ? "" : "locked-row"}" data-lis="${n}">
+          <span class="part-ic">${done ? "✓" : open ? "🎧" : "🔒"}</span>
+          <span class="t"><b>${esc(lname(n))} · <span class="ar">${esc(l.title)}</span></b>
+          <small>${done ? `<span class="stars">${"★".repeat(st)}${"☆".repeat(3 - st)}</span>` : open ? `${prog}/4 bosqich` : "oldingi darsni tugating"}</small>
+          <span class="st4">${[0, 1, 2, 3].map(k => `<i class="${(sc[k] || 0) >= PASS ? "on" : ""}"></i>`).join("")}</span></span><span class="go">›</span></button>`;
+      }).join("")}</div>
+      <button class="btn btn-soft btn-block" id="lis-mix">🎲 Aralash tinglash mashqi</button>
+      <button class="btn btn-soft btn-block" data-close>Yopish</button>`);
+    $("#lis-mix").onclick = () => { closeSheet(); startListen(); };
+    $$("[data-lis]").forEach(b => (b.onclick = () => {
+      const n = +b.dataset.lis;
+      if (!courseOpen(n, lisDone)) return toast(teacherOpened(n) ? "🔒 Avval oldingi tinglash darsini tugating" : "🔒 Bu darsni ustoz hali ochmagan");
+      lisLessonSheet(n);
+    }));
+    setTimeout(() => { const c = $(".part.next"); if (c) c.scrollIntoView({ block: "center" }); }, 80);
+  }
+  function lisLessonSheet(n) {
+    const sc = lisOf(n);
+    sheet(`<h3>🎧 ${esc(lname(n))}</h3><p><span class="ar">${esc(lesson(n).title)}</span></p>
+      <div class="parts">${LIS_ST.map((name, k) => {
+        const ok = (sc[k] || 0) >= PASS, open = k === 0 || (sc[k - 1] || 0) >= PASS;
+        return `<button class="part ${ok ? "done" : open ? "next" : ""}" data-ls="${k}"><span class="part-ic">${ok ? "✓" : open ? k + 1 : "🔒"}</span>
+          <span class="t"><b>${k + 1}. ${name}</b><small>${sc[k] != null ? `eng yaxshi: ${sc[k]}%` : open ? "boshlash" : "oldingi bosqichni tugating"}</small></span><span class="go">›</span></button>`;
+      }).join("")}</div>
+      <button class="btn btn-soft btn-block" id="lis-back">← Tinglash darslari</button>`);
+    $("#lis-back").onclick = lisPath;
+    $$("[data-ls]").forEach(b => (b.onclick = () => {
+      const k = +b.dataset.ls;
+      if (k > 0 && (sc[k - 1] || 0) < PASS) return toast("🔒 Avval oldingi bosqichdan " + PASS + "% oling");
+      closeSheet(); startLisStage(n, k);
+    }));
+  }
+
+  // 🎤 Gapirish bosqichlari: yozuv ustozga boradi («Ovozlar»), baho shu yerda ⭐ bo'lib ko'rinadi
+  const spkOf = n => ((S.spk || {})[n] || []);
+  const spkDone = n => [0, 1, 2, 3].every(k => spkOf(n)[k]);
+  const spkTopic = (n, k) => `${lname(n)} · ${k + 1}/4 · ${SPK_ST[k]}`;
+  function spkTask(n, k) {
+    const d = lesson(n), tops = D.speaking.filter(t => t.lesson === n), seed = n * 7 + k;
+    const at = (a, i) => a[i % a.length];
+    if (k === 0) {
+      const src = [...(d.phrases || []).map(p => p.ar), ...(d.dialogs || []).map(x => x.say)].filter(t => D.audio[t]);
+      const m = src.length ? at(src, seed) : (tops[0] || {}).example;
+      return { title: spkTopic(n, k), task: "Namunani tinglang va xuddi shunday, aniq talaffuz bilan takrorlang.", example: m };
+    }
+    if (k === 1) {
+      const qs = (d.dialogs || []).filter(x => /[؟?]/.test(x.say));
+      const q = qs.length ? at(qs, seed) : at(d.dialogs || [{ say: "مَا اسْمُكَ؟", reply: "اِسْمِي ..." }], seed);
+      return { title: spkTopic(n, k), task: "Savolni tinglang va o'zingiz haqingizda to'liq gap bilan javob bering.", example: q.say,
+        helpers: q.reply.replace(/[،.؟!]/g, " ").split(/\s+/).filter(Boolean).slice(0, 5) };
+    }
+    const t = tops.length ? at(tops, k === 2 ? 0 : 1) : { task: "Bu dars mavzusida o'zingiz haqingizda gapiring.", example: "" };
+    return { title: spkTopic(n, k), task: (k === 3 ? "30–60 soniya erkin gapiring. " : "2–3 gap ayting. ") + t.task, example: t.example };
+  }
+  let SPK_GRADES = {};
+  async function loadSpkGrades() {
+    const mine = await loadSpeakBadge();
+    SPK_GRADES = {};
+    (mine || []).forEach(x => { if (!SPK_GRADES[x.topic] || x.score) SPK_GRADES[x.topic] = x.score || 0; });
+  }
+  async function spkPath() {
+    sheet(`<h3>🎤 Gapirish darslari</h3><p class="muted">Yuklanmoqda…</p>`);
+    await loadSpkGrades();
+    const ls = groupLessons();
+    sheet(`<h3>🎤 Gapirish darslari</h3><p>Har dars 4 bosqich: takrorlash → savolga javob → vaziyat → erkin mavzu. Ustoz baholaydi ⭐</p>
+      <div class="parts">${ls.map(l => {
+        const n = l.number, open = courseOpen(n, spkDone), sent = [0, 1, 2, 3].filter(k => spkOf(n)[k]).length;
+        const grades = [0, 1, 2, 3].map(k => SPK_GRADES[spkTopic(n, k)]).filter(x => x);
+        const avg = grades.length ? (grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(1) : null;
+        const waiting = [0, 1, 2, 3].filter(k => spkOf(n)[k] && !SPK_GRADES[spkTopic(n, k)]).length;
+        return `<button class="part ${sent === 4 ? "done" : open ? "next" : ""}" data-spk="${n}">
+          <span class="part-ic">${sent === 4 ? "✓" : open ? "🎤" : "🔒"}</span>
+          <span class="t"><b>${esc(lname(n))} · <span class="ar">${esc(l.title)}</span></b>
+          <small>${avg ? `<span class="stars">⭐ ${avg}/5</span>&nbsp; ` : ""}${open ? `${sent}/4 bosqich${waiting ? ` · ⏳ ${waiting} ta baholanmoqda` : ""}` : "oldingi darsni tugating"}</small>
+          <span class="st4">${[0, 1, 2, 3].map(k => `<i class="${spkOf(n)[k] ? "on" : ""}"></i>`).join("")}</span></span><span class="go">›</span></button>`;
+      }).join("")}</div>
+      <button class="btn btn-soft btn-block" id="spk-free">🎲 Erkin mavzu (eski usul)</button>
+      <button class="btn btn-soft btn-block" data-close>Yopish</button>`);
+    $("#spk-free").onclick = () => speakSheet();
+    $$("[data-spk]").forEach(b => (b.onclick = () => {
+      const n = +b.dataset.spk;
+      if (!courseOpen(n, spkDone)) return toast(teacherOpened(n) ? "🔒 Avval oldingi gapirish darsini tugating" : "🔒 Bu darsni ustoz hali ochmagan");
+      spkLessonSheet(n);
+    }));
+    setTimeout(() => { const c = $(".part.next"); if (c) c.scrollIntoView({ block: "center" }); }, 80);
+  }
+  function spkLessonSheet(n) {
+    sheet(`<h3>🎤 ${esc(lname(n))}</h3><p><span class="ar">${esc(lesson(n).title)}</span></p>
+      <div class="parts">${SPK_ST.map((name, k) => {
+        const sent = spkOf(n)[k], g = SPK_GRADES[spkTopic(n, k)], open = k === 0 || spkOf(n)[k - 1];
+        return `<button class="part ${sent ? "done" : open ? "next" : ""}" data-sk="${k}"><span class="part-ic">${sent ? "✓" : open ? k + 1 : "🔒"}</span>
+          <span class="t"><b>${k + 1}. ${name}</b><small>${g ? `${"⭐".repeat(g)}${"☆".repeat(5 - g)}` : sent ? "⏳ ustoz baholamoqda" : open ? "boshlash" : "oldingi bosqichni bajaring"}</small></span><span class="go">›</span></button>`;
+      }).join("")}</div>
+      <button class="btn btn-soft btn-block" id="spk-back">← Gapirish darslari</button>`);
+    $("#spk-back").onclick = spkPath;
+    $$("[data-sk]").forEach(b => (b.onclick = () => {
+      const k = +b.dataset.sk;
+      if (k > 0 && !spkOf(n)[k - 1]) return toast("🔒 Avval oldingi bosqichni bajaring");
+      spkStageSheet(n, k);
+    }));
+  }
+  function spkStageSheet(n, k) {
+    dropRecording();
+    const t = spkTask(n, k);
+    t.onSent = () => {
+      S.spk = S.spk || {}; const a = (S.spk[n] = S.spk[n] || []); a[k] = 1;
+      saveResult(0, 0, "speak_course", []);
+      setTimeout(() => toast(k < 3 ? "✅ Yuborildi! Keyingi bosqich ochildi" : "🎉 Dars tugadi! Ustoz baholagach ⭐ ko'rinadi"), 600);
+    };
+    sheet(`<h3>🎤 ${esc(lname(n))} · ${k + 1}/4</h3>
+      <p><b style="color:var(--ink)">${SPK_ST[k]}</b><br>${esc(t.task)}</p>
+      ${t.example ? `<div class="q-card"><div class="ar" style="font-size:24px;font-weight:700;line-height:1.9">${esc(t.example)}</div>
+        ${D.audio[t.example] ? `<button class="listen" id="sp-play" aria-label="Tinglash">🔊</button>` : ""}</div>` : ""}
+      ${t.helpers && t.helpers.length ? `<div class="card" style="padding:10px 12px"><small class="muted">💡 Yordamchi so'zlar:</small><div>${t.helpers.map(w => `<span class="chip ar" style="font-size:17px;margin:3px">${esc(w)}</span>`).join("")}</div></div>` : ""}
+      <div class="rec" id="rec"></div>
+      <button class="btn btn-soft btn-block" id="spk-back2">← Bosqichlar</button>`);
+    const sp = $("#sp-play"); if (sp) sp.onclick = () => play(t.example);
+    $("#spk-back2").onclick = () => { dropRecording(); spkLessonSheet(n); };
+    recStage("idle", t);
+    if (D.audio[t.example] && k < 2) setTimeout(() => play(t.example), 400);
+  }
   function startReview() {
     const all = shuffle(Object.values(S.mistakes)).slice(0, 10).map(m => reshuffle(m.q));
     if (!all.length) return toast("🎉 Xatolar ro'yxatingiz bo'sh!");
@@ -1441,6 +1626,7 @@
       await rpc("speaking_submit", { p_token: TOKEN, p_topic: t.title, p_mime: rec.mime.slice(0, 60), p_audio_b64: b64, p_seconds: Math.round(rec.seconds) });
       dropRecording();
       recStage("sent", t);
+      if (t.onSent) t.onSent();
     } catch (e) {
       $("#rec-send").disabled = false; $("#rec-send").textContent = "📤 Yuborish";
       toast({ SPEAK_LIMIT: "Bugun 3 ta javob yubordingiz. Ertaga davom etamiz! 💪", AUDIO_TOO_BIG: "Yozuv juda uzun. Qisqaroq qilib qayta yozing" }[e.message] || errText(e));
@@ -2411,9 +2597,9 @@
   $("#m-start").onclick = startMission;
   $$("[data-act]").forEach(b => (b.onclick = () => {
     const a = b.dataset.act;
-    if (a === "listen") startListen();
+    if (a === "listen") lisPath();
     else if (a === "review") startReview();
-    else if (a === "speak") speakSheet();
+    else if (a === "speak") spkPath();
     else if (a === "duel") { duelSheet(); loadInbox().then(() => { if ($("#duel-new")) duelSheet(); }); }
   }));
   $("#w-hide").onclick = () => { hideMeaning = !hideMeaning; renderWords(); };
