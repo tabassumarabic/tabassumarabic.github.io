@@ -46,8 +46,14 @@ self.addEventListener("push", e => {
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   e.waitUntil((async () => {
+    const url = e.notification.data && e.notification.data.url || "./";
     const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    for (const c of all) { if ("focus" in c) return c.focus(); }
-    return self.clients.openWindow(e.notification.data && e.notification.data.url || "./");
+    for (const c of all) {
+      if (!("focus" in c)) continue;
+      // Boshqa sahifaga yo'naltiruvchi xabar (masalan, 🐪 Karvon poygasi) — ochiq oynani o'sha sahifaga o'tkazamiz
+      if (url !== "./" && "navigate" in c) { try { await c.navigate(url); } catch { /* boshqaruvsiz oyna */ } }
+      return c.focus();
+    }
+    return self.clients.openWindow(url);
   })());
 });

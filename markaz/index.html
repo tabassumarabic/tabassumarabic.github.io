@@ -283,7 +283,7 @@
       ["G", "O'QISH"],
       ["arab", "📚", "Arab tili", "terra"],
       ["cert", "🎓", "Sertifikatlar", "oasis"],
-      ["sunday", "🎮", "Yakshanba o'yini", "saff", "keyin"],
+      ["sunday", "🐪", "Karvon poygasi", "saff"],
       ["G", "BOSHQARUV"],
       ["teach", "👩‍🏫", "Ustozlar", "saff"],
       ["sec", "🛡", "Xavfsizlik", "palm", "keyin"],
@@ -293,7 +293,7 @@
       ["home", "🏠", "Bosh sahifa", ""],
       ["arab", "📚", "Arab tili", "terra"],
       ["hw", "📝", "Uyga vazifa", "oasis", "keyin"],
-      ["sunday", "🎮", "Yakshanba o'yini", "saff", "keyin"],
+      ["sunday", "🐪", "Karvon poygasi", "saff"],
       ["cert", "🎓", "Sertifikatlarim", "palm"],
     ],
   };
@@ -332,7 +332,7 @@
     const ms = t - n, d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
     return d ? `${d} kun ${h} soat` : h ? `${h} soat ${m} daq` : `${m} daqiqa`;
   }
-  const sundayCard = () => `<div class="sunday"><span class="big">🎮</span><div><b>Yakshanba jamoaviy o'yini</b><small>Har yakshanba soat ${SUNDAY_HOUR}:00 · jamoalarga bo'linib, PIN bilan kiriladi</small></div>
+  const sundayCard = () => `<div class="sunday"><span class="big">🐪</span><div><b>Karvon poygasi</b><small>Har yakshanba soat ${SUNDAY_HOUR}:00 · jamoaviy o'yin · ro'yxat dushanba–juma</small></div>
     <div class="cd">${untilSunday()}<small>qoldi</small></div></div>`;
 
   // ---------- Bo'limlar ----------
@@ -349,10 +349,25 @@
 
     cert(main) { return role === "director" ? dirCerts(main) : stuCerts(main); },
 
+    // 🐪 Karvon poygasi: talabaga o'yin sahifasining o'zi (ro'yxat, jamoa, o'yin), ustozga — boshqaruv va katta ekran
     sunday(main) {
-      main.innerHTML = topBar("🎮 Yakshanba o'yini") + sundayCard() +
-        soonCard("Qanday bo'ladi?", "Ustoz ekranga savol chiqaradi. Talabalar jamoalarga bo'linadi va telefondan PIN kod bilan kirib, tezlikda javob beradi. Tez va to'g'ri javob — ko'proq ball. Oxirida g'olib jamoa e'lon qilinadi 🏆",
-          ["👥 Jamoalar", "⏱ Tezlik bo'yicha ball", "🏆 Haftalik g'olib"]);
+      if (role === "student") {
+        main.classList.add("full");
+        main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>🐪 Karvon poygasi</b></div>
+          <iframe class="frame" src="karvon.html" title="Karvon poygasi" allow="autoplay"></iframe>`;
+        bindTop(); return;
+      }
+      main.innerHTML = topBar("🐪 Karvon poygasi") + sundayCard() + `
+        <div class="tiles" style="grid-template-columns:repeat(2,1fr)">
+          <a class="k terra" href="karvon.html?host" target="_blank" rel="noopener" style="text-decoration:none"><span class="deco">🐪</span><span class="ic">🖥</span><b style="font-size:19px">Katta ekran va boshqaruv</b><small>Jamoalar, o'yinni ochish · Google Meet'da ulashing</small></a>
+          <a class="k oasis" href="karvon.html" target="_blank" rel="noopener" style="text-decoration:none"><span class="deco">🌴</span><span class="ic">📱</span><b style="font-size:19px">Talaba ko'rinishi</b><small>Talabalar telefonda nimani ko'rishi</small></a>
+        </div>
+        <div class="card"><h4>📋 Qoidalar</h4>
+          <div class="li"><i class="dot terra"></i><span>Ro'yxat: dushanba–juma. Shanba kuni jamoalar <b>bir oyga</b> kuchga qarab teng tuziladi</span></div>
+          <div class="li"><i class="dot oasis"></i><span>Yakshanba 20:00: 4 raund × 10 savol + 🐫 Shoh tuya sinovi (tikish bilan), har savolga 15 soniya</span></div>
+          <div class="li"><i class="dot saff"></i><span>Har savolda navbatdagi karvonboshi javob beradi, sheriklari maslahat beradi</span></div>
+          <div class="li"><i class="dot palm"></i><span>XP: 1-o'rin 1000, 2-o'rin 700, 3-o'rin 500 + har bir qatnashchiga 300 · g'olib jamoa bir hafta «🏅 Karvon sardori»</span></div>
+        </div>`;
       bindTop();
     },
 
