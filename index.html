@@ -217,7 +217,8 @@
 
   /* Pastki menyu */
   .tabbar { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bg) 90%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-top: 1px solid var(--line); z-index: 5; }
-  .tabbar nav { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; }
+  .tabbar nav { max-width: 460px; margin: 0 auto; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; }
+  .tab[hidden] { display: none; }
   .tab { display: grid; justify-items: center; gap: 2px; padding: 6px 0; border-radius: 12px; color: var(--muted); font-size: 10.5px; white-space: nowrap; font-weight: 600; }
   .tab svg { width: 22px; height: 22px; }
   .tab { position: relative; }
@@ -517,6 +518,23 @@
   .tb-emblem { width: 58px; height: 58px; filter: drop-shadow(0 4px 12px rgba(214,169,78,.3)); }
   .tb-word { font-family: var(--f-ar); font-size: 58px; font-weight: 400; line-height: 1.6; color: #E9C877; text-shadow: 0 4px 18px rgba(214,169,78,.3); margin: 8px 0 -2px; white-space: nowrap; }
   .tb-motto2 { font-size: 16.5px; font-weight: 700; color: #E9CD84; margin-top: 6px; text-wrap: balance; }
+  /* 🧹 Tozalangan bosh sahifa: kichik muhr + shior bir qatorda, katta missiya kartasi, izohsiz tugmalar */
+  .mission.brandrow, [data-style="premium"] .mission.brandrow { padding: 12px 16px !important; border-radius: var(--r-lg); }
+  .brandrow .tb-hero { display: flex; align-items: center; gap: 14px; text-align: left; }
+  .brandrow .tb-seal { width: 74px; flex: none; }
+  .brandrow .tb-seal text:nth-of-type(1), .brandrow .tb-seal text:nth-of-type(3) { display: none; }   /* kichik muhrda faqat «ت» */
+  .brandrow .tb-seal text:nth-of-type(2) { transform: translateY(-24px); font-size: 120px; }
+  .brandrow .tb-motto2 { margin: 0; font-size: 15px; line-height: 1.35; }
+  .mcard.big { display: grid; gap: 12px; padding: 16px; border: 1.5px solid var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 12%, transparent); }
+  .mcard.big .mc-t b { font-family: var(--f-display); font-size: 19px; }
+  .mcard.big .mc-t .eyebrow { font-size: 11.5px; }
+  .mcard.big .mc-go { width: 100%; padding: 14px; font-size: 16px; }
+  .mc-xp { display: grid; gap: 6px; } .mc-xp .l { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); } .mc-xp .l b { color: var(--ink); }
+  .mc-xp .bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; } .mc-xp .bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+  .home-tiles { margin-top: 12px; }
+  .home-tiles .tile { display: flex; align-items: center; gap: 12px; padding: 14px 12px; }
+  .home-tiles .tile small { display: none; }
+  .home-tiles .tile b { font-size: 15.5px; }
   .m-stat { text-align: center; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .result { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 20px; }
@@ -694,13 +712,14 @@
         <div style="min-width:0"><small>Assalomu alaykum,</small><strong id="h-name"></strong></div>
       </div>
       <div class="chips">
-        <button class="chip theme-tg" id="theme-tg" aria-label="Yorug' / qorong'u ko'rinish">☀️</button>
+        <button class="chip theme-tg" id="theme-tg" hidden aria-label="Yorug' / qorong'u ko'rinish">☀️</button>
         <span class="chip fire" id="chip-fire" title="Ketma-ket kunlar">🔥 <span id="h-streak">0</span></span>
         <span class="chip" title="Jami XP">⭐ <span id="h-xp">0</span></span>
       </div>
     </header>
 
-    <article class="mission">
+    <!-- «Tozalangan» bosh sahifa (2026-10-05): muhr kichik, shior bilan bitta qatorda -->
+    <article class="mission brandrow">
       <div class="tb-hero">
         <!-- Tabassum muhri: qo'sh oltin halqa ichida yoysimon «تَبَسُّم», ostida ko'zlar va tabassum, pastda TABASSUM (ustoz tanlagan) -->
         <svg class="tb-seal" viewBox="0 0 260 260" role="img" aria-label="Tabassum">
@@ -717,15 +736,14 @@
     </article>
 
     <!-- Kunlik missiya — brend yuzidan alohida, ixcham karta (ustoz taklifi) -->
-    <div class="mcard">
-      <span class="mc-ic" aria-hidden="true">🎯</span>
-      <div class="mc-t"><small class="eyebrow">Kunlik missiya</small><b id="m-title"></b><span id="m-sub"></span>
-        <div class="dots" id="m-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="mcard big">
+      <div class="mc-t"><small class="eyebrow">🎯 Kunlik missiya</small><b id="m-title"></b><span id="m-sub" hidden></span>
+        <div class="dots" id="m-dots" hidden aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
       <button class="btn btn-light mc-go" id="m-start"></button>
+      <div class="mc-xp" id="m-xp"></div>
     </div>
 
-    <div class="rankline" id="rankline"></div>
-    <div id="world-card"></div>
+    <div id="world-card" hidden></div>
     <div id="chests" hidden></div>
 
     <button class="card install" id="install" hidden>
@@ -734,12 +752,11 @@
       <span aria-hidden="true">→</span>
     </button>
 
-    <div class="section-title"><h3>Mashg'ulotlar</h3></div>
-    <div class="tiles">
+    <div class="tiles home-tiles">
       <button class="tile" data-act="listen"><span class="ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg></span><span><b>Tinglash</b><small>Eshiting va toping</small></span></button>
-      <button class="tile" data-act="review"><span class="ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span><span><b>Xatolarim <span class="badge-count" id="mist-count" hidden></span></b><small>Takrorlab tuzating</small></span></button>
       <button class="tile" data-act="speak"><span class="ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Gapirish <span class="badge-count" id="speak-count" hidden></span></b><small>Ovoz yozing, ustoz baholaydi</small></span></button>
       <button class="tile" data-act="duel"><span class="ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2"/></svg></span><span><b>Duel <span class="badge-count" id="duel-count" hidden></span></b><small>Guruhdoshni chaqiring</small></span></button>
+      <button class="tile" data-act="review"><span class="ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span><span><b>Xatolarim <span class="badge-count" id="mist-count" hidden></span></b><small>Takrorlab tuzating</small></span></button>
     </div>
 
     <div class="section-title"><h3>☀️ Kun so'zi</h3><span id="wotd-note">+5 XP</span></div>
@@ -790,7 +807,8 @@
       <button class="big-ava" id="p-ava" aria-label="Avatarni o'zgartirish"></button>
       <button class="link-btn" id="p-ava-edit">🧑‍🎨 Avatarimni yaratish</button>
       <div style="font-family:var(--f-display);font-weight:600;font-size:18px" id="p-name"></div>
-      <span class="rank-title" id="p-rank"></span>
+      <span class="rank-title" id="p-rank" hidden></span>
+      <div class="rankline" id="rankline" style="width:100%;box-sizing:border-box;box-shadow:none;background:var(--surface-2)"></div>
       <div class="stats">
         <div class="stat"><b id="p-xp"></b><small>XP</small></div>
         <div class="stat"><b id="p-streak"></b><small>kun 🔥</small></div>
@@ -938,8 +956,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=1d47420faf"></script>
-<script src="avatar.js?v=1d47420faf"></script>
-<script src="app.js?v=1d47420faf"></script>
+<script src="data.js?v=159dddf3c6"></script>
+<script src="avatar.js?v=159dddf3c6"></script>
+<script src="app.js?v=159dddf3c6"></script>
 </body>
 </html>

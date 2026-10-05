@@ -1650,10 +1650,12 @@
 
     const next = RANKS.find(r => r[0] > ME.xp), cur = RANKS.filter(r => ME.xp >= r[0]).pop();
     const todayXp = Math.min(DAILY_CAP, ME.practice_today || 0);
-    $("#rankline").innerHTML = (next
+    // Unvon — Profilda, bugungi XP — missiya kartasida (tozalangan bosh sahifa)
+    $("#rankline").innerHTML = next
       ? `<div class="l"><b>${cur[1]}</b><span>${next[0] - ME.xp} XP → ${next[1]}</span></div><div class="bar"><i style="width:${Math.round((ME.xp - cur[0]) * 100 / (next[0] - cur[0]))}%"></i></div>`
-      : `<div class="l"><b>${cur[1]}</b><span>Eng yuqori unvon 👑</span></div><div class="bar"><i style="width:100%"></i></div>`)
-      + `<div class="l" style="margin-top:6px"><span>🎯 Bugungi mashq XP</span><b>${todayXp}/${DAILY_CAP}</b></div><div class="bar"><i style="width:${Math.round(todayXp * 100 / DAILY_CAP)}%;background:var(--brand)"></i></div>`;
+      : `<div class="l"><b>${cur[1]}</b><span>Eng yuqori unvon 👑</span></div><div class="bar"><i style="width:100%"></i></div>`;
+    $("#m-xp").innerHTML = `<div class="l"><span>Bugungi XP</span><b>${todayXp} / ${DAILY_CAP}</b></div><div class="bar"><i style="width:${Math.round(todayXp * 100 / DAILY_CAP)}%"></i></div>`;
+    const tdTab = $('.tab[data-tab="today"]'); if (tdTab) tdTab.hidden = !DAILY_ON;   // «Bugun» bo'sh paytda menyuda ko'rinmaydi
 
     const mc = Object.keys(S.mistakes).length;
     $("#mist-count").hidden = !mc; $("#mist-count").textContent = mc;
