@@ -1504,7 +1504,7 @@
 
   // ---------- Pastdan chiquvchi oyna ----------
   function sheet(html) {
-    $("#sheet-root").innerHTML = `<div class="sheet-wrap" id="sw"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+    $("#sheet-root").innerHTML = `<div class="sheet-wrap" id="sw"><div class="sheet" role="dialog" aria-modal="true"><button class="sheet-x" data-close aria-label="Yopish">✕</button><div class="grab"></div>${html}</div></div>`;
     $("#sw").addEventListener("click", e => { if (e.target.id === "sw" || e.target.closest("[data-close]")) closeSheet(); });
   }
   const closeSheet = () => { dropRecording(); $("#sheet-root").innerHTML = ""; };

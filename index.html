@@ -536,6 +536,8 @@
   .sheet h3 { margin: 0; font-family: var(--f-display); font-size: 17px; font-weight: 600; }
   .sheet p { margin: 0; color: var(--muted); }
   .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 4px; }
+  /* ✕ — har bir oynaning tepasida doim ko'rinib turadi (pastga tushmasdan yopish uchun) */
+  .sheet-x { position: sticky; top: -18px; justify-self: end; margin: -8px -4px -48px 0; z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 17px; display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
   .input { width: 100%; padding: 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); font-size: 16px; }
   .input:focus { border-color: var(--brand); outline: none; }
   .toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 50; width: max-content; max-width: min(92vw, 420px); text-align: center; }
@@ -936,8 +938,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=b0bfd3c894"></script>
-<script src="avatar.js?v=b0bfd3c894"></script>
-<script src="app.js?v=b0bfd3c894"></script>
+<script src="data.js?v=1d47420faf"></script>
+<script src="avatar.js?v=1d47420faf"></script>
+<script src="app.js?v=1d47420faf"></script>
 </body>
 </html>
