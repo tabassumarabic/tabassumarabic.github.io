@@ -16,9 +16,9 @@
 <script>
   // Dizayn: "premium" (asosiy) yoki "krem" — Profilda tanlanadi
   (function () {
-    var s = "premium"; try { s = localStorage.getItem("dod_style") || s; } catch (e) { /* */ }
+    var s = "sahro"; try { s = localStorage.getItem("tb_style") || s; } catch (e) { /* */ }
     document.documentElement.dataset.style = s;
-    if (s === "krem") document.querySelector('meta[name="theme-color"]').content = "#1F4D3A";
+    document.querySelector('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
   })();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
@@ -31,7 +31,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230E5A4A'/%3E%3Ctext x='32' y='44' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E%D8%B6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Onest:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Nunito:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap">
 <style>
   /* Uslub: krem fon, to'q yashil, oltin; ravoq shakllari va geometrik naqsh */
   :root {
@@ -708,6 +708,47 @@
   [data-style="premium"] .tab[aria-current="page"] { color: var(--gold); }
   [data-style="premium"] .champ { background: linear-gradient(150deg, #8A6A26, #D6A94E); }
 
+  /* ===== 🐪 Sahro uslubi (<html data-style="sahro">) — markaz sayti bilan bir xil: och qahva/qum, krem kartalar,
+     sahro ranglari (terrakota, voha, za'faron, palma), «bosiladigan» qalin tugmalar. Asosiy uslub (2026-10-06). ===== */
+  :root[data-style="sahro"] {
+    color-scheme: light;
+    --bg: #EBD9BC; --surface: #FFF8EC; --surface-2: #F4E8D3; --ink: #3B2614; --muted: #8A6E52; --line: #E2CBA4;
+    --brand: #2A9D8F; --brand-2: #23897D; --brand-ink: #FFFFFF; --brand-soft: #D7EEEA;
+    --gold: #B87A1E; --gold-soft: #F8E7C4; --gold-line: #E3C48A; --good: #4F8A2E; --good-soft: #E3EFD6; --bad: #C8553D; --bad-soft: #F7DDD5;
+    --shadow: 0 5px 0 rgba(107,68,35,.16);
+    --f-display: "Nunito", "Onest", system-ui, sans-serif;
+    --f-body: "Nunito", "Onest", "Amiri", system-ui, sans-serif;
+    --terra: #C8553D; --oasis: #2A9D8F; --saff: #E09A2B; --palm: #5B8C3A; --coffee: #6B4423; --coffee2: #4A2E17;
+  }
+  [data-style="sahro"] body { background: linear-gradient(#f7e7c6, #EBD9BC 45%) fixed; font-weight: 600; }
+  [data-style="sahro"] .hello strong, [data-style="sahro"] .section-title h3, [data-style="sahro"] .sheet h3 { font-weight: 900; color: var(--coffee2); }
+  [data-style="sahro"] .logo, [data-style="sahro"] .big-ava { background: var(--coffee); color: #FFF8EC; border: 2.5px solid var(--saff); border-radius: 50%; }
+  [data-style="sahro"] .chip { box-shadow: 0 3px 0 rgba(107,68,35,.18); font-weight: 900; }
+  [data-style="sahro"] .card, [data-style="sahro"] .tile, [data-style="sahro"] .rankline, [data-style="sahro"] .mcard { border: 0; border-radius: 18px; box-shadow: var(--shadow); }
+  /* Brend qatori (muhr + shior) — to'q qahva, xuddi markazning chap menyusi kabi */
+  [data-style="sahro"] .mission, [data-style="sahro"] .mission.brandrow { background: var(--coffee) repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 10px, transparent 10px 20px) !important;
+    border: 0 !important; border-radius: 18px !important; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+  [data-style="sahro"] .mission::before { display: none; }
+  [data-style="sahro"] .tb-motto2 { color: #F6D58A; }
+  [data-style="sahro"] .mcard.big { border: 0; box-shadow: 0 0 0 3px var(--saff), 0 6px 0 rgba(107,68,35,.2); }
+  [data-style="sahro"] .eyebrow { color: var(--terra); font-weight: 900; }
+  [data-style="sahro"] .btn { font-weight: 900; border-radius: 14px; }
+  [data-style="sahro"] .btn-brand { background: var(--oasis); box-shadow: 0 5px 0 #1d6f65; }
+  [data-style="sahro"] .btn-brand:active { transform: translateY(3px); box-shadow: 0 2px 0 #1d6f65; }
+  [data-style="sahro"] .btn-light { background: linear-gradient(180deg, #F2B84B, #E09A2B); color: #2a1700; box-shadow: 0 5px 0 #9a6413; }
+  [data-style="sahro"] .btn-soft { background: var(--surface-2); color: var(--coffee); box-shadow: 0 4px 0 #dcc7a6; }
+  /* Mashg'ulot tugmalari — har biri o'z sahro rangida */
+  [data-style="sahro"] .tiles .ic { border: 0 !important; color: #fff !important; }
+  [data-style="sahro"] .tiles .ic.blue { background: var(--oasis) !important; } [data-style="sahro"] .tiles .ic.red { background: var(--terra) !important; }
+  [data-style="sahro"] .tiles .ic.gold { background: var(--saff) !important; } [data-style="sahro"] .tiles .ic.green { background: var(--palm) !important; }
+  [data-style="sahro"] .tile b { font-weight: 900; color: var(--coffee2); }
+  [data-style="sahro"] .tabbar { background: color-mix(in srgb, #FFF8EC 94%, transparent); border-top: 0; box-shadow: 0 -4px 14px rgba(107,68,35,.12); }
+  [data-style="sahro"] .tab { font-weight: 800; color: var(--muted); }
+  [data-style="sahro"] .tab[aria-current="page"] { color: var(--terra); }
+  [data-style="sahro"] .champ { background: linear-gradient(150deg, #C8553D, #E09A2B); }
+  [data-style="sahro"] .opt { border: 0; box-shadow: 0 4px 0 rgba(107,68,35,.16); font-weight: 800; }
+  [data-style="sahro"] .lesson.done .node { background: var(--good-soft); color: var(--good); border-color: #bcd6a6; }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -839,6 +880,7 @@
     <div class="card style-pick">
       <b>🎨 Ko'rinish</b>
       <div class="seg" role="group" aria-label="Ko'rinishni tanlang" style="margin:0">
+        <button type="button" data-style-pick="sahro">🐪 Sahro</button>
         <button type="button" data-style-pick="premium">🌙 Qorong'u</button>
         <button type="button" data-style-pick="krem">☀️ Yorug'</button>
       </div>
@@ -965,8 +1007,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=e16321d05c"></script>
-<script src="avatar.js?v=e16321d05c"></script>
-<script src="app.js?v=e16321d05c"></script>
+<script src="data.js?v=36a2000948"></script>
+<script src="avatar.js?v=36a2000948"></script>
+<script src="app.js?v=36a2000948"></script>
 </body>
 </html>

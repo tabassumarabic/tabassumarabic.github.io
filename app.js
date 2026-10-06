@@ -2605,18 +2605,18 @@
     else if (a === "duel") { duelSheet(); loadInbox().then(() => { if ($("#duel-new")) duelSheet(); }); }
   }));
   $("#w-hide").onclick = () => { hideMeaning = !hideMeaning; renderWords(); };
-  // Ko'rinish: Premium (asosiy) yoki Krem
+  // Ko'rinish: 🐪 Sahro (asosiy, markaz bilan bir xil — 2026-10-06), 🌙 Qorong'u (premium) yoki ☀️ Krem. Tanlov «tb_style» da saqlanadi.
   function applyStyle(s) {
     document.documentElement.dataset.style = s;
-    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : "#0C1218";
+    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
     $$("[data-style-pick]").forEach(b => b.setAttribute("aria-pressed", b.dataset.stylePick === s));
     const tb = $("#theme-tg"); if (tb) tb.textContent = s === "krem" ? "🌙" : "☀️";
   }
-  $$("[data-style-pick]").forEach(b => (b.onclick = () => { store.set("dod_style", b.dataset.stylePick); applyStyle(b.dataset.stylePick); }));
-  applyStyle(document.documentElement.dataset.style || "premium");
+  $$("[data-style-pick]").forEach(b => (b.onclick = () => { store.set("tb_style", b.dataset.stylePick); applyStyle(b.dataset.stylePick); }));
+  applyStyle(document.documentElement.dataset.style || "sahro");
   // ☀️/🌙 Bosh sahifadagi tezkor almashtirgich: qorong'u (premium) ↔ yorug' (krem)
   const themeBtn = () => { const b = $("#theme-tg"); if (b) b.textContent = document.documentElement.dataset.style === "krem" ? "🌙" : "☀️"; };
-  $("#theme-tg").onclick = () => { const s = document.documentElement.dataset.style === "krem" ? "premium" : "krem"; store.set("dod_style", s); applyStyle(s); themeBtn(); };
+  $("#theme-tg").onclick = () => { const s = document.documentElement.dataset.style === "krem" ? "premium" : "krem"; store.set("tb_style", s); applyStyle(s); themeBtn(); };
   themeBtn();
   const applySfx = () => $$("[data-sfx]").forEach(b => b.setAttribute("aria-pressed", (b.dataset.sfx === "1") === sfxOn()));
   $$("[data-sfx]").forEach(b => (b.onclick = () => { store.set("dod_sfx", b.dataset.sfx); applySfx(); sfx("ok"); }));
