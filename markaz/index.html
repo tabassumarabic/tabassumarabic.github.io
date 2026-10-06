@@ -8,6 +8,10 @@
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../icon-192.png">
 <link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tabassum">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <!-- «Tabassum» online markaz sayti (1-qadam: qobiq). Chap menyu + kim kirganiga qarab bo'limlar.
      Dizayn: och qahva/qum, sahro manzarasi (ustoz tasdiqlagan maket_markaz3). Ma'lumotlar — Tabassum bazasidan, o'sha xavfsiz funksiyalar orqali. -->
@@ -172,7 +176,7 @@
       <label>Ismingiz<input class="in" id="a-name" autocomplete="username" required></label>
       <label>PIN (4 raqam)<input class="in" id="a-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" required></label>
       <button class="btn" id="a-go">Kirish</button>
-      <small class="muted">Hisobingiz yo'qmi? Avval <a href="../">Tabassum ilovasida</a> ro'yxatdan o'ting.</small>
+      <small class="muted">Hisobingiz yo'qmi? Avval <a href="../?app">Tabassum ilovasida</a> ro'yxatdan o'ting.</small>
     </form>
     <form id="f-tch" class="box" style="padding:0;box-shadow:none" hidden>
       <label>Guruh kodi<input class="in" id="t-code" autocomplete="off" autocapitalize="characters" required></label>
@@ -342,8 +346,8 @@
 
     // 📚 Arab tili — hozirgi Tabassum ilovasining o'zi (ichida)
     arab(main) {
-      main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>📚 Arab tili</b><a href="../" target="_top" class="pill" style="text-decoration:none">To'liq ekran ↗</a></div>
-        <iframe class="frame" src="../" title="Tabassum — arab tili"></iframe>`;
+      main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>📚 Arab tili</b><a href="../?app" target="_top" class="pill" style="text-decoration:none">To'liq ekran ↗</a></div>
+        <iframe class="frame" src="../?app" title="Tabassum — arab tili" allow="autoplay; microphone"></iframe>`;
       bindTop();
     },
 
@@ -379,7 +383,7 @@
     teach(main) {
       main.innerHTML = topBar("👩‍🏫 Ustozlar") + `
         <div class="tiles" style="grid-template-columns:repeat(2,1fr)">
-          <button class="k terra" data-open="../"><span class="deco">🐪</span><span class="ic">📊</span><b style="font-size:19px">Tabassum ustoz paneli</b><small>Davomat, progress, ovozlar, talabalar</small></button>
+          <button class="k terra" data-open="../?app"><span class="deco">🐪</span><span class="ic">📊</span><b style="font-size:19px">Tabassum ustoz paneli</b><small>Davomat, progress, ovozlar, talabalar</small></button>
           <button class="k oasis" data-open="../pro/"><span class="deco">🌴</span><span class="ic">📒</span><b style="font-size:19px">Tabassum Pro jurnali</b><small>Ball, jarima, kassa, oylik to'lov</small></button>
         </div>` +
         soonCard("Keyingi qadamlar", "Bu bo'limda markazning hamma ustozlik ishlari bir joyga yig'iladi. Keyinchalik ba'zi qismlarini boshqa ustozlarga ham ochib berish mumkin bo'ladi.",
@@ -531,7 +535,7 @@
     try {
       const sp = await rpc("teacher_speaking", { p_token: TT() });
       const pend = sp.filter(x => x.pending).length;
-      if (pend) todo.push(["terra", `${pend} ta gapirish yozuvi baholanmagan`, "Ovozlar", "../"]);
+      if (pend) todo.push(["terra", `${pend} ta gapirish yozuvi baholanmagan`, "Ovozlar", "../?app"]);
     } catch { /* */ }
     if (CERT_OPEN) try {
       const cr = await rpc("teacher_certs", { p_token: TT() }), n = (cr.candidates || []).length;
@@ -540,7 +544,7 @@
       if (n) todo.push(["palm", `${n} ta talaba sertifikat olishga haqli — tasdiqlang`, "Sertifikat", "#cert"]);
     } catch { /* */ }
     else { const t = $("#cert-tile"); if (t) t.innerHTML = `<span class="deco">⭐</span><small>Sertifikatlar</small><b>⏸</b><i>darsliklardan keyin</i>`; }
-    if (away.length) todo.push(["saff", `${away.length} ta talaba 3 kundan beri kirmadi: ${away.slice(0, 3).map(s => esc(s.name)).join(", ")}${away.length > 3 ? "…" : ""}`, "Nazorat", "../"]);
+    if (away.length) todo.push(["saff", `${away.length} ta talaba 3 kundan beri kirmadi: ${away.slice(0, 3).map(s => esc(s.name)).join(", ")}${away.length > 3 ? "…" : ""}`, "Nazorat", "../?app"]);
     if (PT()) {
       try {
         const tu = await rpc("teacher_tuition", { p_token: PT() });
@@ -574,6 +578,8 @@
     bindTop(); bindGo();
   }
 
+  // Ilova sifatida o'rnatish va bildirishnomalar uchun (Tabassum ikonkasi shu sahifani ochadi)
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("../sw.js").catch(() => {});
   boot();
 })();
 </script>
