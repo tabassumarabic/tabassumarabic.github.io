@@ -170,7 +170,8 @@
 <section class="auth" id="auth" hidden>
   <div class="box">
     <div class="brand"><span class="m">ت</span><h1>Tabassum</h1><span class="muted">online markaz · bu yerga faqat tabassum bilan kiriladi 😊</span></div>
-    <div class="seg"><button id="s-stu" class="on">🎓 Talaba</button><button id="s-tch">⭐ Ustoz</button></div>
+    <!-- «Ustoz» kirishi talabalarga ko'rinmaydi: faqat markaz/?ustoz havolasida (yoki ustozning shaxsiy #ustoz=… havolasida) -->
+    <div class="seg" id="seg" hidden><button id="s-stu" class="on">🎓 Talaba</button><button id="s-tch">⭐ Ustoz</button></div>
     <form id="f-stu" class="box" style="padding:0;box-shadow:none">
       <label>Guruh kodi<input class="in" id="a-code" autocomplete="off" autocapitalize="characters" placeholder="Masalan: DOD_ARABIC" required></label>
       <label>Ismingiz<input class="in" id="a-name" autocomplete="username" required></label>
@@ -258,6 +259,9 @@
     $("#f-stu").hidden = which !== "stu"; $("#f-tch").hidden = which !== "tch"; $("#a-err").hidden = true;
   };
   $("#s-stu").onclick = () => seg("stu"); $("#s-tch").onclick = () => seg("tch");
+  // Ustoz kirishi: markaz/?ustoz — parol bilan; markaz/#ustoz=TOKEN — shaxsiy havola (USTOZ_HAVOLASI.txt), parolsiz
+  if (/[?&]ustoz/.test(location.search)) { $("#seg").hidden = false; seg("tch"); }
+  { const m = location.hash.match(/ustoz=([0-9a-f]{20,})/i); if (m) { store.set(K_TEACHER, m[1]); history.replaceState(null, "", location.pathname); } }
   const authErr = m => { $("#a-err").textContent = m; $("#a-err").hidden = false; };
   $("#f-stu").onsubmit = async e => {
     e.preventDefault(); $("#a-go").disabled = true;
@@ -289,6 +293,7 @@
       ["cert", "🎓", "Sertifikatlar", "oasis"],
       ["sunday", "🐪", "Karvon poygasi", "saff"],
       ["G", "BOSHQARUV"],
+      ["panel", "⚙️", "Boshqaruv paneli", "terra"],
       ["teach", "👩‍🏫", "Ustozlar", "saff"],
       ["sec", "🛡", "Xavfsizlik", "palm", "keyin"],
       ["ai", "🤖", "AI yordamchilar", "", "keyin"],
@@ -345,7 +350,17 @@
     home(main) { return role === "director" ? dirHome(main) : stuHome(main); },
 
     // 📚 Arab tili — hozirgi Tabassum ilovasining o'zi (ichida)
+    // ⚙️ Boshqaruv paneli — Tabassum ilovasining ustoz paneli (davomat, progress, ovozlar, darslarni ochish, PIN, parol…)
+    panel(main) {
+      main.classList.add("full");
+      main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>⚙️ Boshqaruv paneli</b><a href="../?app#ustoz" target="_top" class="pill" style="text-decoration:none">To'liq ekran ↗</a></div>
+        <iframe class="frame" src="../?app#ustoz" title="Ustoz paneli" allow="autoplay; microphone"></iframe>`;
+      bindTop();
+    },
+
     arab(main) {
+      // Direktor «Arab tili»ni o'quvchi ko'zi bilan ko'radi (o'quvchi hisobi bo'lsa); boshqaruv — «Boshqaruv paneli»da
+      if (role === "director" && ST()) store.set("dod_mode", "student");
       main.innerHTML = `<div class="frame-bar"><button class="burger" data-burger aria-label="Menyu" style="background:rgba(255,255,255,.15)">☰</button><b>📚 Arab tili</b><a href="../?app" target="_top" class="pill" style="text-decoration:none">To'liq ekran ↗</a></div>
         <iframe class="frame" src="../?app" title="Tabassum — arab tili" allow="autoplay; microphone"></iframe>`;
       bindTop();
