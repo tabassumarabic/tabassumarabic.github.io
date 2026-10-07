@@ -309,24 +309,37 @@
   function renderNav() {
     $("#nav").innerHTML = MENU[role].map(([id, ic, name, cls, tag]) => id === "G" ? `<div class="grp">${ic}</div>`
       : `<button class="it ${view === id ? "on" : ""}" data-v="${id}"><span class="sh ${cls || ""}" ${cls ? "" : 'style="background:#9b6b43"'}>${ic}</span>${name}${tag ? `<span class="tag">${tag}</span>` : ""}</button>`).join("");
-    $$("#nav [data-v]").forEach(b => (b.onclick = () => go(b.dataset.v)));
+    $$("#nav [data-v]").forEach(b => (b.onclick = () => { if (drawerOpen) { drawerOpen = false; try { history.replaceState({ v: view }, "", "#" + view); } catch { /* */ } } go(b.dataset.v); }));
     $("#who").innerHTML = role === "director" ? `⭐ Direktor<small>${esc((T.group || {}).name || "")}</small>` : `🎓 ${esc(ME.name)}<small>${esc((ME.group || {}).name || "")}</small>`;
   }
-  function go(v) {
+  // Bo'limlar orasida o'tish brauzer tarixiga yoziladi: telefondagi «orqaga» tugmasi oldingi bo'limga qaytaradi
+  // (avval ilovadan chiqib ketardi — ustoz, 2026-10-07). Menyu ochiq bo'lsa, «orqaga» avval menyuni yopadi.
+  function go(v, push = true) {
+    const prev = view;
     view = v; $("#shell").classList.remove("open"); renderNav();
     const main = $("#main"); main.classList.toggle("full", v === "arab");
     (VIEWS[v] || VIEWS.home)(main);
     window.scrollTo(0, 0);
-    try { history.replaceState(null, "", "#" + v); } catch { /* */ }
+    try { if (push && prev && prev !== v) history.pushState({ v }, "", "#" + v); else history.replaceState({ v }, "", "#" + v); } catch { /* */ }
   }
+  addEventListener("popstate", e => {
+    if (!role) return;
+    if (drawerOpen) { drawerOpen = false; $("#shell").classList.remove("open"); return; }
+    const h = (e.state && e.state.v) || location.hash.slice(1) || "home";
+    go(MENU[role].some(m => m[0] === h) ? h : "home", false);
+  });
+  let drawerOpen = false;
+  const openDrawer = () => { $("#shell").classList.add("open"); drawerOpen = true; try { history.pushState({ v: view, drawer: 1 }, "", "#" + view); } catch { /* */ } };
   function show() {
     $("#auth").hidden = true; $("#shell").hidden = false;
     const h = location.hash.slice(1);
-    go(MENU[role].some(m => m[0] === h) ? h : "home");
+    const t = MENU[role].some(m => m[0] === h) ? h : "home";
+    // To'g'ridan-to'g'ri bo'lim havolasi ochilsa ham, «orqaga» avval bosh sahifaga qaytaradi
+    if (t !== "home") { go("home", false); go(t); } else go("home", false);
   }
-  $("#veil").onclick = () => $("#shell").classList.remove("open");
+  $("#veil").onclick = () => { if (drawerOpen) history.back(); else $("#shell").classList.remove("open"); };
   const topBar = title => `<div class="top"><button class="burger" data-burger aria-label="Menyu">☰</button><h2>${title}</h2><span class="pill">📅 ${todayLabel()}</span></div>`;
-  const bindTop = () => { const b = $("[data-burger]"); if (b) b.onclick = () => $("#shell").classList.add("open"); };
+  const bindTop = () => { const b = $("[data-burger]"); if (b) b.onclick = openDrawer; };
 
   // ---------- Vaqt (Toshkent) ----------
   const MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
