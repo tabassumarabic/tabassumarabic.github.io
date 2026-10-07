@@ -2018,22 +2018,25 @@
     $$("[data-board]").forEach(b => b.setAttribute("aria-pressed", b.dataset.board === boardMode));
     $('[data-board="journal"]').hidden = !(ME.group && ME.group.journal);
     if (boardMode === "journal") return renderJournalBoard();
-    $("#t-note").textContent = boardMode === "week" ? "Guruhingiz ichida · dushanba noldan boshlanadi" : "Barcha guruhlar · har oy 1-sanada noldan";
+    $("#t-note").textContent = boardMode === "week" ? "Guruhingiz ichida · dushanba noldan boshlanadi"
+      : boardMode === "year" ? "Barcha guruhlar · 1-yanvardan noldan · yil oxirida 🏆 Yil chempioni" : "Barcha guruhlar · har oy 1-sanada noldan";
     const medal = ["🥇", "🥈", "🥉"];
-    if (boardMode === "month") {
+    if (boardMode === "month" || boardMode === "year") {
+      const mode = boardMode, yr = mode === "year";
       $("#t-champ").hidden = true;
       try {
-        const b = await rpc("leaderboard_month", { p_token: TOKEN });
-        if (boardMode !== "month") return;
-        const mon = MONTHS[+b.month.slice(5) - 1];
+        const b = await rpc(yr ? "leaderboard_year" : "leaderboard_month", { p_token: TOKEN });
+        if (boardMode !== mode) return;
+        if (yr && b.champion) { $("#t-champ").hidden = false; $("#t-champ").innerHTML = `${avaSvg(b.champion.ava) ? `<span class="champ-ava">${avaSvg(b.champion.ava)}</span>` : ""}<small>🏆 ${b.year - 1}-yil chempioni</small><b>${esc(b.champion.name)}</b> · ${b.champion.xp} XP`; }
+        const mon = yr ? null : MONTHS[+b.month.slice(5) - 1];
         const mine = b.mine && !b.top.some(r => r.id === b.me)
           ? `<div class="row me"><span class="rank">${b.mine.rank}</span>${avaHtml(S.avatar, ME.name)}<span class="name"><b>${esc(ME.name)} (siz)</b></span><span class="xp">${b.mine.xp}</span></div>` : "";
-        $("#t-board").innerHTML = `<p class="muted" style="margin:6px 0">🗓 ${cap(mon)} oyi · TOP ${b.top.length}</p>` + (b.top.length ? b.top.map(r => `
+        $("#t-board").innerHTML = `<p class="muted" style="margin:6px 0">🗓 ${yr ? `${b.year}-yil` : `${cap(mon)} oyi`} · TOP ${b.top.length}</p>` + (b.top.length ? b.top.map(r => `
           <div class="row ${r.id === b.me ? "me" : ""}">
             <span class="rank">${medal[r.rank - 1] || r.rank}</span>${avaHtml(r.ava, r.name)}
             <span class="name"><b>${esc(r.name)}${r.id === b.me ? " (siz)" : ""}</b><small class="muted">${esc(r.group)}</small></span>
             <span class="xp">${r.xp}</span></div>`).join("") + mine
-          : `<p class="muted">Bu oy hali hech kim ball yig'madi. Birinchi bo'ling! 🔥</p>`);
+          : `<p class="muted">Bu ${yr ? "yil" : "oy"} hali hech kim ball yig'madi. Birinchi bo'ling! 🔥</p>`);
       } catch (e) { $("#t-board").innerHTML = `<p class="muted">${esc(errText(e))}</p>`; }
       return;
     }
@@ -2231,21 +2234,27 @@
   }
 
   // O'quvchi: profildagi «Mening progressim»
+  // Kartalar bosilganda «qimirlab» qo'yadi va qisqa izoh chiqaradi (ustoz, 2026-10-07)
+  document.addEventListener("click", e => {
+    const c = e.target.closest(".pg, .stat, .tc-stat, .st-card"); if (!c) return;
+    c.classList.remove("wig"); void c.offsetWidth; c.classList.add("wig"); sfx("tap");
+    if (c.dataset.tip) toast(c.dataset.tip);
+  });
   async function loadMyProgress() {
     let p;
     try { p = await rpc("progress_mine", { p_token: TOKEN }); } catch { return; }
     const days = daysIn(p.month_start, p.today), passedN = Object.values(S.lessons).filter(v => v >= PASS).length;
     const avg = avgScore(S.lessons), att = attPct(p.att);
-    const tile = (label, big, sub, pct) => `<div class="pg"><small>${label}</small><b>${big}</b>${pct != null ? `<div class="bar"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>` : ""}<span>${sub}</span></div>`;
+    const tile = (label, big, sub, pct, tip) => `<div class="pg" role="button" tabindex="0" data-tip="${esc(tip || "")}"><small>${label}</small><b>${big}</b>${pct != null ? `<div class="bar"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>` : ""}<span>${sub}</span></div>`;
     $("#p-prog-wrap").hidden = false;
     $("#p-prog-sum").textContent = `guruhda ${p.rank_xp}-o'rin`;
     $("#p-prog").innerHTML = [
-      tile("📚 Kurs", `${coursePct(S.lessons)}%`, `${passedN}/${D.lessons.length} dars o'tildi`, coursePct(S.lessons)),
-      tile("🎯 O'rtacha natija", avg == null ? "—" : `${avg}%`, "darslardagi eng yaxshi natijalar", avg),
-      tile("🔥 Olov", `${p.streak || 0} kun`, `oy rekordi: ${p.best || 0} · ${p.rank_best}-o'rin`, null),
-      tile("📅 Bu oy faol", `${p.active || 0}/${days}`, "kun ilovada mashq qildingiz", Math.round((p.active || 0) * 100 / days)),
-      tile("⭐ Bu oy XP", p.month_xp || 0, `guruhda ${p.rank_xp}/${p.size}-o'rin`, null),
-      tile("📝 Jonli darslar", att == null ? "—" : `${att}%`, att == null ? "hali belgilanmagan" : "qatnashish", att),
+      tile("📚 Kurs", `${coursePct(S.lessons)}%`, `${passedN}/${D.lessons.length} dars o'tildi`, coursePct(S.lessons), "📚 Butun kursning qancha qismini o'tdingiz. Har bir darsdan 80%+ oling — foiz oshadi"),
+      tile("🎯 O'rtacha natija", avg == null ? "—" : `${avg}%`, "darslardagi eng yaxshi natijalar", avg, "🎯 Darslardagi eng yaxshi natijalaringizning o'rtachasi. Darsni qayta ishlab, oshirsa bo'ladi"),
+      tile("🔥 Olov", `${p.streak || 0} kun`, `oy rekordi: ${p.best || 0} · ${p.rank_best}-o'rin`, null, "🔥 Har kuni kunlik missiyani bajarsangiz, olov yonib turadi. Bir kun qoldirsangiz — o'chadi"),
+      tile("📅 Bu oy faol", `${p.active || 0}/${days}`, "kun ilovada mashq qildingiz", Math.round((p.active || 0) * 100 / days), "📅 Bu oyda necha kun ilovada mashq qilganingiz"),
+      tile("⭐ Bu oy XP", p.month_xp || 0, `guruhda ${p.rank_xp}/${p.size}-o'rin`, null, "⭐ Bu oyda to'plagan XP'ingiz. Har 10 XP = 1 دِينَار (do'kon uchun)"),
+      tile("📝 Jonli darslar", att == null ? "—" : `${att}%`, att == null ? "hali belgilanmagan" : "qatnashish", att, "📝 Jonli darslarga qatnashishingiz (ustoz belgilaydi)"),
     ].join("");
   }
 

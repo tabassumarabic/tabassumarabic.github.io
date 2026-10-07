@@ -116,6 +116,19 @@
   .x-btn { background: transparent; color: var(--mu); font-size: 16px; padding: 6px 8px; border-radius: 8px; }
   @media (max-width: 860px) { .iss-g { grid-template-columns: 1fr; } .iss-g .btn { width: 100%; } .sexes { grid-auto-flow: column; justify-content: start; gap: 18px; } }
 
+  /* 🏪 Do'kon */
+  .wallet { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, #7a4e2a, #4A2E17); color: var(--cream); border-radius: 18px; padding: 16px; box-shadow: 0 6px 0 rgba(0,0,0,.2); flex-wrap: wrap; }
+  .wallet .coin { font-size: 42px; } .wallet small { display: block; opacity: .8; font-size: 12.5px; } .wallet b { font-size: 26px; font-weight: 900; }
+  .ar-din { font-family: Amiri, serif; font-weight: 700; } .wallet .ar-din { font-size: 22px; color: #F6D58A; }
+  .soon-tag { margin-left: auto; background: var(--saff); color: #2a1700; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 900; }
+  .shop { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .item { background: var(--cream); border-radius: 18px; padding: 14px; display: grid; gap: 4px; box-shadow: 0 6px 0 rgba(107,68,35,.18); text-align: center; }
+  .item-img { font-size: 54px; height: 86px; display: grid; place-items: center; background: var(--cream2); border-radius: 14px; margin-bottom: 6px; }
+  .item b { color: var(--coffee2); } .item small { color: var(--mu); font-size: 12px; min-height: 30px; }
+  .price { font-weight: 900; color: var(--coffee); margin: 4px 0; } .item .btn { padding: 10px; font-size: 13.5px; }
+  .item .btn:disabled { background: var(--cream2); color: var(--mu); box-shadow: 0 4px 0 #dcc7a6; opacity: 1; }
+  @media (max-width: 860px) { .shop { grid-template-columns: 1fr 1fr; gap: 10px; } .soon-tag { margin-left: 0; } }
+
   .frame { width: 100%; height: 100vh; border: 0; display: block; background: #0C1218; }
 
   /* Kirish */
@@ -291,6 +304,7 @@
       ["G", "O'QISH"],
       ["arab", "📚", "Arab tili", "terra"],
       ["cert", "🎓", "Sertifikatlar", "oasis"],
+      ["shop", "🏪", "Do'kon", "palm", "tez orada"],
       ["sunday", "🐪", "Karvon poygasi", "saff"],
       ["G", "BOSHQARUV"],
       ["panel", "⚙️", "Boshqaruv paneli", "terra"],
@@ -304,6 +318,7 @@
       ["hw", "📝", "Uyga vazifa", "oasis", "keyin"],
       ["sunday", "🐪", "Karvon poygasi", "saff"],
       ["cert", "🎓", "Sertifikatlarim", "palm"],
+      ["shop", "🏪", "Do'kon", "terra"],
     ],
   };
   function renderNav() {
@@ -400,6 +415,26 @@
           <div class="li"><i class="dot saff"></i><span>Har savolda navbatdagi karvonboshi javob beradi, sheriklari maslahat beradi</span></div>
           <div class="li"><i class="dot palm"></i><span>XP: 1-o'rin 1000, 2-o'rin 700, 3-o'rin 500 + har bir qatnashchiga 300 · g'olib jamoa bir hafta «🏅 Karvon sardori»</span></div>
         </div>`;
+      bindTop();
+    },
+
+    // 🏪 Do'kon (hozircha namuna): XP → دِينَار (10 XP = 1). Sotib olish keyin ochiladi; reyting XP'si kamaymaydi.
+    shop(main) {
+      const xp = role === "student" ? (ME.xp || 0) : null, din = xp == null ? null : Math.floor(xp / 10);
+      const ITEMS = [
+        ["🏷️", "Stikerlar to'plami", "Tabassum stikerlari (10 dona)", 50], ["🔖", "Kitob xatcho'pi", "Arabcha naqshli", 60],
+        ["🖊️", "Ruchka", "«تَبَسُّم» yozuvli", 80], ["📓", "Daftar", "Arabcha yozuv uchun, chiziqli", 120],
+        ["☕", "Krujka", "«بِابْتِسَامَةٍ» yozuvli", 300], ["🧢", "Kepka", "Tabassum logotipi bilan", 400],
+        ["👕", "Futbolka", "«ت» tabassum belgisi", 600], ["🎒", "Sumka", "Tabassum ryukzagi", 800],
+      ];
+      main.innerHTML = topBar("🏪 Do'kon") + `
+        <div class="wallet"><span class="coin">🪙</span><div><small>Hisobingizda</small><b>${din == null ? "—" : din} <bdi class="ar-din">دِينَار</bdi></b>
+          <small>${xp == null ? "Talabalar XP'sini dinorga almashtiradi" : `${xp} XP · har 10 XP = 1 دِينَار`}</small></div>
+          <span class="soon-tag">⏳ Tez orada ochiladi</span></div>
+        <p class="muted" style="margin:0">Dinor sarflansa ham <b>reytingdagi XP kamaymaydi</b> 🙂 Hozircha bu — namuna, sovg'alar tez orada ochiladi.</p>
+        <div class="shop">${ITEMS.map(([e, n, d, price]) => `<div class="item"><div class="item-img">${e}</div><b>${n}</b><small>${d}</small>
+          <div class="price">🪙 ${price} <bdi class="ar-din">دِينَار</bdi></div>
+          <button class="btn" disabled>${din != null && din >= price ? "🔒 Tez orada" : din == null ? "🔒 Tez orada" : `Yana ${price - din} دِينَار`}</button></div>`).join("")}</div>`;
       bindTop();
     },
 

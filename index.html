@@ -415,6 +415,8 @@
   .prog-row .val { font-family: var(--f-display); font-weight: 700; font-size: 16px; white-space: nowrap; }
   .idle { color: var(--bad); font-weight: 700; }
   .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pg, .stat, .tc-stat { cursor: pointer; transition: transform .12s; } .pg:active, .stat:active, .tc-stat:active { transform: scale(.96); }
+  .wig { animation: wig .45s ease; } @keyframes wig { 0% { transform: rotate(0) } 20% { transform: rotate(-3deg) scale(1.03) } 45% { transform: rotate(3deg) scale(1.03) } 70% { transform: rotate(-1.5deg) } 100% { transform: rotate(0) } }
   .pg { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; box-shadow: var(--shadow); display: grid; gap: 6px; }
   .pg small { color: var(--muted); font-weight: 600; } .pg b { font-family: var(--f-display); font-size: 20px; } .pg span { font-size: 12px; color: var(--muted); }
   /* 🧪 Kuboklar va arenalar */
@@ -830,6 +832,7 @@
     <div class="seg" role="group" aria-label="Reyting turi">
       <button type="button" data-board="week" aria-pressed="true">📅 Haftalik · guruh</button>
       <button type="button" data-board="month" aria-pressed="false">🌍 Oylik · hamma</button>
+      <button type="button" data-board="year" aria-pressed="false">🏆 Yillik</button>
       <button type="button" data-board="journal" aria-pressed="false" hidden>📒 Jurnal</button>
     </div>
     <div class="champ" id="t-champ" hidden></div>
@@ -1007,8 +1010,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=36a2000948"></script>
-<script src="avatar.js?v=36a2000948"></script>
-<script src="app.js?v=36a2000948"></script>
+<script src="data.js?v=4a4dde3ffd"></script>
+<script src="avatar.js?v=4a4dde3ffd"></script>
+<script src="app.js?v=4a4dde3ffd"></script>
 </body>
 </html>
