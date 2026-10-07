@@ -60,6 +60,10 @@
   .ob { position: relative; border-radius: 14px; padding: 14px 14px; color: #fff; font-size: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 5px 0 rgba(0,0,0,.22); text-align: left; min-height: 62px; width: 100%; }
   .ob .sh { width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,.18); display: grid; place-items: center; font-size: 15px; flex: none; }
   .ob .v { flex: 1; } .ob .v.ar { font-size: 26px; text-align: right; } .ob .v.em { font-size: 34px; }
+  .tipbar { background: var(--coffee); color: var(--cream); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; }
+  .tipbar b { color: #F6D58A; font-size: 16px; } .tipbar small { opacity: .8; }
+  .mini-board { display: flex; gap: 6px; flex-wrap: wrap; } .mini-board span { display: flex; align-items: center; gap: 6px; background: var(--cream); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; }
+  .mini-board span i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); } .mini-board span.me { outline: 2px solid var(--c); } .mini-board b { font-variant-numeric: tabular-nums; }
   .ob .tips { position: absolute; right: 8px; top: -9px; background: var(--cream); color: var(--coffee2); border-radius: 999px; padding: 1px 8px; font-size: 12.5px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
   .ob.sel { outline: 4px solid var(--coffee2); outline-offset: 2px; }
   .ob.dim { opacity: .35; } .ob.good { outline: 4px solid #1f7a3a; outline-offset: 2px; } .ob.good::after { content: "✓"; position: absolute; right: 12px; font-size: 26px; }
@@ -137,7 +141,7 @@
   const HOST = new URLSearchParams(location.search).has("host");
   const TEST = new URLSearchParams(location.search).has("sinov");
   const B = window.KARVON_BANK || { words: [], numbers: [], colors: [], situations: [], facts: [], finals: [], audio: {} };
-  const Q_SEC = 15;
+  const Q_SEC = 22;   // ustoz: 22 soniya (sinovdan keyin, 2026-10-07)
   const ROUNDS = { 1: "📚 So'zlar", 2: "🎧 Tinglash", 3: "💬 Hayotiy vaziyatlar", 4: "🌍 Arab dunyosi", 5: "🐫 Shoh tuya sinovi" };
   const SHAPES = ["▲", "◆", "●", "■"];
 
@@ -204,7 +208,11 @@
   const fresh = (list, keyOf, recent) => { const s = shuffle(list); return [...s.filter(x => !recent.has(keyOf(x))), ...s.filter(x => recent.has(keyOf(x)))]; };
   function buildGame(level, recentArr) {
     const L = level === "A1" ? 2 : 1, recent = new Set(recentArr || []), out = [];
-    const words = B.words.filter(w => w[4] <= L), same = w => words.filter(x => x[3] === w[3] && x[0] !== w[0]);
+    // Noto'g'ri variantlar: avval shu guruhdan (hayvon, taom…); guruhda so'z kam bo'lsa — boshqa so'zlar bilan to'ldiriladi
+    // (aks holda bitta variant chiqib qolardi — «طِفْلٌ» xatosi, sinov 2026-10-07)
+    const words = B.words.filter(w => w[4] <= L);
+    const same = w => { const a = words.filter(x => x[3] === w[3] && x[0] !== w[0]);
+      return a.length >= 3 ? a : a.concat(shuffle(words.filter(x => x[3] !== w[3] && x[1] !== w[1])).slice(0, 3 - a.length)); };
     // 1-raund: so'zlar — emoji → arabcha va arabcha → emoji
     fresh(words, w => "w:" + w[0], recent).slice(0, 10).forEach((w, i) => out.push(i % 2 === 0
       ? mk("w:" + w[0], 1, "e2a", { p: "Bu nima? Arabchasini toping", q: w[1] }, w[0], same(w).map(x => x[0]))
@@ -247,6 +255,13 @@
   // TALABA
   // ======================================================================
   let ST = null, G = null, lastQ = -2, lastStatus = "", myPick = null, unlocked = false;
+  // 📵 Savol paytida boshqa oynaga/ilovaga o'tilsa — serverga yoziladi (karvonboshining javobi hisoblanmaydi) va ogohlantiriladi
+  document.addEventListener("visibilitychange", () => {
+    if (HOST || !G || G.status !== "q" || !G.team) return;
+    if (document.hidden) { rpc("karvon_left", { p_token: TOKEN(), p_game: G.game, p_qi: G.qi }).catch(() => {}); stuLeft = true; }
+    else if (stuLeft) { stuLeft = false; toast("⚠️ O'yin paytida ilovadan chiqmang! Bu savolda karvonboshi bo'lsangiz, javobingiz hisoblanmaydi"); }
+  });
+  let stuLeft = false;
   async function stuLoop() {
     try {
       G = await rpc("karvon_game", { p_token: TOKEN() });
@@ -297,7 +312,9 @@
     const key = g.status + ":" + g.qi;
     if (key !== lastStatus) { if (g.qi !== lastQ) { myPick = null; lastQ = g.qi; } lastStatus = key; drawStu(true); } else drawStu(false);
     function drawStu(full) {
-      const head = `${barHtml()}${team ? `<div class="team-h card" style="padding:10px 12px"><span class="dot" style="background:${team.color}">${camelSvg("#fff")}</span><div><b>${esc(team.name)}</b><small>${(g.scores || {})[team.id] || 0} ball</small></div></div>` : ""}`;
+      const sortedT = (g.teams || []).slice().sort((a, b) => ((g.scores || {})[b.id] || 0) - ((g.scores || {})[a.id] || 0));
+      const board = sortedT.length > 1 && g.status !== "lobby" ? `<div class="mini-board">${sortedT.map((t, i) => `<span class="${t.id === g.team ? "me" : ""}" style="--c:${t.color}"><i></i>${i + 1}. ${esc(t.name)} <b>${(g.scores || {})[t.id] || 0}</b></span>`).join("")}</div>` : "";
+      const head = `${barHtml()}${team ? `<div class="team-h card" style="padding:10px 12px"><span class="dot" style="background:${team.color}">${camelSvg("#fff")}</span><div><b>${esc(team.name)}</b><small>${(g.scores || {})[team.id] || 0} ball</small></div></div>` : ""}${board}`;
       if (!team) { $("#root").innerHTML = `<div class="wrap">${head}<div class="card"><h3>👀 Tomoshabin</h3><p>Siz bu hafta ro'yxatdan o'tmagansiz. Keyingi yakshanba albatta qatnashing!</p></div></div>`; return; }
       if (g.status === "lobby") {
         if (!full) return;
@@ -336,8 +353,9 @@
           <div class="muted" style="text-align:center;font-size:13px">${ROUNDS[q.r] || ""} · ${g.qi + 1}/${g.total}</div>
           <div class="timer"><i id="tbar" style="width:${reveal ? 0 : left / (Q_SEC * 10)}%"></i></div>
           <div class="qbox">${promptHtml(q)}${q.a ? `<button class="say" id="say">🔊</button>` : ""}</div>
+          <div class="tipbar" id="tipbar" hidden></div>
           <div class="opts" id="opts">${q.o.map((_, i) => optHtml(q, i, reveal ? (i === q.c ? "good" : "dim") : (locked && g.final !== i && (isCap ? true : myPick !== i) ? "dim" : ""))).join("")}</div>
-          <div id="fb"></div></div>`;
+          <div id="fb"></div>${!reveal ? `<div class="muted" style="text-align:center;font-size:12px">📵 Savol paytida ilovadan chiqmang — karvonboshining javobi hisoblanmaydi</div>` : ""}</div>`;
         const say = $("#say"); if (say) { say.onclick = () => play(q.a); if (!reveal) play(q.a); }
         $$("#opts .ob").forEach(b => (b.onclick = () => pick(+b.dataset.o)));
         if (reveal) { const ok = g.gained != null && g.gained > 0; (g.final === q.c ? SFX.ok : SFX.bad)(); }
@@ -347,9 +365,21 @@
       // Jonli yangilanish: maslahatlar, tanlovlar, natija
       $$("#opts .ob").forEach(b => {
         const i = +b.dataset.o, n = tips[i] || 0;
-        let t = b.querySelector(".tips"); if (n && !reveal) { if (!t) { t = document.createElement("span"); t.className = "tips"; b.appendChild(t); } t.textContent = `👥 ${n}`; } else if (t) t.remove();
+        let t = b.querySelector(".tips"); if (n && !reveal) { if (!t) { t = document.createElement("span"); t.className = "tips"; b.appendChild(t); } t.textContent = `👥 ${n} kishi`; } else if (t) t.remove();
         b.classList.toggle("sel", !reveal && (g.final === i || (!isCap && myPick === i && g.final == null)));
       });
+      // 💡 Maslahat paneli: «Sheriklaringiz ◆ B variantni tanlashingizni xohlashyapti (2 kishi)»
+      const tb = $("#tipbar");
+      if (tb) {
+        const tl = Object.entries(tips).map(([i, n]) => [+i, n]).sort((a, b) => b[1] - a[1]);
+        if (!reveal && tl.length) {
+          const top = tl[0], L = "ABCD"[top[0]];
+          tb.hidden = false;
+          tb.innerHTML = isCap
+            ? `💡 Sheriklaringiz <b>${SHAPES[top[0]]} ${L}</b> variantni tanlashingizni xohlashyapti <small>(${top[1]} kishi${tl.length > 1 ? ` · boshqalar: ${tl.slice(1).map(([i, n]) => `${"ABCD"[i]} — ${n}`).join(", ")}` : ""})</small>`
+            : `💡 Jamoangiz maslahati: ${tl.map(([i, n]) => `<b>${SHAPES[i]} ${"ABCD"[i]}</b> — ${n} kishi`).join(" · ")}`;
+        } else tb.hidden = true;
+      }
       const fb = $("#fb");
       if (fb) fb.innerHTML = reveal
         ? `<div class="res" style="color:${g.gained > 0 ? "var(--palm)" : "var(--terra)"}">${g.final == null ? "⏰ Javob berilmadi" : g.final === q.c ? "✅ To'g'ri!" : "❌ Xato"} · ${g.gained > 0 ? "+" : ""}${g.gained || 0} ball</div>`
@@ -439,7 +469,8 @@
           <svg class="cam" style="left:4%" fill="${t.color}"><use href="#camel"/></svg><span class="pts" style="left:4%">0</span>
           <span class="ans"></span><span class="fin"></span><span class="oasis-end">🌴</span></div></div>`).join("");
       }
-      const max = Math.max(1, ...teams.map(t => sc[t.id] || 0)), scale = Math.max(max * 1.15, 6000);
+      // Shkala savollar soniga bog'liq: har savolda ~700 ball hisobidan — tuyalar o'yin oxirigacha vohaga yetib bormaydi (sinov, 2026-10-07)
+      const max = Math.max(1, ...teams.map(t => sc[t.id] || 0)), scale = Math.max(max * 1.12, (g.total || 40) * 700);
       requestAnimationFrame(() => teams.forEach(t => {
         const lane = lanesEl.querySelector(`[data-t="${t.id}"]`); if (!lane) return;
         const s = sc[t.id] || 0, pos = 4 + Math.min(86, s / scale * 86), cap = (g.caps || {})[t.id];
@@ -500,7 +531,7 @@
       if (reveal) SFX.ok();
     }
     const box = $("#lanes"); if (box) { const el = lanes(); if (el.parentNode !== box) box.appendChild(el); }
-    const ac = $("#ansc"); if (ac) ac.textContent = g.status === "q" ? `✋ ${(g.answered || []).length}/${teams.length} jamoa javob berdi` : "";
+    const ac = $("#ansc"); if (ac) ac.textContent = g.status === "q" ? `✋ ${(g.answered || []).length}/${teams.length} jamoa javob berdi${(g.left || []).length ? ` · 📵 chiqib ketdi: ${g.left.join(", ")}` : ""}` : "";
     function lobbyTeams() {
       return `<div class="lobby-teams">${(g.teams || []).map(t => `<div class="card"><div class="team-h"><span class="dot" style="background:${t.color}">${camelSvg("#fff")}</span><div><b>${esc(t.name)}</b><small>${(g.players || {})[t.id] || 0}/${t.members.length} kirdi</small></div></div>
         <div class="mem">${t.members.map(m => `<span>${esc(m.name)}</span>`).join("")}</div></div>`).join("")}</div>`;
