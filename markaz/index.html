@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tabassum — online markaz</title>
-<meta name="theme-color" content="#6B4423">
+<meta name="theme-color" content="#080a0f">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../icon-192.png">
 <link rel="apple-touch-icon" href="../icon-180.png">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tabassum">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Nunito:wght@700;800;900&family=Poppins:wght@500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <!-- «Tabassum» online markaz sayti (1-qadam: qobiq). Chap menyu + kim kirganiga qarab bo'limlar.
      Dizayn: och qahva/qum, sahro manzarasi (ustoz tasdiqlagan maket_markaz3). Ma'lumotlar — Tabassum bazasidan, o'sha xavfsiz funksiyalar orqali. -->
 <style>
@@ -162,6 +162,82 @@
   }
   .frame-bar { display: none; align-items: center; gap: 10px; padding: 6px 10px; height: 52px; background: var(--coffee); color: var(--cream); }
   .frame-bar b { flex: 1; font-weight: 900; }
+
+  /* ===================== ✨ OLTIN NEON SHISHA (ustoz tanlovi, 2026-10-07) =====================
+     Qorong'u fon + oltin/moviy-yashil nur, shisha (shaffof, xira) kartalar, oltin neon raqamlar.
+     Pastdagi qoidalar yuqoridagi «sahro» ranglarining ustidan yoziladi. */
+  :root { --g1: #ffd27a; --g2: #f5b83d; --g3: #e09a2b; --teal: #14b8a6; --coral: #fb7185; --emer: #34d399; --vio: #a78bfa;
+          --glass: rgba(255,255,255,.065); --glass2: rgba(255,255,255,.1); --gline: rgba(255,255,255,.13); --txt: #eef0f3; --mut: #9aa3ad; }
+  body { background: #080a0f; color: var(--txt); font-family: Poppins, Nunito, system-ui, sans-serif; font-weight: 500; }
+  body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(520px 420px at 12% -6%, rgba(245,184,61,.26), transparent 70%),
+                radial-gradient(520px 460px at 100% 105%, rgba(20,184,166,.24), transparent 70%),
+                radial-gradient(380px 300px at 70% 40%, rgba(245,184,61,.06), transparent 70%); }
+  .scene { display: none; }
+  .side { background: rgba(14,17,24,.72); background-image: none; border-right: 1px solid var(--gline); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .logo { color: #fff; } .logo .m { background: linear-gradient(135deg, var(--g1), var(--g3)); color: #1a1104; border: 0; box-shadow: 0 0 22px rgba(245,184,61,.55); }
+  .it { background: transparent; box-shadow: none; color: rgba(255,255,255,.78); font-weight: 600; }
+  .it:hover { background: rgba(255,255,255,.05); }
+  .it.on { background: rgba(245,184,61,.14); color: var(--g1); box-shadow: inset 3px 0 0 var(--g2); }
+  .it .tag { background: rgba(245,184,61,.18); color: var(--g1); border: 1px solid rgba(245,184,61,.4); }
+  .grp { color: rgba(255,255,255,.38); }
+  .who { background: var(--glass); border: 1px solid var(--gline); color: #fff; }
+  .ghost { color: var(--mut); border-color: var(--gline); }
+  .terra { background: linear-gradient(135deg, #fb7185, #e11d48); } .oasis { background: linear-gradient(135deg, #2dd4bf, #0f766e); }
+  .saff { background: linear-gradient(135deg, #ffd27a, #e09a2b); } .palm { background: linear-gradient(135deg, #34d399, #059669); }
+  .violet { background: linear-gradient(135deg, #c4b5fd, #7c3aed); } .navy { background: linear-gradient(135deg, #93c5fd, #2563eb); } .goldl { background: linear-gradient(135deg, #fde68a, #b8862e); }
+  .top h2 { color: #fff; font-weight: 800; }
+  .burger { background: var(--glass2); color: var(--g1); border: 1px solid var(--gline); }
+  .pill { background: var(--glass); color: var(--g1); border: 1px solid rgba(245,184,61,.4); box-shadow: none; }
+  /* Shisha kartalar */
+  .card, .lv, .cg, .item, .auth .box, .issue, .sunday, .wallet {
+    background: var(--glass); border: 1px solid var(--gline); box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: var(--txt); }
+  .card h4 { color: var(--g1); } .card p, .muted, .lv-t small, .cg-t small, .item small, label { color: var(--mut); }
+  .li { background: rgba(255,255,255,.05); color: var(--txt); font-weight: 600; } .li small { color: var(--mut); }
+  /* Rangli raqam kartalari: shisha + o'z rangidagi nur, raqam neon bo'lib yonadi */
+  .k { background: var(--glass); border: 1px solid var(--gline); box-shadow: 0 10px 30px rgba(0,0,0,.25); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: #fff; }
+  .k.terra { background: linear-gradient(135deg, rgba(251,113,133,.22), rgba(251,113,133,.05)); border-color: rgba(251,113,133,.35); }
+  .k.oasis { background: linear-gradient(135deg, rgba(45,212,191,.22), rgba(45,212,191,.05)); border-color: rgba(45,212,191,.35); }
+  .k.saff  { background: linear-gradient(135deg, rgba(245,184,61,.25), rgba(245,184,61,.05)); border-color: rgba(245,184,61,.4); }
+  .k.palm  { background: linear-gradient(135deg, rgba(52,211,153,.22), rgba(52,211,153,.05)); border-color: rgba(52,211,153,.35); }
+  .k b { font-family: "Space Grotesk", Poppins, sans-serif; font-weight: 700; color: var(--g1); text-shadow: 0 0 16px rgba(245,184,61,.55); }
+  .k.terra b { color: #fda4af; text-shadow: 0 0 16px rgba(251,113,133,.6); } .k.oasis b { color: #5eead4; text-shadow: 0 0 16px rgba(45,212,191,.6); }
+  .k.palm b { color: #6ee7b7; text-shadow: 0 0 16px rgba(52,211,153,.6); }
+  .k small { color: rgba(255,255,255,.75); font-weight: 600; } .k i { background: rgba(255,255,255,.1); }
+  .k .deco { opacity: .22; filter: saturate(.7); }
+  button.k:active { transform: translateY(2px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  /* Tugmalar */
+  .btn { background: linear-gradient(90deg, var(--g1), var(--g3)); color: #1a1104; box-shadow: 0 0 22px rgba(245,184,61,.4); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 0 12px rgba(245,184,61,.4); }
+  .btn.brown { background: var(--glass2); color: var(--g1); border: 1px solid rgba(245,184,61,.45); box-shadow: none; }
+  .btn:disabled, .item .btn:disabled { background: rgba(255,255,255,.07); color: var(--mut); box-shadow: none; border: 1px solid var(--gline); }
+  .lv-go { background: linear-gradient(90deg, var(--g1), var(--g3)); color: #1a1104; box-shadow: 0 0 14px rgba(245,184,61,.4); }
+  .soon { border-color: rgba(255,255,255,.18); color: var(--mut); }
+  /* Yakshanba kartasi, hamyon */
+  .sunday { background: linear-gradient(135deg, rgba(245,184,61,.2), rgba(20,184,166,.12)); border-color: rgba(245,184,61,.35); }
+  .sunday .cd { background: rgba(0,0,0,.25); color: var(--g1); border: 1px solid rgba(245,184,61,.35); text-shadow: 0 0 10px rgba(245,184,61,.5); }
+  .wallet { background: linear-gradient(135deg, rgba(245,184,61,.22), rgba(20,184,166,.1)); border-color: rgba(245,184,61,.4); }
+  .wallet b { color: var(--g1); text-shadow: 0 0 14px rgba(245,184,61,.6); } .wallet .ar-din { color: var(--g1); }
+  .soon-tag { background: rgba(245,184,61,.18); color: var(--g1); border: 1px solid rgba(245,184,61,.45); }
+  /* Sertifikatlar, do'kon */
+  .lv-t b, .cg-t b, .item b { color: #fff; } .lv-ar { color: var(--g1); } .lv-bar { background: rgba(255,255,255,.1); } .lv-bar i { background: linear-gradient(90deg, var(--g1), var(--g3)); }
+  .lv.cur, .cg.cur { box-shadow: 0 0 0 2px var(--g2), 0 0 24px rgba(245,184,61,.3); } .cg.got { box-shadow: 0 0 0 2px var(--emer), 0 0 24px rgba(52,211,153,.3); }
+  .cg-img { background: rgba(255,255,255,.06); } .cg-lock { background: rgba(10,12,18,.8); }
+  .item-img { background: rgba(255,255,255,.06); } .price { color: var(--g1); }
+  .tag2 { background: rgba(245,184,61,.18); color: var(--g1); } .x-btn { color: var(--mut); } .sexes label { color: var(--txt); }
+  /* Kirish oynasi, maydonlar */
+  .auth h1 { color: #fff; } .auth .brand .m { background: linear-gradient(135deg, var(--g1), var(--g3)); color: #1a1104; border: 0; box-shadow: 0 0 24px rgba(245,184,61,.55); }
+  .seg { background: rgba(255,255,255,.06); } .seg button { color: var(--mut); } .seg button.on { background: linear-gradient(90deg, var(--g1), var(--g3)); color: #1a1104; }
+  .in { background: rgba(255,255,255,.06); border: 1px solid var(--gline); color: #fff; } .in::placeholder { color: rgba(255,255,255,.35); }
+  .in:focus { border-color: var(--g2); box-shadow: 0 0 0 3px rgba(245,184,61,.15); }
+  .auth a { color: var(--g1); }
+  .auth form.box { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
+  .toast { background: rgba(20,24,32,.92); color: #fff; border: 1px solid var(--gline); backdrop-filter: blur(12px); }
+  .frame { background: #080a0f; }
+  .frame-bar { background: rgba(14,17,24,.9); color: #fff; border-bottom: 1px solid var(--gline); }
+  .frame-bar .pill { background: var(--glass); }
+  @media (max-width: 860px) { .side { background: rgba(12,15,22,.96); } .shell.open .veil { background: rgba(0,0,0,.55); } }
 </style>
 </head>
 <body>
