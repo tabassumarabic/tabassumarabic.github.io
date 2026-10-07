@@ -135,6 +135,7 @@
   const API = "https://fstmvfroylwyelmaxhzh.supabase.co/rest/v1/rpc/";
   const API_KEY = "sb_publishable_dNWgUrggq3AEbr4Ifu74Cg_8iq3K1Nm";
   const HOST = new URLSearchParams(location.search).has("host");
+  const TEST = new URLSearchParams(location.search).has("sinov");
   const B = window.KARVON_BANK || { words: [], numbers: [], colors: [], situations: [], facts: [], finals: [], audio: {} };
   const Q_SEC = 15;
   const ROUNDS = { 1: "📚 So'zlar", 2: "🎧 Tinglash", 3: "💬 Hayotiy vaziyatlar", 4: "🌍 Arab dunyosi", 5: "🐫 Shoh tuya sinovi" };
@@ -379,7 +380,7 @@
         <div class="row">
           <label class="muted">Daraja: <select class="in" id="lvl"><option ${H.level === "Pre-A1" ? "selected" : ""}>Pre-A1</option><option ${H.level === "A1" ? "selected" : ""}>A1</option></select></label>
           <button class="btn ghost" id="form" style="width:auto">👥 Jamoalarni hozir tuzish</button>
-          <button class="btn" id="new" style="width:auto">🎮 O'yinni ochish (kutish xonasi)</button>
+          <button class="btn" id="new" style="width:auto">🎮 ${TEST ? "🧪 Sinov o'yinini ochish (14 savol)" : "O'yinni ochish (kutish xonasi)"}</button>
         </div>
         <p>💡 Bu sahifani Google Meet'da <b>«Ekranni ulashish»</b> orqali ko'rsating. Boshqarish: <b>Probel</b> yoki «Keyingi» tugmasi.</p></div>
       <div class="card"><h3>👥 Jamoalar · ${H.month} (bir oy amal qiladi)</h3>
@@ -393,7 +394,9 @@
     </div>`;
     $("#form").onclick = async () => { try { H = await rpc("teacher_karvon", { p_token: TOKEN(), p_form: true }); hostSetup(true); toast(H.teams.length ? "✅ Jamoalar tayyor" : "Kamida 4 kishi kerak"); } catch (e) { toast(errText(e)); } };
     $("#new").onclick = async () => {
-      const lvl = $("#lvl").value, qs = buildGame(lvl, H.recent);
+      const lvl = $("#lvl").value, all = buildGame(lvl, H.recent);
+      // 🧪 Sinov o'yini (karvon.html?host&sinov): har raunddan 3 ta + final 2 ta = 14 savol
+      const qs = TEST ? [1, 2, 3, 4].flatMap(r => all.filter(q => q.r === r).slice(0, 3)).concat(all.filter(q => q.r === 5).slice(0, 2)) : all;
       try { const r = await rpc("teacher_karvon_new", { p_token: TOKEN(), p_level: lvl, p_questions: qs }); hostGame(r.id); } catch (e) { toast(errText(e)); }
     };
     $$("[data-ts]").forEach(b => (b.onclick = async () => {
