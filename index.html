@@ -16,9 +16,9 @@
 <script>
   // Dizayn: "premium" (asosiy) yoki "krem" — Profilda tanlanadi
   (function () {
-    var s = "sahro"; try { s = localStorage.getItem("tb_style") || s; } catch (e) { /* */ }
+    var s = "neon"; try { s = localStorage.getItem("tb_style") || s; } catch (e) { /* */ }
     document.documentElement.dataset.style = s;
-    document.querySelector('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
+    document.querySelector('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : s === "neon" ? "#080a0f" : "#0C1218";
   })();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
@@ -31,7 +31,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230E5A4A'/%3E%3Ctext x='32' y='44' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E%D8%B6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Nunito:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Poppins:wght@500;600;700;800&family=Space+Grotesk:wght@500;700&family=Nunito:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap">
 <style>
   /* Uslub: krem fon, to'q yashil, oltin; ravoq shakllari va geometrik naqsh */
   :root {
@@ -751,6 +751,55 @@
   [data-style="sahro"] .opt { border: 0; box-shadow: 0 4px 0 rgba(107,68,35,.16); font-weight: 800; }
   [data-style="sahro"] .lesson.done .node { background: var(--good-soft); color: var(--good); border-color: #bcd6a6; }
 
+
+  /* ===== ✨ Oltin neon shisha (<html data-style="neon">) — markaz bilan bir xil. Asosiy uslub (ustoz tanlovi, 2026-10-07) =====
+     Qorong'u fon, orqada oltin va moviy-yashil nur, shaffof «shisha» kartalar, oltin neon raqamlar. */
+  :root[data-style="neon"] {
+    color-scheme: dark;
+    --bg: #080a0f; --surface: rgba(255,255,255,.065); --surface-2: rgba(255,255,255,.1); --ink: #eef0f3; --muted: #9aa3ad; --line: rgba(255,255,255,.13);
+    --brand: #f5b83d; --brand-2: #ffd27a; --brand-ink: #1a1104; --brand-soft: rgba(245,184,61,.16);
+    --gold: #ffd27a; --gold-soft: rgba(245,184,61,.14); --gold-line: rgba(245,184,61,.4); --good: #34d399; --good-soft: rgba(52,211,153,.14); --bad: #fb7185; --bad-soft: rgba(251,113,133,.14);
+    --shadow: 0 10px 28px rgba(0,0,0,.28);
+    --f-display: "Poppins", "Onest", system-ui, sans-serif; --f-body: "Poppins", "Onest", "Amiri", system-ui, sans-serif;
+    --glow: radial-gradient(520px 420px at 0% -8%, rgba(245,184,61,.22), transparent 70%), radial-gradient(520px 460px at 100% 108%, rgba(20,184,166,.2), transparent 70%);
+  }
+  [data-style="neon"] body, [data-style="neon"] .quiz, [data-style="neon"] .auth { background: var(--glow), #080a0f; background-attachment: fixed; }
+  [data-style="neon"] .card, [data-style="neon"] .tile, [data-style="neon"] .rankline, [data-style="neon"] .mcard, [data-style="neon"] .pg, [data-style="neon"] .chip,
+  [data-style="neon"] .opt, [data-style="neon"] .lesson, [data-style="neon"] .row, [data-style="neon"] .stat {
+    border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  [data-style="neon"] .logo, [data-style="neon"] .big-ava { background: linear-gradient(135deg, #ffd27a, #e09a2b); color: #1a1104; border: 0; box-shadow: 0 0 20px rgba(245,184,61,.5); border-radius: 50%; }
+  /* Brend qatori (muhr + shior) */
+  [data-style="neon"] .mission, [data-style="neon"] .mission.brandrow { background: linear-gradient(135deg, rgba(245,184,61,.18), rgba(20,184,166,.1)) !important;
+    border: 1px solid rgba(245,184,61,.35) !important; border-radius: 18px !important; box-shadow: var(--shadow); }
+  [data-style="neon"] .mission::before { display: none; }
+  [data-style="neon"] .tb-motto2 { color: #ffd27a; text-shadow: 0 0 12px rgba(245,184,61,.4); }
+  [data-style="neon"] .tb-seal { filter: drop-shadow(0 0 10px rgba(245,184,61,.6)); }
+  [data-style="neon"] .mcard.big { box-shadow: 0 0 0 1px rgba(245,184,61,.5), 0 0 26px rgba(245,184,61,.18); }
+  [data-style="neon"] .eyebrow { color: #ffd27a; }
+  [data-style="neon"] .btn-brand, [data-style="neon"] .btn-light { background: linear-gradient(90deg, #ffd27a, #e09a2b); color: #1a1104; box-shadow: 0 0 20px rgba(245,184,61,.35); font-weight: 800; }
+  [data-style="neon"] .btn-soft { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+  /* Raqamlar — oltin neon */
+  [data-style="neon"] .stat b, [data-style="neon"] .pg b, [data-style="neon"] .tc-stat b, [data-style="neon"] .result .score, [data-style="neon"] .row .xp, [data-style="neon"] .chip {
+    font-family: "Space Grotesk", "Poppins", sans-serif; }
+  [data-style="neon"] .stat b, [data-style="neon"] .pg b, [data-style="neon"] .tc-stat b, [data-style="neon"] .result .score { color: #ffd27a; text-shadow: 0 0 14px rgba(245,184,61,.5); }
+  [data-style="neon"] .bar i, [data-style="neon"] .pg .bar i { background: linear-gradient(90deg, #ffd27a, #e09a2b) !important; }
+  /* Mashg'ulot tugmalari — har biri o'z neon rangida */
+  [data-style="neon"] .tiles .ic { border: 0 !important; color: #fff !important; }
+  [data-style="neon"] .tiles .ic.blue { background: linear-gradient(135deg, #2dd4bf, #0f766e) !important; box-shadow: 0 0 14px rgba(45,212,191,.4); }
+  [data-style="neon"] .tiles .ic.red { background: linear-gradient(135deg, #fb7185, #e11d48) !important; box-shadow: 0 0 14px rgba(251,113,133,.4); }
+  [data-style="neon"] .tiles .ic.gold { background: linear-gradient(135deg, #ffd27a, #e09a2b) !important; color: #1a1104 !important; box-shadow: 0 0 14px rgba(245,184,61,.45); }
+  [data-style="neon"] .tiles .ic.green { background: linear-gradient(135deg, #34d399, #059669) !important; box-shadow: 0 0 14px rgba(52,211,153,.4); }
+  [data-style="neon"] .tabbar { background: rgba(10,12,18,.82); border-top: 1px solid var(--line); }
+  [data-style="neon"] .tab[aria-current="page"] { color: #ffd27a; text-shadow: 0 0 10px rgba(245,184,61,.5); }
+  [data-style="neon"] .seg button[aria-pressed="true"] { background: linear-gradient(90deg, #ffd27a, #e09a2b); color: #1a1104; }
+  [data-style="neon"] .champ, [data-style="neon"] .prize { background: linear-gradient(135deg, rgba(245,184,61,.35), rgba(20,184,166,.18)); border: 1px solid rgba(245,184,61,.45); color: #fff; }
+  [data-style="neon"] .lesson.done .node { background: rgba(52,211,153,.15); color: #34d399; border-color: rgba(52,211,153,.4); }
+  [data-style="neon"] .sheet { background: var(--glow), #0b0e14; border-top: 1px solid var(--line); }
+  [data-style="neon"] .toast { background: rgba(20,24,32,.95); color: #fff; border: 1px solid var(--line); }
+  [data-style="neon"] .opt.good { box-shadow: 0 0 0 2px #34d399, 0 0 16px rgba(52,211,153,.35); }
+  [data-style="neon"] .opt.bad { box-shadow: 0 0 0 2px #fb7185, 0 0 16px rgba(251,113,133,.3); }
+  [data-style="neon"] input, [data-style="neon"] .input { background: rgba(255,255,255,.06); color: #fff; }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -883,6 +932,7 @@
     <div class="card style-pick">
       <b>🎨 Ko'rinish</b>
       <div class="seg" role="group" aria-label="Ko'rinishni tanlang" style="margin:0">
+        <button type="button" data-style-pick="neon">✨ Neon</button>
         <button type="button" data-style-pick="sahro">🐪 Sahro</button>
         <button type="button" data-style-pick="premium">🌙 Qorong'u</button>
         <button type="button" data-style-pick="krem">☀️ Yorug'</button>
@@ -1010,8 +1060,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=4a4dde3ffd"></script>
-<script src="avatar.js?v=4a4dde3ffd"></script>
-<script src="app.js?v=4a4dde3ffd"></script>
+<script src="data.js?v=eac7a9ba4e"></script>
+<script src="avatar.js?v=eac7a9ba4e"></script>
+<script src="app.js?v=eac7a9ba4e"></script>
 </body>
 </html>

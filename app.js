@@ -2617,12 +2617,12 @@
   // Ko'rinish: 🐪 Sahro (asosiy, markaz bilan bir xil — 2026-10-06), 🌙 Qorong'u (premium) yoki ☀️ Krem. Tanlov «tb_style» da saqlanadi.
   function applyStyle(s) {
     document.documentElement.dataset.style = s;
-    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
+    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : s === "neon" ? "#080a0f" : "#0C1218";
     $$("[data-style-pick]").forEach(b => b.setAttribute("aria-pressed", b.dataset.stylePick === s));
     const tb = $("#theme-tg"); if (tb) tb.textContent = s === "krem" ? "🌙" : "☀️";
   }
   $$("[data-style-pick]").forEach(b => (b.onclick = () => { store.set("tb_style", b.dataset.stylePick); applyStyle(b.dataset.stylePick); }));
-  applyStyle(document.documentElement.dataset.style || "sahro");
+  applyStyle(document.documentElement.dataset.style || "neon");
   // ☀️/🌙 Bosh sahifadagi tezkor almashtirgich: qorong'u (premium) ↔ yorug' (krem)
   const themeBtn = () => { const b = $("#theme-tg"); if (b) b.textContent = document.documentElement.dataset.style === "krem" ? "🌙" : "☀️"; };
   $("#theme-tg").onclick = () => { const s = document.documentElement.dataset.style === "krem" ? "premium" : "krem"; store.set("tb_style", s); applyStyle(s); themeBtn(); };
