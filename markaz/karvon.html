@@ -60,6 +60,8 @@
   .ob { position: relative; border-radius: 14px; padding: 14px 14px; color: #fff; font-size: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 5px 0 rgba(0,0,0,.22); text-align: left; min-height: 62px; width: 100%; }
   .ob .sh { width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,.18); display: grid; place-items: center; font-size: 15px; flex: none; }
   .ob .v { flex: 1; } .ob .v.ar { font-size: 26px; text-align: right; } .ob .v.em { font-size: 34px; }
+  .qbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .qbtns button { background: var(--cream); color: var(--coffee2); border-radius: 12px; padding: 10px 6px; font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 rgba(107,68,35,.18); }
+  .qbtns button:disabled { opacity: .5; } .qmsg { display: grid; gap: 4px; background: var(--cream2); border-radius: 12px; padding: 8px 10px; font-size: 13.5px; }
   .tipbar { background: var(--coffee); color: var(--cream); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; }
   .tipbar b { color: #F6D58A; font-size: 16px; } .tipbar small { opacity: .8; }
   .mini-board { display: flex; gap: 6px; flex-wrap: wrap; } .mini-board span { display: flex; align-items: center; gap: 6px; background: var(--cream); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; }
@@ -144,6 +146,25 @@
   const Q_SEC = 22;   // ustoz: 22 soniya (sinovdan keyin, 2026-10-07)
   const ROUNDS = { 1: "📚 So'zlar", 2: "🎧 Tinglash", 3: "💬 Hayotiy vaziyatlar", 4: "🌍 Arab dunyosi", 5: "🐫 Shoh tuya sinovi" };
   const SHAPES = ["▲", "◆", "●", "■"];
+  const QMSG = { sure: "✅ Ishonchim komil", unsure: "🤔 Bilmayman", hurry: "⏰ Tezroq!", nice: "👍 Zo'r!" };
+  // 🔔 Bildirishnoma (yakshanba 19:30 eslatmasi uchun) — ilovadagi bilan bir xil obuna
+  const VAPID_PUBLIC = "BPFgzDNzYes7VPQFm0d405ukhTr_BnNur1Y4KZ0sIbTuCl6e2mpIm4bmw6IsPOEnlrnsKrmXcxNaLhB93OCmDTM";
+  const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const pushOn = () => !pushSupported() || Notification.permission === "granted";
+  const b64u8 = b => { const p = "=".repeat((4 - b.length % 4) % 4), r = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(r, c => c.charCodeAt(0)); };
+  async function pushEnable() {
+    if (!pushSupported()) { toast("Bu telefonda bildirishnoma ishlamaydi. Chrome'da oching (iPhone'da — avval ilovani ekranga qo'shing)"); return false; }
+    let perm; try { perm = await Notification.requestPermission(); } catch { perm = "denied"; }
+    if (perm !== "granted") { toast("🔕 Ruxsat berilmadi. Telefon sozlamalaridan bildirishnomaga ruxsat bering"); return false; }
+    try {
+      const reg = await navigator.serviceWorker.register("../sw.js"); await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(VAPID_PUBLIC) });
+      const j = sub.toJSON();
+      await rpc("push_subscribe", { p_token: TOKEN(), p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+      try { localStorage.setItem("tb_push", "1"); } catch { /* */ }
+      toast("🔔 Eslatma yoqildi! Yakshanba 19:30 da eslatamiz 🐪"); return true;
+    } catch { toast("Eslatmani yoqib bo'lmadi. Keyinroq urinib ko'ring"); return false; }
+  }
 
   const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -292,6 +313,9 @@
           : `<div class="res" style="color:${s.registered ? "var(--palm)" : "var(--mu)"}">${s.registered ? "✅ Siz ro'yxatdasiz" : "🔒 Ro'yxat yopilgan"}</div>
              <p>${s.registered ? "Yakshanba 20:00 da shu sahifani oching." : "Keyingi hafta dushanbadan yana ochiladi."} Ro'yxatda: ${s.reg_count} kishi.</p>`}
       </div>
+      ${s.registered && !pushOn() ? `<div class="card" style="border:2px dashed var(--saff)"><h3>🔔 Eslatmani yoqing</h3>
+          <p>Yakshanba soat 19:30 da telefoningizga «30 daqiqa qoldi!» degan xabar keladi — o'yinni unutmaysiz.</p>
+          <button class="btn brown" id="push-on">🔔 Eslatmani yoqish</button></div>` : ""}
       ${team ? `<div class="card"><div class="team-h"><span class="dot" style="background:${team.color}">${camelSvg("#fff")}</span>
           <div><b>${esc(team.name)}</b><small>Sizning jamoangiz · ${s.month} oyi</small></div></div>
           <div class="mem">${team.members.map(m => `<span class="${m.me ? "me" : ""}">${esc(m.name)}</span>`).join("")}</div>
@@ -300,7 +324,8 @@
       ${sorted.length ? `<div class="card"><h3>🏆 Oylik poyga · ${s.month}</h3><div class="stand">${sorted.map((t, i) => `<div><span class="md">${["🥇", "🥈", "🥉"][i] || "▫️"}</span><i style="background:${t.color}"></i><span>${esc(t.name)}</span><b>${t.points}</b></div>`).join("")}</div>
           <p>Oy oxirida eng ko'p ball to'plagan jamoa — oylik g'olib 🎁</p></div>` : ""}
     </div>`;
-    const reg = $("#reg"), un = $("#unreg"), ts = $("#tsave");
+    const reg = $("#reg"), un = $("#unreg"), ts = $("#tsave"), po = $("#push-on");
+    if (po) po.onclick = async () => { po.disabled = true; const ok = await pushEnable(); po.disabled = false; if (ok) { homeSig = ""; renderStuHome(); } };
     if (reg) reg.onclick = async () => { reg.disabled = true; try { ST = await rpc("karvon_register", { p_token: TOKEN(), p_on: true }); homeSig = ""; renderStuHome(); toast("✅ Yakshanba ko'rishamiz! 🐪"); } catch (e) { reg.disabled = false; toast(errText(e)); } };
     if (un) un.onclick = async () => { if (!confirm("Ro'yxatdan chiqasizmi?")) return; try { ST = await rpc("karvon_register", { p_token: TOKEN(), p_on: false }); homeSig = ""; renderStuHome(); } catch (e) { toast(errText(e)); } };
     if (ts) ts.onclick = async () => { try { ST = await rpc("karvon_team_name", { p_token: TOKEN(), p_name: $("#tname").value }); homeSig = ""; renderStuHome(); toast("✅ Jamoa nomi saqlandi"); } catch (e) { toast(errText(e)); } };
@@ -355,7 +380,7 @@
           <div class="qbox">${promptHtml(q)}${q.a ? `<button class="say" id="say">🔊</button>` : ""}</div>
           <div class="tipbar" id="tipbar" hidden></div>
           <div class="opts" id="opts">${q.o.map((_, i) => optHtml(q, i, reveal ? (i === q.c ? "good" : "dim") : (locked && g.final !== i && (isCap ? true : myPick !== i) ? "dim" : ""))).join("")}</div>
-          <div id="fb"></div>${!reveal ? `<div class="muted" style="text-align:center;font-size:12px">📵 Savol paytida ilovadan chiqmang — karvonboshining javobi hisoblanmaydi</div>` : ""}</div>`;
+          <div id="fb"></div>${!reveal ? `<div class="qmsg" id="qmsg" hidden></div><div class="qbtns">${Object.entries(QMSG).map(([k, t]) => `<button data-say="${k}">${t}</button>`).join("")}</div>` : ""}${!reveal ? `<div class="muted" style="text-align:center;font-size:12px">📵 Savol paytida ilovadan chiqmang — karvonboshining javobi hisoblanmaydi</div>` : ""}</div>`;
         const say = $("#say"); if (say) { say.onclick = () => play(q.a); if (!reveal) play(q.a); }
         $$("#opts .ob").forEach(b => (b.onclick = () => pick(+b.dataset.o)));
         if (reveal) { const ok = g.gained != null && g.gained > 0; (g.final === q.c ? SFX.ok : SFX.bad)(); }
@@ -380,6 +405,10 @@
             : `💡 Jamoangiz maslahati: ${tl.map(([i, n]) => `<b>${SHAPES[i]} ${"ABCD"[i]}</b> — ${n} kishi`).join(" · ")}`;
         } else tb.hidden = true;
       }
+      // 💬 Jamoadoshlarning tezkor xabarlari (oxirgi 3 tasi)
+      const qm = $("#qmsg"), ms = (g.msgs || []).slice(-3);
+      if (qm) { qm.hidden = !ms.length; qm.innerHTML = ms.map(m => `<span>💬 <b>${esc(m.name.split(" ")[0])}:</b> ${QMSG[m.code] || ""}</span>`).join(""); }
+      $$("[data-say]").forEach(b => (b.onclick = async () => { b.disabled = true; try { await rpc("karvon_say", { p_token: TOKEN(), p_game: G.game, p_code: b.dataset.say }); tone([[880, 0, .05, .06]]); } catch { /* */ } setTimeout(() => (b.disabled = false), 2000); }));
       const fb = $("#fb");
       if (fb) fb.innerHTML = reveal
         ? `<div class="res" style="color:${g.gained > 0 ? "var(--palm)" : "var(--terra)"}">${g.final == null ? "⏰ Javob berilmadi" : g.final === q.c ? "✅ To'g'ri!" : "❌ Xato"} · ${g.gained > 0 ? "+" : ""}${g.gained || 0} ball</div>`

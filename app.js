@@ -2048,7 +2048,7 @@
       $("#t-board").innerHTML = b.week.length ? b.week.map((r, i) => `
         <div class="row ${r.id === b.me ? "me" : ""}">
           <span class="rank">${medal[i] || i + 1}</span>${avaHtml(r.ava, r.name)}
-          <span class="name"><b>${esc(r.name)}${b.champion && b.champion.id === r.id ? " 👑" : ""}${r.id === b.me ? " (siz)" : ""}</b></span>
+          <span class="name"><b>${esc(r.name)}${b.champion && b.champion.id === r.id ? " 👑" : ""}${SARDOR.has(r.id) ? " 🏅" : ""}${r.id === b.me ? " (siz)" : ""}</b></span>
           <span class="xp">${r.xp}</span></div>`).join("")
         : `<p class="muted">Bu hafta hali hech kim ball yig'madi. Birinchi bo'ling! 🔥</p>`;
     } catch (e) { $("#t-board").innerHTML = `<p class="muted">${esc(errText(e))}</p>`; }
@@ -2115,6 +2115,7 @@
     loadInbox();
     loadMyAttendance();
     loadMyProgress();
+    loadKarvon();
     if (store.get("tb_hello") !== today()) { store.set("tb_hello", today()); setTimeout(() => toast("😊 Bu yerga faqat tabassum bilan kiriladi!"), 700); }
     if (TROPHY_ON()) loadTrophies();
     loadSpeakBadge();
@@ -2240,6 +2241,22 @@
     c.classList.remove("wig"); void c.offsetWidth; c.classList.add("wig"); sfx("tap");
     if (c.dataset.tip) toast(c.dataset.tip);
   });
+  // 🐪 Karvon poygasi: bosh sahifada banner (bildirishnomasiz ham ko'rinadi) va 🏅 «Karvon sardori» belgisi
+  let SARDOR = new Set();
+  async function loadKarvon() {
+    if (!TOKEN || (ME && ME.group && ME.group.journal)) return;
+    try { SARDOR = new Set(await rpc("karvon_sardors", { p_token: TOKEN })); } catch { /* */ }
+    const ps = $("#p-sardor"); if (ps) ps.hidden = !(ME && SARDOR.has(ME.id));
+    const box = $("#kv-banner"); if (!box) return;
+    let k; try { k = await rpc("karvon_status", { p_token: TOKEN }); } catch { return; }
+    const sunday = k.today === k.sunday, txt = k.game && k.game.status !== "done" ? ["🐪", "Karvon poygasi boshlandi!", "Hoziroq kiring →"]
+      : sunday && k.registered ? ["🐪", "Bugun soat 20:00 da Karvon poygasi!", "Jamoangizni ko'rish →"]
+      : k.open && !k.registered ? ["✋", "Karvon poygasiga ro'yxat ochiq — juma kuni yopiladi!", "Qatnashaman →"]
+      : k.registered ? ["✅", `Siz yakshanba o'yiniga ro'yxatdasiz · ${k.reg_count} kishi`, "Batafsil →"] : null;
+    box.innerHTML = txt ? `<button class="kv-ban"><span class="e">${txt[0]}</span><span class="t"><b>${txt[1]}</b><small>${txt[2]}</small></span></button>` : "";
+    const b = box.querySelector("button");
+    if (b) b.onclick = () => { try { (window.top || window).location.href = new URL("markaz/#sunday", location.href).href; } catch { location.href = "markaz/#sunday"; } };
+  }
   async function loadMyProgress() {
     let p;
     try { p = await rpc("progress_mine", { p_token: TOKEN }); } catch { return; }
