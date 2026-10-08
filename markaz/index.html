@@ -190,11 +190,13 @@
     <!-- «Ustoz» kirishi talabalarga ko'rinmaydi: faqat markaz/?ustoz havolasida (yoki ustozning shaxsiy #ustoz=… havolasida) -->
     <div class="seg" id="seg" hidden><button id="s-stu" class="on">🎓 Talaba</button><button id="s-tch">⭐ Ustoz</button></div>
     <form id="f-stu" class="box" style="padding:0;box-shadow:none">
-      <label>Guruh kodi<input class="in" id="a-code" autocomplete="off" autocapitalize="characters" placeholder="Masalan: DOD_ARABIC" required></label>
-      <label>Ismingiz<input class="in" id="a-name" autocomplete="username" required></label>
-      <label>PIN (4 raqam)<input class="in" id="a-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" required></label>
+      <!-- Yangi talaba ham shu yerda ro'yxatdan o'tadi (ustoz, 2026-10-08) -->
+      <div class="seg"><button type="button" id="m-login" class="on">Menda hisob bor</button><button type="button" id="m-join">✨ Birinchi marta</button></div>
+      <label>Guruh kodi <small id="code-hint">(ustozingiz beradi)</small><input class="in" id="a-code" autocomplete="off" autocapitalize="characters" placeholder="Masalan: DOD_ARABIC" required></label>
+      <label>Ismingiz<input class="in" id="a-name" autocomplete="username" required placeholder="Ism va familiya"></label>
+      <label><span id="pin-lbl">PIN (4 raqam)</span><input class="in" id="a-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" required></label>
       <button class="btn" id="a-go">Kirish</button>
-      <small class="muted">Hisobingiz yo'qmi? Avval <a href="../?app">Tabassum ilovasida</a> ro'yxatdan o'ting.</small>
+      <small class="muted" id="join-note" hidden>PIN-kodni o'zingiz o'ylab toping va eslab qoling — keyingi safar shu bilan kirasiz.</small>
     </form>
     <form id="f-tch" class="box" style="padding:0;box-shadow:none" hidden>
       <label>Guruh kodi<input class="in" id="t-code" autocomplete="off" autocapitalize="characters" required></label>
@@ -246,6 +248,8 @@
     return body;
   }
   const ERR = {
+    BAD_NAME: "Ismingizni to'liq yozing (2–30 harf).", BAD_PIN: "PIN 4 ta raqamdan iborat bo'lsin.",
+    NAME_TAKEN: "Bu ism guruhda band. «Menda hisob bor» orqali kiring yoki familiyangizni ham qo'shing.",
     BAD_LOGIN: "Ism yoki PIN noto'g'ri.", BAD_CODE: "Guruh kodi noto'g'ri.", LOCKED: "Ko'p marta xato kiritildi. 10 daqiqadan keyin urinib ko'ring.",
     BAD_TEACHER_LOGIN: "Guruh kodi yoki ustoz paroli noto'g'ri.", NO_PASSWORD: "Bu guruhga ustoz paroli hali o'rnatilmagan.",
     NET: "Internet bilan aloqa yo'q.",
@@ -280,11 +284,21 @@
   if (/[?&]ustoz/.test(location.search)) { $("#seg").hidden = false; seg("tch"); }
   { const m = location.hash.match(/ustoz=([0-9a-f]{20,})/i); if (m) { store.set(K_TEACHER, m[1]); history.replaceState(null, "", location.pathname); } }
   const authErr = m => { $("#a-err").textContent = m; $("#a-err").hidden = false; };
+  // Talaba: «Menda hisob bor» (kirish) yoki «Birinchi marta» (ro'yxatdan o'tish — ilovadagi bilan bir xil)
+  let joinMode = false;
+  const setJoin = on => {
+    joinMode = on; $("#m-login").classList.toggle("on", !on); $("#m-join").classList.toggle("on", on);
+    $("#a-go").textContent = on ? "✨ Ro'yxatdan o'tish" : "Kirish"; $("#join-note").hidden = !on;
+    $("#pin-lbl").textContent = on ? "PIN-kod (4 raqam, o'zingiz o'ylab toping)" : "PIN (4 raqam)";
+    $("#a-pin").autocomplete = on ? "new-password" : "current-password"; $("#a-err").hidden = true;
+  };
+  $("#m-login").onclick = () => setJoin(false); $("#m-join").onclick = () => setJoin(true);
   $("#f-stu").onsubmit = async e => {
     e.preventDefault(); $("#a-go").disabled = true;
     try {
-      const r = await rpc("login", { p_code: $("#a-code").value.trim().toUpperCase(), p_name: $("#a-name").value.trim(), p_pin: $("#a-pin").value.trim() });
+      const r = await rpc(joinMode ? "join_group" : "login", { p_code: $("#a-code").value.trim().toUpperCase(), p_name: $("#a-name").value.trim(), p_pin: $("#a-pin").value.trim() });
       store.set(K_TOKEN, r.token); $("#auth").hidden = true; await boot();
+      if (joinMode) toast("🎉 Xush kelibsiz! PIN-kodingizni eslab qoling 😊");
     } catch (err) { authErr(errText(err)); } finally { $("#a-go").disabled = false; }
   };
   $("#f-tch").onsubmit = async e => {
