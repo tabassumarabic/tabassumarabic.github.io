@@ -1545,7 +1545,7 @@
   // Buning uchun brauzer tarixiga bitta «qo'riqchi» yozuv qo'yiladi. U ✕ bilan yopilganda ham qoladi (tarixni dastur orqali
   // ortga surish ishonchsiz), shuning uchun shundan keyin ilovadan chiqish uchun «Orqaga» ikki marta bosiladi.
   let backGuard = false;
-  const overlayOpen = () => !!run || !!$("#sheet-root").innerHTML || !!$("#world");
+  const overlayOpen = () => !!run || !!$("#sheet-root").innerHTML || !!$("#world") || !$("#fon").hidden;
   function syncBack() {
     if (!overlayOpen() || backGuard) return;
     try { history.pushState({ tb: 1 }, ""); backGuard = true; } catch { /* tarix yopiq muhitda — «Orqaga» oddiy ishlayveradi */ }
@@ -1555,6 +1555,7 @@
     backGuard = false;
     if ($("#world")) $("#w-close").click();
     else if ($("#sheet-root").innerHTML) closeSheet();
+    else if (!$("#fon").hidden) closeFon();
     else if (run) { const q = $("[data-quit]"); if (q) q.click(); else closeRun(); }   // natija ekranida — bosh sahifaga
     syncBack();
   });
@@ -1710,7 +1711,7 @@
     const mc = Object.keys(S.mistakes).length;
     $("#mist-count").hidden = !mc; $("#mist-count").textContent = mc;
 
-    renderWotd(); renderLessons(); renderWords(); renderProfile(); renderToday(); renderChests(); renderCardsBtn(); renderWorldCard();
+    renderWotd(); renderLessons(); renderWords(); renderProfile(); renderToday(); renderChests(); renderCardsBtn(); renderWorldCard(); renderFon();
   }
   const showTab = name => $(`.tab[data-tab="${name}"]`).click();
 
@@ -2147,6 +2148,7 @@
     // test ochiq bo'lsa (seans test ustida tugagan) — yopamiz, aks holda kirish oynasi ostida qotib qoladi
     if (run) { clearInterval(run.timer); if (player) player.pause(); run = null; $("#quiz").hidden = true; document.body.style.overflow = ""; }
     const wm = $("#world"); if (wm) wm.remove();
+    $("#fon").hidden = true;
     closeSheet();
     showAuth();
     if (expired) toast(ERRORS.AUTH);
@@ -2827,6 +2829,172 @@
     $("#install-hide").onclick = () => { store.set("dod_install_hide", "1"); closeSheet(); showInstallCard(); };
   };
   showInstallCard();
+
+  // ---------- 🌙 Fonetika: «Yulduzlar yo'li» (Mundil.uz; «Savodim» kitobi asosida; ustoz, 2026-10-12) ----------
+  // Har harf — osmondagi bitta yulduz (kitobdagi tartibda). Harfning barcha qadamlari bajarilsa, yulduz yonadi.
+  // Bu yerda ball, soat va reyting yo'q (ustoz qarori). Ma'lumot: content/fonetika/harflar.json → python build_fon.py
+  const FON = /*FON_DATA*/{"tartib":"ارزمتنيبكلوهفقشسثصطجخحغعدضذظ","harflar":[{"char":"ا","name":"Alif","maxraj":"Halqumda.","tip":"Arab tilida a, i, u unlilari harf bilan emas, kichik belgilar — harakatlar bilan yoziladi.","harakat":true,"syll":["اَ","اِ","اُ"],"words":[],"join":[]},{"char":"ر","name":"Ro","maxraj":"Tilning oldi qismi ro'parasidagi yuqori tanglayga (qaynoq suv ichganda kuyadigan joy) tekkanda chiqadi.","tip":"Ro harfida yengil titroq bor. Lekin «traktorrrr» degandek qattiq titratib yubormang.","sifat":[1,0,0,0],"special":"Biroz titroq — takrir","syll":["رَ","رِ","رُ"],"words":["اَرْ","اِرْ","اُرْ"],"join":[["اَ","رْ"],["اِ","رْ"],["اُ","رْ"]]},{"char":"ز","name":"Za","maxraj":"Tilning uchi pastki old tishlarning ichki qismiga tekkanda chiqadi.","tip":"Za harfida hushtakka o'xshash ovoz bor: «zzz» deb cho'zib ko'ring.","sifat":[2,0,0,0],"special":"Hushtaksimon — sofir","syll":["زَ","زِ","زُ"],"words":["اَزْ","اِزْ","اُزْ","زَرْ","زِرْ","زُرْ","اَزْرُ","اِزْرُ","اُرْزُ"],"join":[["اَ","زْ"],["زَ","رُ"],["اِ","زْ","رُ"],["اُ","رْ","زُ"]]},{"char":"م","name":"Mim","maxraj":"Ikki lab bir-biriga tekkanda, ya'ni yopilganda chiqadi.","tip":"Mim aytilganda ovoz burundan chiqadi. Burningizni qisib ko'ring — ovoz to'xtab qoladi.","sifat":[1,0,0,0],"special":"Burundan chiqadigan tovush — g'unna","syll":["مَ","مِ","مُ"],"words":["اَمْ","اِمْ","اُمْ","مُرْ","مُزْ","رُمْ","اَمَرَ","اُمِرَ","اَمْرُ","رَمْزُ","مَرْمَرْ","زَمْزَمْ"],"join":[["اَ","مَ","رَ"],["رَ","مْ","زُ"],["مَ","رْ","مَ","رْ"],["زَ","مْ","زَ","مْ"]]}]}/*FON_END*/;
+  const FON_STEPS = [["meet", "👋", "Tanishuv"], ["sifat", "🧩", "Sifatlari"], ["listen", "🎧", "Tinglab top"], ["read", "📖", "O'qish"], ["join", "🔗", "Yig'ish"], ["write", "✍️", "Yozish"]];
+  const FON_SIFAT = [
+    ["Tovush qanday chiqadi?", [["Portlovchi", "shidda", "cho'zib bo'lmaydi"], ["Oraliq", "bayniya", "biroz cho'ziladi"], ["Sirg'aluvchi", "rohova", "cho'ziladi"]]],
+    ["Jaranglimi?", [["Jarangli", "jahr", "tovush paychalari titraydi"], ["Jarangsiz", "hams", "nafas kaftga uriladi"]]],
+    ["Ingichkami, yo'g'onmi?", [["Ingichka", "iste'fola", "til pastda turadi"], ["Yo'g'on", "iste'lo", "til orqasi ko'tariladi"]]],
+    ["Ochiqmi, yopiqmi?", [["Ochiq", "infitoh", "til tanglaydan ajralgan"], ["Yopiq", "itboq", "til tanglayga yopishadi"]]],
+  ];
+  const FON_HARAKAT = [["اَ", "Fatha", "a", "ustidagi chiziqcha: «baland» = b‑l‑n‑d"], ["اِ", "Kasra", "i", "ostidagi chiziqcha: «bilim» = b‑l‑m"], ["اُ", "Zamma", "u", "ustidagi vergulcha: «bulut» = b‑l‑t"], ["اْ", "Sukun", "unlisiz", "doiracha: tovush yo'q, keyingi harfga o'tiladi"]];
+  const NOJOIN = "اأإآدذرزو";   // o'zidan keyingi harfga ulanmaydigan harflar
+  const fonFile = t => "audio/f_" + Array.from(t).map(c => c.codePointAt(0).toString(16)).join("") + ".mp3";
+  function fonPlay(t) { try { if (player) player.pause(); playSeq.id = (playSeq.id || 0) + 1; player = new Audio(fonFile(t)); player.play().catch(() => { /* ovozsiz davom */ }); } catch { /* */ } }
+  const fonGot = ch => ((S.fon || {})[ch] || []);
+  const fonStepsOf = h => FON_STEPS.filter(([k]) => (k === "sifat" ? h.sifat || h.harakat : k === "read" ? h.words.length : k === "join" ? h.join.length : true));
+  const fonComplete = h => fonStepsOf(h).every(([k]) => fonGot(h.char).includes(k));
+  const fonOpen = i => i < FON.harflar.length && (i === 0 || fonComplete(FON.harflar[i - 1]));
+
+  function renderFon() {
+    const box = $("#fon-sky"); if (!box) return;
+    const order = Array.from(FON.tartib), lit = FON.harflar.filter(fonComplete).length;
+    box.innerHTML = `<div class="fs-head"><b>Yulduzlar yo'li</b><span>${lit}/${order.length} yulduz yondi</span></div>
+      <p class="fs-note">Har bir harf — bitta yulduz. Harfni o'rganing — yulduz yonadi ✨</p>
+      <div class="fs-grid">${order.map((ch, i) => { const h = FON.harflar[i], st = !h ? "soon" : fonComplete(h) ? "done" : fonOpen(i) ? "open" : "locked";
+        return `<button class="fs-star ${st}" data-fi="${i}" aria-label="${h ? esc(h.name) + " harfi" : "tez orada"}"><span class="ar">${ch}</span><small>${st === "done" ? "★" : st === "open" ? "boshlash" : st === "locked" ? "🔒" : "•"}</small></button>`; }).join("")}</div>
+      <p class="fs-note">«Savodim» kitobi asosida · hozircha birinchi ${FON.harflar.length} ta harf ochiq</p>`;
+    $$("[data-fi]").forEach(b => (b.onclick = () => { const i = +b.dataset.fi, h = FON.harflar[i];
+      if (!h) return toast("✨ Bu yulduz tez orada ochiladi");
+      if (!fonOpen(i)) return toast(`🔒 Avval «${FON.harflar[i - 1].name}» harfi yulduzini yoqing`);
+      sfx("tap"); fonLetter(i); }));
+  }
+
+  let fonCur = null;   // { i, k } — ochiq harf va qadam
+  function closeFon() { if (player) player.pause(); fonCur = null; $("#fon").hidden = true; document.body.style.overflow = ""; renderFon(); }
+  function fonLetter(i, k) {
+    const h = FON.harflar[i], steps = fonStepsOf(h);
+    if (k == null) { k = steps.findIndex(([key]) => !fonGot(h.char).includes(key)); if (k < 0) k = 0; }
+    fonCur = { i, k }; $("#fon").hidden = false; document.body.style.overflow = "hidden"; syncBack();
+    const [key, ic, title] = steps[k];
+    $("#fon-in").innerHTML = `<div class="fn-top"><button class="fn-x" id="fn-x" aria-label="Yopish">✕</button><b>${esc(h.name)} harfi</b><span class="ar">${h.char}</span></div>
+      <div class="fn-steps">${steps.map(([sk, sic], j) => `<i class="${fonGot(h.char).includes(sk) ? "on" : ""} ${j === k ? "cur" : ""}">${sic}</i>`).join("")}</div>
+      <h3 class="fn-title">${ic} ${title}</h3><div id="fn-body"></div>
+      <button class="fn-next" id="fn-next" disabled>Davom etish →</button>`;
+    $("#fn-x").onclick = closeFon; $("#fon").scrollTop = 0;
+    const ok = () => { const b = $("#fn-next"); if (b && b.disabled) { b.disabled = false; sfx("ok"); } };
+    $("#fn-next").onclick = () => {
+      const was = fonComplete(h);
+      S.fon = S.fon || {}; const a = (S.fon[h.char] = S.fon[h.char] || []); if (!a.includes(key)) a.push(key);
+      saveResult(0, 0, "fon", []);
+      if (k + 1 < steps.length) return fonLetter(i, k + 1);
+      fonFinish(i, !was);
+    };
+    FON_STEP[key](h, $("#fn-body"), ok, i);
+  }
+  function fonFinish(i, fresh) {
+    const h = FON.harflar[i], next = FON.harflar[i + 1];
+    sfx("win");
+    $("#fon-in").innerHTML = `<div class="fn-done"><div class="fn-bigstar">★</div><div class="ar fn-bigletter">${h.char}</div>
+      <h3>${fresh ? "Yulduz yondi!" : "Yana bir bor mustahkamlandi!"}</h3><p>«${esc(h.name)}» harfini o'rgandingiz. Barakalla! 🌙</p>
+      ${next ? `<button class="fn-next" id="fn-go">Keyingi yulduz: ${esc(next.name)} →</button>` : `<p class="fs-note">Keyingi harflar tez orada qo'shiladi 🐪</p>`}
+      <button class="fn-ghost" id="fn-sky">Osmonga qaytish</button></div>`;
+    const go = $("#fn-go"); if (go) go.onclick = () => fonLetter(i + 1);
+    $("#fn-sky").onclick = closeFon;
+  }
+  // Qator-qator savol: har qatorda to'g'ri variant topilguncha urinish mumkin (jarima yo'q)
+  function fonRows(box, rows, ok) {
+    let left = rows.length;
+    box.insertAdjacentHTML("beforeend", rows.map((r, ri) => `<div class="fn-row" data-r="${ri}"><div class="fn-q">${r.q}</div><div class="fn-opts">${r.opts.map((o, oi) => `<button data-o="${oi}">${o}</button>`).join("")}</div></div>`).join(""));
+    box.querySelectorAll(".fn-row button").forEach(b => (b.onclick = () => {
+      const row = b.closest(".fn-row"), r = rows[+row.dataset.r]; if (row.classList.contains("ok")) return;
+      if (+b.dataset.o === r.correct) { b.classList.add("good"); row.classList.add("ok"); sfx("pop"); if (--left === 0) ok(); }
+      else { b.classList.add("bad"); sfx("bad"); setTimeout(() => b.classList.remove("bad"), 500); }
+    }));
+  }
+  const fonPrev = i => FON.harflar.slice(0, i).flatMap(x => [...x.syll, ...x.words]);
+  const FON_STEP = {
+    // 👋 Tanishuv: harf shakllari, maxraji, maslahat; uchala bo'g'inni tinglash kerak
+    meet(h, box, ok) {
+      const c = h.char, nj = NOJOIN.includes(c), Z = "\u200d";
+      const forms = [["Alohida", c], ["So'z boshida", nj ? c : c + Z], ["O'rtasida", nj ? Z + c : Z + c + Z], ["Oxirida", Z + c]];
+      box.innerHTML = `<div class="fn-letter ar">${c}</div>
+        <div class="fn-forms">${forms.map(([n, f]) => `<div><span class="ar">${f}</span><small>${n}</small></div>`).join("")}</div>
+        <div class="fn-card"><small>📍 Maxraji (chiqish joyi)</small><p>${esc(h.maxraj)}</p></div>
+        ${h.tip ? `<div class="fn-card tip"><small>💡 Maslahat</small><p>${esc(h.tip)}</p></div>` : ""}
+        ${h.harakat ? `<div class="fn-hk">${FON_HARAKAT.map(([s, n, v, d]) => `<div><span class="ar">${s}</span><b>${n} = ${v}</b><small>${d}</small></div>`).join("")}</div>` : ""}
+        <p class="fn-ask">🔊 Uchala tovushni bosib tinglang va takrorlang:</p>
+        <div class="fn-syll">${h.syll.map((s, j) => `<button class="ar" data-s="${j}">${s}</button>`).join("")}</div>`;
+      const heard = new Set();
+      box.querySelectorAll("[data-s]").forEach(b => (b.onclick = () => { fonPlay(h.syll[+b.dataset.s]); b.classList.add("on"); heard.add(b.dataset.s); if (heard.size === h.syll.length) ok(); }));
+    },
+    // 🧩 Sifatlar: avval yodlab olinadi, keyin tekshiriladi (markaz talabi: bolalar ham yodlaydi). Alifda — harakatlar
+    sifat(h, box, ok) {
+      if (h.harakat) {
+        box.innerHTML = `<p class="fn-ask">Har bir belgi qaysi tovushni beradi?</p>`;
+        return fonRows(box, shuffle(FON_HARAKAT.map(([s, n, v]) => ({ q: `<span class="ar big">${s}</span>`, opts: ["a", "i", "u", "unlisiz"], correct: ["a", "i", "u", "unlisiz"].indexOf(v) }))), ok);
+      }
+      const table = quiz => FON_SIFAT.map(([q, opts], r) => `<div class="fn-srow"><small>${q}</small><div>${opts.map(([uz, ar, d], o) => `<span class="${!quiz && o === h.sifat[r] ? "on" : ""}"><b>${uz}</b><i>${ar}</i>${!quiz && o === h.sifat[r] ? `<em>${d}</em>` : ""}</span>`).join("")}</div></div>`).join("");
+      box.innerHTML = `<p class="fn-ask">«${esc(h.name)}» harfining sifatlari. Yodlab oling:</p><div class="fn-stable">${table(false)}</div>
+        ${h.special ? `<div class="fn-card tip"><small>⭐ O'ziga xos sifati</small><p>${esc(h.special)}</p></div>` : ""}
+        <button class="fn-ghost" id="fn-quiz">Yodladim, tekshirib ko'r →</button>`;
+      $("#fn-quiz").onclick = () => {
+        box.innerHTML = `<p class="fn-ask">«${esc(h.name)}» harfi qanday? Har qatordan to'g'risini tanlang:</p>`;
+        fonRows(box, FON_SIFAT.map(([q, opts], r) => ({ q, opts: opts.map(([uz, ar]) => `${uz}<i>${ar}</i>`), correct: h.sifat[r] })), ok);
+      };
+    },
+    // 🎧 Tinglab top: ovoz eshitiladi, to'g'ri yozuv tanlanadi
+    listen(h, box, ok, i) {
+      const pool = [...h.syll, ...h.words], other = fonPrev(i), n = Math.max(4, Math.min(6, pool.length));
+      const targets = [...shuffle(pool), ...shuffle(pool)].slice(0, n);
+      let r = 0;
+      const round = () => {
+        if (r >= n) { box.innerHTML = `<p class="fn-ask">🎉 Hammasini to'g'ri eshitdingiz!</p>`; return ok(); }
+        const t = targets[r], opts = shuffle([t, ...shuffle([...new Set([...pool, ...other])].filter(x => x !== t)).slice(0, 2)]);
+        box.innerHTML = `<p class="fn-ask">Tinglang va eshitganingizni toping (${r + 1}/${n})</p>
+          <button class="fn-play" id="fn-play" aria-label="Qayta tinglash">🔊</button>
+          <div class="fn-choice">${opts.map(o => `<button class="ar" data-v="${o}">${o}</button>`).join("")}</div>`;
+        $("#fn-play").onclick = () => fonPlay(t);
+        box.querySelectorAll("[data-v]").forEach(b => (b.onclick = () => {
+          if (b.dataset.v === t) { b.classList.add("good"); sfx("pop"); r++; setTimeout(round, 550); }
+          else { b.classList.add("bad"); sfx("bad"); setTimeout(() => { b.classList.remove("bad"); fonPlay(t); }, 500); }
+        }));
+        setTimeout(() => fonPlay(t), 250);
+      };
+      round();
+    },
+    // 📖 O'qish: avval o'zi o'qiydi, keyin bosib tekshiradi
+    read(h, box, ok) {
+      box.innerHTML = `<p class="fn-ask">Avval o'zingiz o'qing, keyin bosib tekshiring:</p><div class="fn-words">${h.words.map((w, j) => `<button class="ar" data-w="${j}">${w}</button>`).join("")}</div>`;
+      const seen = new Set();
+      box.querySelectorAll("[data-w]").forEach(b => (b.onclick = () => { fonPlay(h.words[+b.dataset.w]); b.classList.add("on"); seen.add(b.dataset.w); if (seen.size === h.words.length) ok(); }));
+    },
+    // 🔗 Yig'ish: ajratilgan harflar qo'shilsa, qaysi so'z chiqadi
+    join(h, box, ok, i) {
+      const items = h.join, all = [...new Set([...items.map(p => p.join("")), ...h.words, ...h.syll, ...fonPrev(i)])];
+      let r = 0;
+      const round = () => {
+        if (r >= items.length) { box.innerHTML = `<p class="fn-ask">🎉 Barakalla, hammasini yig'dingiz!</p>`; return ok(); }
+        const parts = items[r], t = parts.join(""), opts = shuffle([t, ...shuffle(all.filter(x => x !== t)).slice(0, 2)]);
+        box.innerHTML = `<p class="fn-ask">Harflar qo'shilsa, qaysi so'z chiqadi? (${r + 1}/${items.length})</p>
+          <div class="fn-parts ar">${parts.map(x => `<span>${x}</span>`).join("<i>+</i>")}</div>
+          <div class="fn-choice">${opts.map(o => `<button class="ar" data-v="${o}">${o}</button>`).join("")}</div>`;
+        box.querySelectorAll("[data-v]").forEach(b => (b.onclick = () => {
+          if (b.dataset.v === t) { b.classList.add("good"); fonPlay(t); r++; setTimeout(round, 900); }
+          else { b.classList.add("bad"); sfx("bad"); setTimeout(() => b.classList.remove("bad"), 500); }
+        }));
+      };
+      round();
+    },
+    // ✍️ Yozish: xira harf ustidan barmoq bilan chiziladi
+    write(h, box, ok) {
+      box.innerHTML = `<p class="fn-ask">Barmog'ingiz bilan harf ustidan yozing:</p><canvas class="fn-cv" id="fn-cv" width="600" height="600"></canvas>
+        <button class="fn-ghost" id="fn-clear">🧽 Tozalash</button>`;
+      const cv = $("#fn-cv"), c = cv.getContext("2d");
+      let len = 0, last = null;
+      const base = () => { c.clearRect(0, 0, 600, 600); c.fillStyle = "rgba(243,217,139,.2)"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = '400px "Amiri", serif'; c.fillText(h.char, 300, 290); len = 0; };
+      const pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * 600 / r.width, y: (e.clientY - r.top) * 600 / r.height }; };
+      cv.onpointerdown = e => { try { cv.setPointerCapture(e.pointerId); } catch { /* */ } last = pos(e); };
+      cv.onpointermove = e => { if (!last) return; const p = pos(e); c.strokeStyle = "#F3D98B"; c.lineWidth = 22; c.lineCap = "round"; c.beginPath(); c.moveTo(last.x, last.y); c.lineTo(p.x, p.y); c.stroke(); len += Math.hypot(p.x - last.x, p.y - last.y); last = p; if (len > 260) ok(); };
+      cv.onpointerup = cv.onpointercancel = () => (last = null);
+      $("#fn-clear").onclick = base;
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(base);
+    },
+  };
 
   // ---------- Ishga tushirish ----------
   const m = location.hash.match(/ustoz=([0-9a-f]{20,})/i);
