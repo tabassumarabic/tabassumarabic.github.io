@@ -2152,6 +2152,16 @@
     if (expired) toast(ERRORS.AUTH);
   }
 
+  // ---------- Darslar: ikki bo'lim (ustoz, 2026-10-12) ----------
+  // «Darslar»ning tepasida quyosh (Grammatika — hozirgi darslar xaritasi) va oy (Fonetika — alohida, yangicha uslubda; tayyorlanmoqda).
+  // Missiya, duel va reyting Fonetikaga qo'shilmaydi. Tanlov «tb_course» da eslab qolinadi.
+  function setCourse(c) {
+    $$("[data-course]").forEach(b => b.setAttribute("aria-pressed", b.dataset.course === c));
+    $("#course-gram").hidden = c !== "gram"; $("#course-fon").hidden = c !== "fon";
+  }
+  $$("[data-course]").forEach(b => (b.onclick = () => { sfx("tap"); store.set("tb_course", b.dataset.course); setCourse(b.dataset.course); }));
+  setCourse(store.get("tb_course") === "fon" ? "fon" : "gram");
+
   // Telefonda ilova yopilmay, kunlab ochiq turadi. Qaytib kirilganda sana, XP va ustoz ochgan darslar yangilanadi
   // (aks holda ertasi kuni ham «bugungi missiya bajarildi» deb turadi va olov yonmaydi). O'quv holati (S) ga tegilmaydi.
   let meAt = 0;

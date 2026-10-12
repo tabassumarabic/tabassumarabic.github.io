@@ -755,6 +755,39 @@
   [data-style="sahro"] .lesson.done .node { background: var(--good-soft); color: var(--good); border-color: #bcd6a6; }
 
 
+  /* ---------- Darslar: ikki bo'lim — quyosh = Grammatika, oy = Fonetika (Mundil.uz: to'q yashil + to'q oltin; ustoz, 2026-10-12) ---------- */
+  .sky { position: relative; border-radius: 22px; overflow: hidden; background: radial-gradient(circle at 12% 14%, #F3D98B 0 1.2px, transparent 1.8px), radial-gradient(circle at 88% 9%, #F3D98B 0 1.4px, transparent 2px), radial-gradient(circle at 50% 6%, #F3D98B 0 1px, transparent 1.6px), radial-gradient(circle at 30% 30%, #F3D98B 0 .9px, transparent 1.5px), radial-gradient(circle at 70% 36%, #F3D98B 0 1px, transparent 1.6px), radial-gradient(circle at 94% 44%, #F3D98B 0 1px, transparent 1.6px), radial-gradient(circle at 6% 50%, #F3D98B 0 1px, transparent 1.6px), linear-gradient(#03120D, #06281F 40%, #0B3D2E 68%, #1F5A40 86%, #5E6A2E); margin: 4px 0 14px; box-shadow: 0 6px 0 rgba(4,20,15,.35), 0 14px 26px rgba(4,20,15,.25); font-family: "Nunito", sans-serif; }
+  .sky-scene { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; aspect-ratio: 400 / 150; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%); mask-image: linear-gradient(to bottom, transparent, #000 22%); }
+  .sky-in { position: relative; z-index: 1; padding: 14px 12px calc(37.5% - 14px); }
+  .sky-brand { text-align: center; font-family: "Lora", Georgia, serif; font-weight: 700; font-size: 22px; line-height: 1; margin-bottom: 16px;
+    background: linear-gradient(180deg, #F3D98B, #D4A63A 55%, #A87B1F); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sky-brand i { font-style: normal; font-size: .64em; }
+  .sky-orbs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; max-width: 380px; margin: 0 auto; }
+  .orb { background: none; border: 0; padding: 0; display: grid; justify-items: center; gap: 0; color: #F6EBCB; cursor: pointer; text-align: center; font: inherit; opacity: .62; transition: opacity .2s, transform .2s; transform: scale(.9); }
+  .orb[aria-pressed="true"] { opacity: 1; transform: scale(1); }
+  .orb .disc { position: relative; width: min(29vw, 112px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; transition: transform .14s; margin-bottom: 9px; }
+  .orb:active .disc { transform: scale(.94); }
+  .orb .disc b { position: relative; z-index: 2; font-size: clamp(13px, 4.3vw, 18px); font-weight: 900; letter-spacing: -.01em; color: #0B3D2E; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+  .orb.moon .disc { background: radial-gradient(circle at 34% 30%, #FFFDF0 0%, #F1E7C1 46%, #CFC08A 78%, #A99A62 100%); box-shadow: 0 0 0 5px rgba(255,248,214,.07), 0 0 34px 6px rgba(255,244,200,.32), inset -13px -10px 0 rgba(6,40,31,.20); }
+  .orb.moon[aria-pressed="true"] .disc { animation: sky-float 7s ease-in-out infinite; }
+  .orb.moon .disc::before { content: ""; position: absolute; inset: 0; border-radius: 50%; opacity: .5;
+    background: radial-gradient(circle at 24% 66%, rgba(120,104,52,.55) 0 7%, transparent 8%), radial-gradient(circle at 70% 22%, rgba(120,104,52,.5) 0 5%, transparent 6%), radial-gradient(circle at 76% 72%, rgba(120,104,52,.45) 0 9%, transparent 10%), radial-gradient(circle at 40% 16%, rgba(120,104,52,.4) 0 3.5%, transparent 4.5%); }
+  .orb.sun .disc { background: radial-gradient(circle at 40% 34%, #FFF6C9 0%, #F5CF62 40%, #D4A63A 72%, #A87B1F 100%); box-shadow: 0 0 0 5px rgba(240,194,75,.10), 0 0 44px 10px rgba(240,194,75,.46), inset -8px -8px 0 rgba(120,80,10,.16); }
+  .orb.sun .disc::before { content: ""; position: absolute; inset: -22%; border-radius: 50%; z-index: -1; animation: sky-spin 50s linear infinite;
+    background: repeating-conic-gradient(from 0deg, rgba(240,194,75,.55) 0 7deg, transparent 7deg 22.5deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 55%, #000 57%, #000 66%, transparent 86%); mask-image: radial-gradient(circle, transparent 55%, #000 57%, #000 66%, transparent 86%); }
+  .orb .ar { font-family: var(--f-ar, "Amiri", serif); font-size: 20px; line-height: 1.4; color: #E7C566; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+  .orb small { display: none; }
+  @keyframes sky-float { 50% { transform: translateY(-5px); } }
+  @keyframes sky-spin { to { transform: rotate(360deg); } }
+  .sky-camels { animation: sky-walk 60s linear infinite alternate; } @keyframes sky-walk { from { transform: translateX(14px); } to { transform: translateX(-22px); } }
+  .sky-star { animation: sky-tw 3.2s ease-in-out infinite; } .sky-star:nth-child(2n) { animation-delay: 1.1s; } .sky-star:nth-child(3n) { animation-delay: 2s; }
+  @keyframes sky-tw { 50% { opacity: .2; } }
+  /* Fonetika bo'limi (tungi uslub) — mazmuni keyin qo'shiladi */
+  .fon-soon { background: linear-gradient(170deg, #0B3D2E, #06281F); color: #F6EBCB; border-radius: 20px; padding: 22px 18px; text-align: center; box-shadow: 0 5px 0 rgba(4,20,15,.3); font-family: "Nunito", sans-serif; }
+  .fon-soon .big { font-size: 40px; line-height: 1; } .fon-soon h3 { margin: 8px 0 6px; font-family: "Lora", Georgia, serif; font-size: 20px; color: #E7C566; }
+  .fon-soon p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; color: #E4DBBE; } .fon-soon b { color: #F3D98B; }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -827,8 +860,53 @@
   </section>
 
   <section id="screen-lessons" hidden>
-    <div class="section-title" style="margin-top:4px"><h3>🧭 Darajalar xaritasi</h3><span>المنهج العالمي · CEFR</span></div>
-    <div class="lvmap" id="lvmap"></div>
+    <!-- Ikki bo'lim: quyosh = Grammatika (hozirgi darslar), oy = Fonetika -->
+    <div class="sky">
+      <svg class="sky-scene" viewBox="0 584 400 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="hb-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#03120D"/><stop offset=".3" stop-color="#06281F"/><stop offset=".55" stop-color="#0B3D2E"/><stop offset=".7" stop-color="#1F5A40"/><stop offset=".78" stop-color="#6E6A2C"/><stop offset=".84" stop-color="#C79A36"/></linearGradient>
+      <radialGradient id="hb-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#F3D98B" stop-opacity=".55"/><stop offset=".5" stop-color="#D4A63A" stop-opacity=".22"/><stop offset="1" stop-color="#D4A63A" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hb-far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8E7426"/><stop offset="1" stop-color="#6B5519"/></linearGradient>
+      <linearGradient id="hb-d1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#CFA23B"/><stop offset=".55" stop-color="#9C7422"/><stop offset="1" stop-color="#5E4413"/></linearGradient>
+      <linearGradient id="hb-d2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0B549"/><stop offset=".5" stop-color="#B0842A"/><stop offset="1" stop-color="#5A4012"/></linearGradient>
+      <linearGradient id="hb-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9A7424"/><stop offset=".45" stop-color="#5E4413"/><stop offset="1" stop-color="#1C1406"/></linearGradient>
+      <linearGradient id="hb-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1A1204" stop-opacity=".6"/><stop offset="1" stop-color="#1A1204" stop-opacity="0"/></linearGradient>
+      <symbol id="hb-camel" viewBox="0 0 100 80"><path d="M18 42C20 37 24 35 28 34 31 22 37 13 45 13 53 13 57 22 59 32 63 37 70 40 76 38 79 34 80 26 84 18 86 14 92 14 95 18L96 22C93 24 90 24 87 24 84 30 82 40 76 48 72 52 68 53 66 54L66 78 63 78 62 56 59 56 58 78 55 78 54 55 37 55 36 78 33 78 32 55 29 55 28 78 25 78 24 54C20 52 18 48 18 40Z"/><path d="M18 40C14 44 13 50 14 56L16 56C16 50 17 46 19 43Z"/></symbol>
+      <symbol id="hb-palm" viewBox="0 0 60 90"><path d="M29 88C30 70 31 50 30 30L33 30C35 50 34 70 33 88Z"/><path d="M31 30C22 18 10 16 2 22 12 20 20 24 28 32ZM31 30C40 18 52 16 58 22 48 20 40 24 33 32ZM31 30C28 16 20 6 10 4 18 10 24 18 29 31ZM31 30C34 16 42 6 52 4 44 10 38 18 33 31ZM31 30C24 26 12 30 6 40 14 32 22 30 29 32ZM31 30C38 26 50 30 56 40 48 32 40 30 33 32Z"/></symbol>
+    </defs>
+    <rect width="400" height="800" fill="url(#hb-sky)"/>
+    
+    <ellipse cx="200" cy="640" rx="260" ry="110" fill="url(#hb-glow)"/>
+    <path d="M0 612C50 592 96 598 140 588S230 566 276 582 356 604 400 594V800H0Z" fill="url(#hb-far)" opacity=".85"/>
+    <path d="M0 650C40 626 92 616 150 634 196 648 232 674 290 660 330 650 366 628 400 636V800H0Z" fill="url(#hb-d1)"/>
+    <path d="M150 634C196 648 232 674 290 660 256 682 222 716 196 800H100C122 730 140 676 150 634Z" fill="url(#hb-shade)"/>
+    <g class="sky-camels" fill="#04160F">
+      <path d="M152 618a3.6 3.6 0 1 1 .1 0zM149 622h6l2 14-3 1v19h-2.4v-17h-1v17H148v-19l-2-1z"/>
+      <use href="#hb-camel" x="166" y="607" width="52" height="42"/><use href="#hb-camel" x="222" y="615" width="46" height="37"/><use href="#hb-camel" x="272" y="623" width="41" height="33"/><use href="#hb-camel" x="318" y="627" width="36" height="29"/>
+      <path d="M157 627l14 5M216 634l9 6M266 640l8 5M312 645l8 2" stroke="#04160F" stroke-width="1" fill="none"/>
+    </g>
+    <path d="M0 712C60 680 120 676 176 694 226 710 262 736 320 722 352 714 380 700 400 704V800H0Z" fill="url(#hb-d2)"/>
+    <path d="M176 694C226 710 262 736 320 722 290 742 262 770 244 800H130C150 760 166 722 176 694Z" fill="url(#hb-shade)" opacity=".8"/>
+    <g fill="none" stroke="#F3D98B" stroke-opacity=".2" stroke-width="1.2"><path d="M10 728q60-26 130-16"/><path d="M4 750q70-30 150-14"/><path d="M300 744q50-10 96-24"/></g>
+    <g fill="#03110C"><use href="#hb-palm" x="-10" y="640" width="92" height="138"/><use href="#hb-palm" x="42" y="676" width="62" height="94"/><use href="#hb-palm" x="338" y="680" width="68" height="102"/></g>
+    <path d="M0 772C70 750 150 760 210 774 270 788 330 780 400 762V800H0Z" fill="url(#hb-d3)"/>
+  </svg>
+      <div class="sky-in">
+        <div class="sky-brand">Mundil<i>.uz</i></div>
+        <div class="sky-orbs" role="group" aria-label="Bo'limni tanlang">
+          <button class="orb sun" data-course="gram" aria-pressed="true"><span class="disc"><b>Grammatika</b></span><span class="ar">الْقَوَاعِدُ</span><small>Darslar xaritasi</small></button>
+          <button class="orb moon" data-course="fon" aria-pressed="false"><span class="disc"><b>Fonetika</b></span><span class="ar">الْأَصْوَاتُ</span><small>Harflar va talaffuz</small></button>
+        </div>
+      </div>
+    </div>
+    <div id="course-gram">
+      <div class="section-title" style="margin-top:4px"><h3>🧭 Darajalar xaritasi</h3><span>المنهج العالمي · CEFR</span></div>
+      <div class="lvmap" id="lvmap"></div>
+    </div>
+    <div id="course-fon" hidden>
+      <div class="fon-soon"><div class="big">🌙</div><h3>Fonetika</h3>
+        <p>Harflarning maxraji, to'g'ri talaffuz va o'xshash tovushlarni farqlash.</p><p><b>Bu bo'lim tayyorlanmoqda — tez orada ochiladi 🐪</b></p></div>
+    </div>
   </section>
 
   <!-- REYTING -->
@@ -1016,8 +1094,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=d72efa4878"></script>
-<script src="avatar.js?v=d72efa4878"></script>
-<script src="app.js?v=d72efa4878"></script>
+<script src="data.js?v=ab39f1799d"></script>
+<script src="avatar.js?v=ab39f1799d"></script>
+<script src="app.js?v=ab39f1799d"></script>
 </body>
 </html>
