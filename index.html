@@ -101,11 +101,11 @@
   .bar i { display: block; height: 100%; background: var(--gold); border-radius: 5px; }
 
   .section-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 24px 2px 10px; }
-  .section-title h3 { margin: 0; font-family: var(--f-display); font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .section-title h3 { margin: 0; font-family: var(--f-display); font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex: none; }
   .section-title h3::before { content: ""; width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); flex: none; }
   .section-title span { color: var(--muted); font-size: 13px; text-align: right; }
 
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tiles { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
   .tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px; box-shadow: var(--shadow); display: grid; gap: 10px; align-content: start; }
   .tile .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; }
   .tile .ic svg { width: 22px; height: 22px; }
@@ -312,7 +312,7 @@
   .w-in.bad { border-color: var(--bad); background: var(--bad-soft); }
   .akb { display: grid; gap: 6px; direction: rtl; background: var(--surface-2); border-radius: 14px; padding: 8px 4px; }
   .akb-row { display: flex; gap: 4px; justify-content: center; }
-  .akb-k { flex: 1; max-width: 34px; height: 44px; border-radius: 8px; background: var(--surface); font-family: var(--f-ar); font-size: 20px; font-weight: 700; box-shadow: 0 2px 0 var(--line); }
+  .akb-k { flex: 1; min-width: 0; padding: 0; max-width: 34px; height: 44px; border-radius: 8px; background: var(--surface); font-family: var(--f-ar); font-size: 20px; font-weight: 700; box-shadow: 0 2px 0 var(--line); }
   .akb-k:active { transform: translateY(1px); box-shadow: none; }
   .akb-k.wide { max-width: none; flex: 4; font-family: inherit; font-size: 13px; color: var(--muted); }
   #kb-sw { justify-self: center; font-size: 13.5px; }
@@ -1016,8 +1016,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=8b769788b3"></script>
-<script src="avatar.js?v=8b769788b3"></script>
-<script src="app.js?v=8b769788b3"></script>
+<script src="data.js?v=d72efa4878"></script>
+<script src="avatar.js?v=d72efa4878"></script>
+<script src="app.js?v=d72efa4878"></script>
 </body>
 </html>

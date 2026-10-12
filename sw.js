@@ -30,7 +30,14 @@ self.addEventListener("fetch", e => {
     const hit = await caches.match(req);
     if (hit) return hit;
     const res = await fetch(req);
-    if (res.ok && (url.origin === location.origin || url.hostname.includes("fonts.g"))) (await caches.open(CACHE)).put(req, res.clone());
+    if (res.ok && (url.origin === location.origin || url.hostname.includes("fonts.g"))) {
+      const cache = await caches.open(CACHE);
+      // Yangi versiya (?v=…) keshga tushganda shu faylning eski versiyalari o'chiriladi — telefon xotirasi to'lib ketmasin
+      if (url.search && url.origin === location.origin) {
+        for (const k of await cache.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) cache.delete(k); }
+      }
+      cache.put(req, res.clone());
+    }
     return res;
   })());
 });

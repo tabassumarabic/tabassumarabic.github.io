@@ -114,16 +114,25 @@
 
   // Natija saqlanmay qolsa (internet yo'q), navbatga qo'yiladi va keyin yuboriladi
   const pending = () => { try { return JSON.parse(store.get(K_PENDING) || "[]"); } catch { return []; } };
+  // Server rad etgan so'rov (kodi KATTA_HARFLAR bilan keladi) qayta yuborilsa ham o'tmaydi — navbatga faqat aloqa xatolari qo'yiladi
+  const rejected = e => /^[A-Z_]+$/.test(e.message) && e.message !== "NET";
+  // Xatolar ro'yxati cheksiz o'smasin (holat serverga har safar to'liq yuboriladi): eng eskilari tushib qoladi
+  const MISTAKES_MAX = 150;
+  function trimMistakes(max = MISTAKES_MAX) { const ks = Object.keys(S.mistakes); ks.slice(0, Math.max(0, ks.length - max)).forEach(k => delete S.mistakes[k]); }
+  const sendResult = it => rpc("save_result", { p_token: TOKEN, p_state: S, p_practice: it.practice, p_bonus: it.bonus, p_kind: it.kind, p_answers: it.answers });
   async function saveResult(practice, bonus, kind, answers) {
     const item = { practice, bonus, kind, answers };
     try {
-      const r = await rpc("save_result", { p_token: TOKEN, p_state: S, p_practice: practice, p_bonus: bonus, p_kind: kind, p_answers: answers });
+      let r;
+      try { r = await sendResult(item); }
+      catch (e) { if (e.message !== "STATE_TOO_BIG") throw e; trimMistakes(40); r = await sendResult(item); }   // holat kattalashib ketgan: ixchamlab, yana bir urinamiz
       ME.xp = r.xp; ME.practice_today = r.practice_today;
       store.set(K_CACHE, JSON.stringify({ ME, S }));
       flushPending();
       return r;
     } catch (e) {
-      if (e.message === "AUTH") return logout(true);
+      if (e.message === "AUTH") { logout(true); return { granted: 0, bonus: 0 }; }
+      if (rejected(e)) return { granted: 0, bonus: 0, failed: true };
       const q = pending(); q.push(item); store.set(K_PENDING, JSON.stringify(q.slice(-20)));
       store.set(K_CACHE, JSON.stringify({ ME, S }));
       return { granted: practice, bonus, offline: true };
@@ -132,16 +141,20 @@
   async function flushPending() {
     const q = pending(); if (!q.length) return;
     store.set(K_PENDING, "[]");
-    for (const it of q) {
-      try { const r = await rpc("save_result", { p_token: TOKEN, p_state: S, p_practice: it.practice, p_bonus: it.bonus, p_kind: it.kind, p_answers: it.answers }); ME.xp = r.xp; }
-      catch { const left = pending(); left.push(it); store.set(K_PENDING, JSON.stringify(left)); break; }
+    for (let i = 0; i < q.length; i++) {
+      try { const r = await sendResult(q[i]); ME.xp = r.xp; }
+      catch (e) {
+        if (rejected(e) && e.message !== "AUTH") continue;   // bu yozuv hech qachon o'tmaydi — navbatni to'sib turmasin
+        store.set(K_PENDING, JSON.stringify([...q.slice(i), ...pending()].slice(-20))); break;
+      }
     }
+    if (ME) store.set(K_CACHE, JSON.stringify({ ME, S }));
   }
 
   // ---------- Ovoz ----------
   let player = null;
   function play(text) {
-    const file = D.audio[text];
+    const file = D.audio[text] || D.audio["F|" + text];   // suhbat javoblari faqat ayol ovozida yozilgan
     if (!file) return;
     playSeq.id = (playSeq.id || 0) + 1;   // ketma-ket o'qish ketayotgan bo'lsa, to'xtaydi
     try { if (player) player.pause(); player = new Audio("audio/" + file); player.play().catch(() => toast("🔊 Ovozni yoqish uchun ekranga bir marta bosing")); } catch { /* ovozsiz davom */ }
@@ -225,23 +238,25 @@
     if (names.length < 3) names = names.concat(shuffle(letters.filter(l => !names.includes(l[field]) && l.char !== ch).map(l => l[field])).slice(0, 3 - names.length));
     return names;
   }
+  // Butun alifbo (har harf bir marta): darsda 3 ta harf bo'lsa ham, savolda 4 ta variant chiqishi uchun
+  const ALPHABET = [...new Map(D.lessons.flatMap(l => l.letters || []).map(l => [l.char, l])).values()];
   const sameKind = (w, words) => words.filter(x => (x.pos || "") === (w.pos || ""));
   const Q = (maker, skill, topic, text, [opts, correct], extra = {}) => ({ key: `${maker}:${topic}`, skill, topic, text, options: opts, correct, ...extra });
 
   const M = {
     ar2uz: d => { const w = pick(d.words); return Q("ar2uz", "reading", w.ar, `<b>${w.ar}</b>\n\nBu so'z nima degani?`, options(w.uz, sameKind(w, d.words).map(x => x.uz)), { hint: `${w.ar}: ${w.uz}`, audio: w.ar }); },
     uz2ar: d => { const w = pick(d.words); return Q("uz2ar", "reading", w.ar, `<b>«${cap(w.uz)}»</b> arabchada qanday bo'ladi?`, options(w.ar, sameKind(w, d.words).map(x => x.ar))); },
-    letter: d => { const l = pick(d.letters); return Q("letter", "reading", l.char, `<b>${l.char}</b>\n\nBu harfning nomi nima?`, options(l.name, [...similarPool(l.char, d.letters), l.name])); },
+    letter: d => { const l = pick(d.letters); return Q("letter", "reading", l.char, `<b>${l.char}</b>\n\nBu harfning nomi nima?`, options(l.name, [...similarPool(l.char, ALPHABET), l.name])); },
     phrase: d => { const p = pick(d.phrases); return Q("phrase", "reading", p.ar, `<b>${p.ar}</b>\n\nBu ibora nima degani?`, options(p.uz, d.phrases.map(x => x.uz))); },
     shown: d => { const s = pick(d.shown); const same = d.shown.filter(x => x.kind === s.kind); return Q("shown", "reading", s.ar, SHOWN[s.kind][0].replace("{s}", s.shown), options(s.ar, same.map(x => x.ar))); },
     dialog: d => { const x = pick(d.dialogs); return Q("dialog", "grammar", x.say, `Sizga <b>«${x.say}»</b> deyishdi.\n\nQanday javob berasiz?`, options(x.reply, d.dialogs.map(y => y.reply))); },
-    first: d => { const w = pick(d.words.filter(x => x.letter)); return Q("first", "grammar", w.ar, `<b>«${cap(w.uz)}»</b> arabchada qaysi harf bilan boshlanadi?`, options(w.letter, d.letters.map(l => l.char)), { hint: `${cap(w.uz)}: ${w.ar}` }); },
+    first: d => { const w = pick(d.words.filter(x => x.letter)); return Q("first", "grammar", w.ar, `<b>«${cap(w.uz)}»</b> arabchada qaysi harf bilan boshlanadi?`, options(w.letter, [...d.letters.map(l => l.char), ...similarPool(w.letter, ALPHABET, "char")]), { hint: `${cap(w.uz)}: ${w.ar}` }); },
     demo: d => { const x = pick(d.demonstratives); return Q("demo", "grammar", x.word, `Bo'sh joyga nima qo'yiladi?\n\n<b>...... ${x.word}</b>`, [DEMO, x.fem ? 1 : 0], { hint: "هَذَا: muzakkar (erkak jinsi), هَذِهِ: muannas (ayol jinsi, ko'pincha ة bilan tugaydi)" }); },
     wh: d => { const x = pick(d.wh); return Q("wh", "grammar", x.answer, `Javob: <b>«${x.answer}»</b>\n\nSavol qanday bo'lgan?`, [WH, WH.indexOf(x.question)], { hint: "مَنْ: odam uchun, مَا: narsa va hayvon uchun" }); },
     fill: d => { const x = pick(d.fills); return Q("fill", "grammar", x.topic || x.a, x.q, options(x.a, [...x.opts, x.a]), x.hint ? { hint: x.hint } : {}); },
     l_word: d => { const w = pick(d.words); return Q("l_word", "listening", w.ar, "🎧 Eshiting. Qaysi so'z aytildi?", options(w.ar, sameKind(w, d.words).map(x => x.ar)), { audio: w.ar, hint: `${w.ar}: ${w.uz}` }); },
     l_mean: d => { const w = pick(d.words); return Q("l_mean", "listening", w.ar, "🎧 Eshiting. Bu so'z nima degani?", options(w.uz, sameKind(w, d.words).map(x => x.uz)), { audio: w.ar, hint: `${w.ar}: ${w.uz}` }); },
-    l_letter: d => { const l = pick(d.letters); return Q("l_letter", "listening", l.char, "🎧 Eshiting. Qaysi harf aytildi?", options(l.char, [...similarPool(l.char, d.letters, "char"), l.char]), { audio: l.name, hint: `${l.char}: ${l.name}` }); },
+    l_letter: d => { const l = pick(d.letters); return Q("l_letter", "listening", l.char, "🎧 Eshiting. Qaysi harf aytildi?", options(l.char, [...similarPool(l.char, ALPHABET, "char"), l.char]), { audio: l.name, hint: `${l.char}: ${l.name}` }); },
     l_dialog: d => { const x = pick(d.dialogs); return Q("l_dialog", "listening", x.say, "🎧 Suhbatdoshingiz gapini eshiting.\n\nUnga qaysi <b>javob</b> mos keladi?", options(x.reply, d.dialogs.map(y => y.reply)), { audio: x.say, hint: `Aytilgani: ${x.say}` }); },
     l_shown: d => { const s = pick(d.shown); const same = d.shown.filter(x => x.kind === s.kind); return Q("l_shown", "listening", s.ar, SHOWN[s.kind][1], options(s.shown, same.map(x => x.shown)), { audio: s.ar, hint: `${s.shown}: ${s.ar}` }); },
 
@@ -436,9 +451,11 @@
     return { ...q, options: opts, correct: opts.indexOf(right) };
   }
 
-  // Savol matni: arabcha qatorlar katta harf bilan
+  // Savol matni: arabcha qatorlar katta harf bilan.
+  // Duel savollari boshqa o'quvchining telefonidan keladi, shuning uchun matndagi <b> dan boshqa hamma narsa oddiy yozuvga aylantiriladi
+  const safeText = s => esc(s).replace(/&lt;(\/?)b&gt;/g, "<$1b>");
   function promptHtml(text) {
-    return text.split("\n").filter(l => l.trim()).map(line => {
+    return safeText(text).split("\n").filter(l => l.trim()).map(line => {
       const plain = line.replace(/<[^>]+>/g, "");
       const ar = (plain.match(/[؀-ۿ]/g) || []).length, lat = (plain.match(/[A-Za-z]/g) || []).length;
       // Aralash qator (o'zbekcha gap ichida arabcha ibora): o'zbekcha chapdan o'ngga, arabcha qismi alohida o'ngdan chapga
@@ -467,6 +484,7 @@
     run = { kind, qs, i: 0, right: 0, fast: 0, fixed: 0, practice: 0, answers: [], bySkill: {}, timeUsed: 0, ...CFG[kind], ...extra };
     $("#quiz").hidden = false;
     document.body.style.overflow = "hidden";
+    syncBack();
     showQ();
   }
 
@@ -475,6 +493,8 @@
     if (player) player.pause();
     run = null; $("#quiz").hidden = true; document.body.style.overflow = "";
     render();
+    refreshMe();
+    syncBack();
   }
 
   // 🎧 Tinglash qismi: avval suhbat to'liq eshittiriladi, keyin savollar
@@ -520,7 +540,7 @@
         <button class="btn btn-soft" data-passage>🔊 Matnni tinglash</button></details>` : ""}
       ${q.dialog ? `<div class="dlg-box"><button class="listen big-listen" data-dialog aria-label="Suhbatni tinglash">▶</button>
         <div><b>🎧 Suhbatni tinglang</b><small id="dlg-st">${q.dialog.length} ta gap · istalgancha qayta tinglash mumkin</small></div></div>` : ""}
-      <div class="q-card">${q.ins ? `<div class="q-ins"><div class="ar">${q.ins[0]}</div><small>${q.ins[1]}</small></div>` : ""}${q.skill === "listening" && !q.dialog ? listenBtn : ""}${promptHtml(q.text)}${q.skill !== "listening" ? listenBtn : ""}</div>
+      <div class="q-card">${q.ins ? `<div class="q-ins"><div class="ar">${esc(q.ins[0])}</div><small>${esc(q.ins[1])}</small></div>` : ""}${q.skill === "listening" && !q.dialog ? listenBtn : ""}${promptHtml(q.text)}${q.skill !== "listening" ? listenBtn : ""}</div>
       ${q.type === "order" || q.type === "spell" ? `${q.type === "spell" ? `<div class="spell-prev ar" id="sprev"></div>` : ""}<div class="slots ar ${q.type}" id="slots"></div><div class="bank ar" id="bank">${q.tiles.map((t, k) => `<button class="wt" data-t="${k}">${esc(t)}</button>`).join("")}</div>
         <button class="btn btn-brand btn-block" id="check" disabled>Tekshirish</button>`
       : q.type === "write" ? writeHtml()
@@ -586,7 +606,7 @@
     $$("#bank .wt").forEach(b => (b.onclick = () => {
       const k = +b.dataset.t;
       if (run.locked === run.i || placed.includes(k)) return;
-      placed.push(k); if (q.type === "order") play(q.tiles[k]); else sfx("tap"); draw();
+      placed.push(k); if (q.type === "order" && D.audio[q.tiles[k]]) play(q.tiles[k]); else sfx("tap"); draw();
     }));
     $("#check").onclick = () => {
       const ok = placed.map(k => q.tiles[k]).join(joiner) === q.answer.join(joiner);
@@ -699,7 +719,9 @@
         else m.streak = 0;
       }
     } else if (!ok) {
+      delete S.mistakes[q.key];   // qayta xato qilingan savol ro'yxat oxiriga (eng yangilar qatoriga) o'tadi
       S.mistakes[q.key] = { q: { ...q }, streak: 0 };
+      trimMistakes();
     }
     if (ok && q.skill === "listening") bump("listen_ok");
 
@@ -829,6 +851,7 @@
     if (r.kind === "lesson" && pct >= PASS && !res.offline) refClaim();
     if (res.capped) pills.push(`<span class="pill soft">🎯 Bugungi ${DAILY_CAP} XP chegarasi to'ldi, mashq davom etsin 💪</span>`);
     if (res.offline) pills.push(`<span class="pill soft">📶 Internet yo'q, natija keyin yuboriladi</span>`);
+    if (res.failed) pills.push(`<span class="pill soft">⚠️ Natija saqlanmadi. Ilovani yopib, qayta oching</span>`);
     if (r.kind !== "review" && r.right < n && Object.keys(S.mistakes).length) pills.push(`<span class="pill soft">❌ Xatolar «Xatolarim» bo'limiga tushdi</span>`);
 
     if (!run || run !== r) return;
@@ -929,7 +952,14 @@
     const d = lesson(n), seen = new Set(), out = [];
     // ovozi bor savollargina olinadi (ma'lumot yetmasa — xato emas, shunchaki kamroq savol)
     const take = (fn, cnt) => { for (let t = 0; out.length < cnt && t < cnt * 25; t++) { let q; try { q = fn(); } catch { continue; } if (q && !seen.has(q.key) && (!q.audio || D.audio[q.audio])) { seen.add(q.key); out.push(q); } } };
-    if (k === 0) take(() => (d.letters && d.letters.length ? M.l_letter(d) : M.l_word(d)), 6);
+    if (k === 0) {
+      take(() => (d.letters && d.letters.length ? M.l_letter(d) : M.l_word(d)), 6);
+      // Darsda 3–4 ta harf bo'lsa, 6 taga oldin o'tilgan harflar bilan to'ldiriladi (takrorlash)
+      if (out.length < 6 && d.letters) {
+        const prev = D.lessons.filter(l => l.number < n && l.letters && l.letters.length <= 6).flatMap(l => l.letters);
+        take(() => M.l_letter({ letters: prev.length >= 6 - out.length ? prev : ALPHABET }), 6);
+      }
+    }
     if (k === 1) take(() => (Math.random() < 0.5 ? M.l_word(d) : M.l_mean(d)), 6);
     if (k === 2) { if ((d.phrases || []).length >= 4) take(() => lPhrase(d), 6); take(() => M.l_dialog(d), 6); take(() => M.l_mean(d), 6); }
     if (k === 3) {
@@ -1218,8 +1248,8 @@
         <small>⚔️ Yutsangiz yangi davlat, yutqazsangiz oxirgisi qo'ldan ketadi. 🏰 Har 10-davlat — qal'a: undan pastga tushmaysiz.</small>
         ${WORLDB && WORLDB.board.length > 1 ? `<small>👥 Guruhda: ${WORLDB.board.slice(0, 3).map((r, i) => `${["🥇", "🥈", "🥉"][i]} ${esc(r.name)} — ${r.pos}`).join(" · ")}</small>` : ""}</div>
       <small class="w-credit">Xarita: Natural Earth (ochiq ma'lumot)</small>`;
-    document.body.appendChild(ov); document.body.style.overflow = "hidden";
-    $("#w-close").onclick = () => { ov.remove(); document.body.style.overflow = ""; if (fromDuel) duelSheet(); };
+    document.body.appendChild(ov); document.body.style.overflow = "hidden"; syncBack();
+    $("#w-close").onclick = () => { ov.remove(); document.body.style.overflow = ""; syncBack(); if (fromDuel) duelSheet(); };
 
     // Surish va kattalashtirish (barmoq, sichqoncha, g'ildirak)
     const svg = $("#w-svg"), home = W.c[Math.max(0, n - 1)];
@@ -1506,8 +1536,28 @@
   function sheet(html) {
     $("#sheet-root").innerHTML = `<div class="sheet-wrap" id="sw"><div class="sheet" role="dialog" aria-modal="true"><button class="sheet-x" data-close aria-label="Yopish">✕</button><div class="grab"></div>${html}</div></div>`;
     $("#sw").addEventListener("click", e => { if (e.target.id === "sw" || e.target.closest("[data-close]")) closeSheet(); });
+    syncBack();
   }
-  const closeSheet = () => { dropRecording(); $("#sheet-root").innerHTML = ""; };
+  const closeSheet = () => { dropRecording(); $("#sheet-root").innerHTML = ""; syncBack(); };
+
+  // ---------- Telefonning «Orqaga» tugmasi ----------
+  // Oyna, test yoki xarita ochiq bo'lsa, «Orqaga» ilovadan chiqarib yubormaydi — eng ustki narsani yopadi (✕ bosilgandek).
+  // Buning uchun brauzer tarixiga bitta «qo'riqchi» yozuv qo'yiladi. U ✕ bilan yopilganda ham qoladi (tarixni dastur orqali
+  // ortga surish ishonchsiz), shuning uchun shundan keyin ilovadan chiqish uchun «Orqaga» ikki marta bosiladi.
+  let backGuard = false;
+  const overlayOpen = () => !!run || !!$("#sheet-root").innerHTML || !!$("#world");
+  function syncBack() {
+    if (!overlayOpen() || backGuard) return;
+    try { history.pushState({ tb: 1 }, ""); backGuard = true; } catch { /* tarix yopiq muhitda — «Orqaga» oddiy ishlayveradi */ }
+  }
+  window.addEventListener("popstate", e => {
+    if (e.state && e.state.tb) { backGuard = true; return; }   // «Oldinga» bosilib, qo'riqchi yozuvga qaytildi
+    backGuard = false;
+    if ($("#world")) $("#w-close").click();
+    else if ($("#sheet-root").innerHTML) closeSheet();
+    else if (run) { const q = $("[data-quit]"); if (q) q.click(); else closeRun(); }   // natija ekranida — bosh sahifaga
+    syncBack();
+  });
 
   // ---------- Gapirish: ovoz yozib ustozga yuborish ----------
   const REC_MAX = 90;   // soniya
@@ -1670,7 +1720,8 @@
     const words = groupLessons().flatMap(l => l.words);
     const r = seeded(today());
     const w = words[Math.floor(r() * words.length)];
-    const pool = [...new Set(sameKind(w, words).map(x => x.uz).filter(u => u !== w.uz))];
+    if (!w) { $("#wotd").innerHTML = ""; $("#wotd-note").textContent = ""; return; }   // guruhda hali ochiq dars yo'q
+    const pool =[...new Set(sameKind(w, words).map(x => x.uz).filter(u => u !== w.uz))];
     const others = []; while (others.length < 3 && pool.length) others.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
     const opts = [...others, w.uz].sort(() => r() - .5);
     const done = S.wotd.day === today();
@@ -1929,6 +1980,7 @@
     if (!open.includes(wordLesson)) wordLesson = open[open.length - 1];
     $("#w-seg").innerHTML = D.lessons.map(l => `<button aria-pressed="${l.number === wordLesson}" data-wl="${l.number}" ${open.includes(l.number) ? "" : "disabled"}>${l.number > 100 ? `A1·${l.number - 100}` : l.number}. <span class="ar">${esc(l.title)}</span></button>`).join("");
     const l = lesson(wordLesson);
+    if (!l) return;   // guruhda hali ochiq dars yo'q
     $("#w-count").textContent = `${l.words.length} ta so'z`;
     $("#w-hide").textContent = hideMeaning ? "👀 Ma'nosini ko'rsatish" : "🙈 Ma'nosini yashirish";
     $("#w-list").innerHTML = l.words.map((w, i) => `<button class="word ${hideMeaning ? "hide" : ""}" data-wi="${i}"><span class="ar">${esc(w.ar)}</span><small>${esc(w.uz)}</small></button>`).join("");
@@ -2092,9 +2144,30 @@
   function logout(expired) {
     TOKEN = null; ME = null; S = fresh();
     store.del(K_TOKEN); store.del(K_CACHE); store.del(K_PENDING);
+    // test ochiq bo'lsa (seans test ustida tugagan) — yopamiz, aks holda kirish oynasi ostida qotib qoladi
+    if (run) { clearInterval(run.timer); if (player) player.pause(); run = null; $("#quiz").hidden = true; document.body.style.overflow = ""; }
+    const wm = $("#world"); if (wm) wm.remove();
     closeSheet();
     showAuth();
     if (expired) toast(ERRORS.AUTH);
+  }
+
+  // Telefonda ilova yopilmay, kunlab ochiq turadi. Qaytib kirilganda sana, XP va ustoz ochgan darslar yangilanadi
+  // (aks holda ertasi kuni ham «bugungi missiya bajarildi» deb turadi va olov yonmaydi). O'quv holati (S) ga tegilmaydi.
+  let meAt = 0;
+  async function refreshMe() {
+    if (!TOKEN || !ME || run || Date.now() - meAt < 30000) return;
+    meAt = Date.now();
+    let m;
+    try { m = await rpc("me", { p_token: TOKEN }); } catch (e) { if (e.message === "AUTH") logout(true); return; }
+    if (!ME || !TOKEN || run) return;
+    if (m.group && m.group.journal) return;
+    const same = m.today === ME.today && m.xp === ME.xp && m.name === ME.name && JSON.stringify(m.group) === JSON.stringify(ME.group);
+    ME = { ...ME, name: m.name, xp: m.xp, today: m.today, practice_today: m.practice_today, group: m.group };
+    if (same) return;
+    store.set(K_CACHE, JSON.stringify({ ME, S }));
+    render();
+    if (!$("#screen-top").hidden) renderBoard();
   }
 
   async function boot() {
@@ -2102,6 +2175,9 @@
       ME = await rpc("me", { p_token: TOKEN });
       if (ME.group && ME.group.journal) return location.replace("pro/");   // Dod Pro o'quvchilari — alohida sahifada
       S = Object.assign(fresh(), ME.state || {});
+      // Internetsiz ishlangan natija hali yuborilmagan bo'lsa, telefondagi holat serverdagidan yangiroq — o'shani olamiz (aks holda o'tilgan dars yo'qoladi)
+      if (pending().length) { try { const c = JSON.parse(store.get(K_CACHE) || "null"); if (c && c.S) S = Object.assign(fresh(), c.S); } catch { /* */ } }
+      meAt = Date.now();
       store.set(K_CACHE, JSON.stringify({ ME, S }));
     } catch (e) {
       if (e.message === "AUTH") return logout(true);
@@ -2445,13 +2521,13 @@
     $$("[data-pin]").forEach(b => (b.onclick = async () => {
       try {
         const r = await rpc("teacher_reset_pin", { p_token: TT, p_student: b.dataset.pin });
-        sheet(`<h3>🔑 Yangi PIN</h3><p><b style="color:var(--ink)">${b.dataset.name}</b> uchun yangi PIN:</p>
-          <div class="q-card"><div style="font-family:var(--f-display);font-size:40px;letter-spacing:.2em">${r.pin}</div></div>
+        sheet(`<h3>🔑 Yangi PIN</h3><p><b style="color:var(--ink)">${esc(b.dataset.name)}</b> uchun yangi PIN:</p>
+          <div class="q-card"><div style="font-family:var(--f-display);font-size:40px;letter-spacing:.2em">${esc(r.pin)}</div></div>
           <p>Talabaga ayting: ilovada «Menda hisob bor» bo'limidan ismi va shu PIN bilan kiradi.</p><button class="btn btn-brand btn-block" data-close>Tushunarli</button>`);
       } catch (e) { toast(errText(e)); }
     }));
     $$("[data-del]").forEach(b => (b.onclick = () => {
-      sheet(`<h3>O'chirasizmi?</h3><p><b style="color:var(--ink)">${b.dataset.name}</b> va uning barcha natijalari o'chadi. Buni qaytarib bo'lmaydi.</p>
+      sheet(`<h3>O'chirasizmi?</h3><p><b style="color:var(--ink)">${esc(b.dataset.name)}</b> va uning barcha natijalari o'chadi. Buni qaytarib bo'lmaydi.</p>
         <button class="btn btn-danger btn-block" id="del-yes">Ha, o'chirish</button><button class="btn btn-soft btn-block" data-close>Bekor qilish</button>`);
       $("#del-yes").onclick = async () => { try { await rpc("teacher_remove", { p_token: TT, p_student: b.dataset.del }); } catch (e) { toast(errText(e)); } closeSheet(); teacherLoad(); };
     }));
@@ -2663,11 +2739,12 @@
   }));
   document.addEventListener("keydown", e => {
     if (!run || $("#sheet-root").innerHTML || e.target.tagName === "INPUT") return;
-    const k = "abcd".indexOf(e.key.toLowerCase());
+    const k = e.key && e.key.length === 1 ? "abcd".indexOf(e.key.toLowerCase()) : -1;
     if (k >= 0 && run.qs[run.i] && run.qs[run.i].options && k < run.qs[run.i].options.length && run.locked !== run.i) answer(k);
     else if (e.key === "Enter" && $("#next")) $("#next").click();
   });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && TOKEN && $("#teacher").hidden) { loadInbox(); flushPending(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && TOKEN && $("#teacher").hidden) { loadInbox(); flushPending(); refreshMe(); } });
+  window.addEventListener("pageshow", e => { if (e.persisted && TOKEN && $("#teacher").hidden) refreshMe(); });
 
   // ---------- Xizmat fayli (to'liq o'rnatish, tez ochilish) ----------
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => { /* ishlamasa ham ilova ishlayveradi */ });
