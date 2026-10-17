@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>🐪 Karvon poygasi — Tabassum</title>
-<meta name="theme-color" content="#6B4423">
+<title>🐪 Karvon poygasi — Mundil.uz</title>
+<meta name="theme-color" content="#0B3D2E">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
      karvon.html?host   — ustoz (katta ekran, Google Meet'da ulashiladi): jamoalar, o'yinni boshqarish, poyga yo'lagi, podium
      Holat serverda (019_karvon.sql); sahifa har ~1 soniyada yangilanadi. -->
 <style>
-  :root { --sand:#EBD9BC; --cream:#FFF8EC; --cream2:#F4E8D3; --coffee:#6B4423; --coffee2:#4A2E17; --ink:#3B2614; --mu:#8A6E52;
-          --terra:#C8553D; --oasis:#2A9D8F; --saff:#E09A2B; --palm:#5B8C3A; --line:#E2CBA4; }
+  :root { --sand:#EEF0E4; --cream:#FFFDF6; --cream2:#E8EADB; --coffee:#0B3D2E; --coffee2:#06281F; --ink:#10261D; --mu:#5E6E62;
+          --terra:#B8902F; --oasis:#0F4D3A; --saff:#C9982F; --palm:#2F7A4A; --line:#D6DCC6; }   /* Mundil.uz: to'q yashil + oltin (2026-10-17) */
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body { background: linear-gradient(#f7e7c6, var(--sand) 55%); font-family: Nunito, system-ui, sans-serif; color: var(--ink); font-weight: 800; }
@@ -27,7 +27,7 @@
   .bar { display: flex; align-items: center; gap: 10px; }
   .bar .m { width: 40px; height: 40px; border-radius: 50%; background: var(--coffee); color: var(--cream); display: grid; place-items: center; font-family: Amiri, serif; font-size: 26px; padding-bottom: 6px; border: 2px solid var(--saff); flex: none; }
   .bar b { font-size: 19px; font-weight: 900; flex: 1; color: var(--coffee2); }
-  .card { background: var(--cream); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; box-shadow: 0 6px 0 rgba(107,68,35,.2); }
+  .card { background: var(--cream); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; box-shadow: 0 6px 0 rgba(11,61,46,.2); }
   .card h3 { margin: 0; font-size: 17px; font-weight: 900; color: var(--coffee); }
   .card p { margin: 0; color: var(--mu); font-size: 14px; line-height: 1.45; font-weight: 700; }
   .btn { background: var(--oasis); color: #fff; font-weight: 900; text-align: center; padding: 14px; border-radius: 14px; box-shadow: 0 5px 0 #1d6f65; font-size: 16px; width: 100%; }
@@ -52,15 +52,15 @@
   /* O'yin — talaba */
   .role { border-radius: 14px; padding: 10px 12px; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
   .role.cap { background: var(--coffee); color: var(--cream); } .role.adv { background: var(--cream); color: var(--coffee2); }
-  .qbox { background: var(--cream); border-radius: 18px; padding: 14px; text-align: center; display: grid; gap: 8px; box-shadow: 0 6px 0 rgba(107,68,35,.2); }
+  .qbox { background: var(--cream); border-radius: 18px; padding: 14px; text-align: center; display: grid; gap: 8px; box-shadow: 0 6px 0 rgba(11,61,46,.2); }
   .qbox .p { font-size: 16px; } .qbox .qar { font-size: 40px; line-height: 1.6; } .qbox .qe { font-size: 70px; line-height: 1.1; }
   .say { width: 64px; height: 64px; border-radius: 50%; background: var(--oasis); color: #fff; font-size: 28px; margin: 0 auto; box-shadow: 0 4px 0 #1d6f65; }
-  .timer { height: 10px; border-radius: 6px; background: rgba(107,68,35,.15); overflow: hidden; } .timer i { display: block; height: 100%; background: var(--terra); transition: width .25s linear; }
+  .timer { height: 10px; border-radius: 6px; background: rgba(11,61,46,.15); overflow: hidden; } .timer i { display: block; height: 100%; background: var(--terra); transition: width .25s linear; }
   .opts { display: grid; gap: 10px; }
   .ob { position: relative; border-radius: 14px; padding: 14px 14px; color: #fff; font-size: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 5px 0 rgba(0,0,0,.22); text-align: left; min-height: 62px; width: 100%; }
   .ob .sh { width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,.18); display: grid; place-items: center; font-size: 15px; flex: none; }
   .ob .v { flex: 1; } .ob .v.ar { font-size: 26px; text-align: right; } .ob .v.em { font-size: 34px; }
-  .qbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .qbtns button { background: var(--cream); color: var(--coffee2); border-radius: 12px; padding: 10px 6px; font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 rgba(107,68,35,.18); }
+  .qbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .qbtns button { background: var(--cream); color: var(--coffee2); border-radius: 12px; padding: 10px 6px; font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 rgba(11,61,46,.18); }
   .qbtns button:disabled { opacity: .5; } .qmsg { display: grid; gap: 4px; background: var(--cream2); border-radius: 12px; padding: 8px 10px; font-size: 13.5px; }
   .tipbar { background: var(--coffee); color: var(--cream); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; }
   .tipbar b { color: #F6D58A; font-size: 16px; } .tipbar small { opacity: .8; }
@@ -82,7 +82,7 @@
   .h-top .round { background: var(--coffee); color: var(--cream); border-radius: 999px; padding: .6vh 1.2vw; font-size: 2.1vh; }
   .h-top .chip:empty { display: none; } .h-top .chip { background: var(--cream); border-radius: 999px; padding: .6vh 1.2vw; font-size: 2.1vh; }
   .h-timer { margin-left: auto; width: 8vh; height: 8vh; border-radius: 50%; background: var(--cream); border: .7vh solid var(--terra); display: grid; place-items: center; font-size: 3.6vh; font-weight: 900; color: var(--terra); }
-  .h-q { background: var(--cream); border-radius: 2vh; padding: 1.4vh 2vw; display: flex; align-items: center; gap: 2vw; box-shadow: 0 .7vh 0 rgba(107,68,35,.2); min-height: 11vh; }
+  .h-q { background: var(--cream); border-radius: 2vh; padding: 1.4vh 2vw; display: flex; align-items: center; gap: 2vw; box-shadow: 0 .7vh 0 rgba(11,61,46,.2); min-height: 11vh; }
   .h-q .p { font-size: 3.3vh; flex: 1; } .h-q .qar { font-size: 6vh; } .h-q .qe { font-size: 8vh; }
   .h-q .say { width: 7vh; height: 7vh; font-size: 3.2vh; margin: 0; flex: none; }
   .h-mid { display: grid; grid-template-rows: auto 1fr; gap: 1.2vh; min-height: 0; }
@@ -183,7 +183,7 @@
   }
   const ERR = { REG_CLOSED: "Ro'yxat yopilgan (dushanba–juma ochiq)", BAD_NAME: "Nom 2–24 harf bo'lsin", GAME_RUNNING: "O'yin ketyapti, keyinroq",
     NO_TEAM: "Siz hali jamoaga kirmagansiz", NO_TEAMS: "Jamoalar yo'q: kamida 4 kishi ro'yxatdan o'tishi kerak", TOO_LATE: "Vaqt tugadi ⏰",
-    NET: "Internet bilan aloqa yo'q", AUTH: "Avval Tabassum'ga kiring", TEACHER_AUTH: "Ustoz sifatida kiring" };
+    NET: "Internet bilan aloqa yo'q", AUTH: "Avval ilovaga kiring", TEACHER_AUTH: "Ustoz sifatida kiring" };
   const errText = e => ERR[e.message] || "Xatolik: " + e.message;
   const camelSvg = color => `<svg viewBox="0 0 100 80" fill="${color}"><use href="#camel"/></svg>`;
   const fmtSun = d => { const [y, m, dd] = d.split("-"); return `${+dd}-${["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"][+m - 1]}`; };
@@ -294,10 +294,10 @@
     setTimeout(stuLoop, G && G.game && G.status !== "done" ? 1000 : 8000);
   }
   function renderNoLogin() {
-    $("#root").innerHTML = `<div class="wrap">${barHtml()}<div class="card"><h3>Avval kiring</h3><p>Karvon poygasida qatnashish uchun Tabassum hisobingizga kiring.</p>
+    $("#root").innerHTML = `<div class="wrap">${barHtml()}<div class="card"><h3>Avval kiring</h3><p>Karvon poygasida qatnashish uchun Mundil.uz hisobingizga kiring.</p>
       <a class="btn" style="text-decoration:none" href="./">Kirish</a></div></div>`;
   }
-  const barHtml = () => `<div class="bar"><span class="m">ت</span><b>🐪 Karvon poygasi</b><a href="./" class="pill" style="text-decoration:none">← Markaz</a></div>`;
+  const barHtml = () => `<div class="bar"><b>🐪 Karvon poygasi</b><a href="./" class="pill" style="text-decoration:none">← Markaz</a></div>`;
   let homeSig = "";
   function renderStuHome() {
     const s = ST, sig = JSON.stringify(s); if (sig === homeSig) return; homeSig = sig;

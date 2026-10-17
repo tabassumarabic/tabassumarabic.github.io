@@ -1,4 +1,4 @@
-/* Tabassum (avvalgi nomi Dod) — arab tili ilovasi.
+/* Mundil.uz (avvalgi nomlari Dod, Tabassum) — arab tili ilovasi.
    Savollar botdagi quiz.py bilan bir xil tuziladi. Natijalar, reyting, duel va ustoz paneli —
    Supabase bazasida (faqat xavfsiz funksiyalar orqali, har chaqiruvda token tekshiriladi). */
 (() => {
@@ -11,7 +11,7 @@
   const TIMER = 15, FAST = 5, PASS = 80, XP_OK = 10, XP_FAST = 5, XP_MISSION = 20, XP_EXAM = 50, XP_WOTD = 5, DAILY_CAP = 700;
   const REVIEW_NEEDED = 2, DUEL_QUESTIONS = 10, DUEL_LAST_LESSONS = 3;   // duel: 10 ta, turlari aralash (ustoz, 2026-10-05)
 
-  const RANKS = [[0, "🌱 Yangi boshlovchi"], [100, "📖 Harf ovchisi"], [300, "⭐ So'z ustasi"], [700, "🏅 Tabassum bilimdoni"], [1500, "👑 Tabassum qiroli"]];
+  const RANKS = [[0, "🌱 Yangi boshlovchi"], [100, "📖 Harf ovchisi"], [300, "⭐ So'z ustasi"], [700, "🏅 Mundil bilimdoni"], [1500, "👑 Mundil qiroli"]];
   const SIMILAR = ["بتثني", "جحخ", "دذ", "رز", "سش", "صض", "طظ", "عغ", "فق", "كلمهـوأ"];
   const SKILLS = { reading: "📖 O'qish va lug'at", grammar: "✏️ Grammatika", listening: "🎧 Tinglash", writing: "✍️ Yozish" };
   const EXAM_PLAN = [["reading", 8], ["grammar", 6], ["listening", 6]];
@@ -901,7 +901,7 @@
   }
   function shareInvite() {
     if (!REF.code) return toast(ERRORS.NET);
-    const text = `Men «Tabassum» ilovasida arab tilini o'yin orqali o'rganyapman 🔥 Qo'shil, birga o'rganamiz! Birinchi darsni o'tsang, ikkalamizga +${REF_BONUS} XP 🎁`;
+    const text = `Men «Mundil.uz» ilovasida arab tilini o'yin orqali o'rganyapman 🔥 Qo'shil, birga o'rganamiz! Birinchi darsni o'tsang, ikkalamizga +${REF_BONUS} XP 🎁`;
     const url = refLink();
     const tg = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
     sheet(`<h3>🎁 Do'stni taklif qilish</h3>
@@ -2204,7 +2204,6 @@
     loadMyAttendance();
     loadMyProgress();
     loadKarvon();
-    if (store.get("tb_hello") !== today()) { store.set("tb_hello", today()); setTimeout(() => toast("😊 Bu yerga faqat tabassum bilan kiriladi!"), 700); }
     if (TROPHY_ON()) loadTrophies();
     loadSpeakBadge();
     // Taklif havolasi orqali kelgan bo'lsa — taklif qilganni bog'laymiz (faqat yangi hisob uchun ishlaydi)
@@ -2719,15 +2718,15 @@
     else if (a === "duel") { duelSheet(); loadInbox().then(() => { if ($("#duel-new")) duelSheet(); }); }
   }));
   $("#w-hide").onclick = () => { hideMeaning = !hideMeaning; renderWords(); };
-  // Ko'rinish: 🐪 Sahro (asosiy, markaz bilan bir xil — 2026-10-06), 🌙 Qorong'u (premium) yoki ☀️ Krem. Tanlov «tb_style» da saqlanadi.
+  // Ko'rinish: 🟢 Mundil (asosiy, to'q yashil + oltin — 2026-10-17), 🌙 Qorong'u (premium) yoki ☀️ Krem. Tanlov «tb_style» da saqlanadi.
   function applyStyle(s) {
     document.documentElement.dataset.style = s;
-    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
+    $('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "mundil" ? "#0B3D2E" : "#0C1218";
     $$("[data-style-pick]").forEach(b => b.setAttribute("aria-pressed", b.dataset.stylePick === s));
     const tb = $("#theme-tg"); if (tb) tb.textContent = s === "krem" ? "🌙" : "☀️";
   }
   $$("[data-style-pick]").forEach(b => (b.onclick = () => { store.set("tb_style", b.dataset.stylePick); applyStyle(b.dataset.stylePick); }));
-  applyStyle(document.documentElement.dataset.style || "sahro");
+  applyStyle(document.documentElement.dataset.style || "mundil");
   // ☀️/🌙 Bosh sahifadagi tezkor almashtirgich: qorong'u (premium) ↔ yorug' (krem)
   const themeBtn = () => { const b = $("#theme-tg"); if (b) b.textContent = document.documentElement.dataset.style === "krem" ? "🌙" : "☀️"; };
   $("#theme-tg").onclick = () => { const s = document.documentElement.dataset.style === "krem" ? "premium" : "krem"; store.set("tb_style", s); applyStyle(s); themeBtn(); };
@@ -2805,7 +2804,7 @@
     $("#install").hidden = hidden;
   }
   window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; showInstallCard(); });
-  window.addEventListener("appinstalled", () => { $("#install").hidden = true; toast("🎉 Tabassum telefoningizga o'rnatildi!"); });
+  window.addEventListener("appinstalled", () => { $("#install").hidden = true; toast("🎉 Mundil.uz telefoningizga o'rnatildi!"); });
   $("#install").onclick = async () => {
     if (installPrompt) {
       installPrompt.prompt();
@@ -2823,7 +2822,7 @@
         <li>O'ng yuqoridagi <b>⋮</b> (uch nuqta) tugmasini bosing.</li>
         <li><b>«Установить приложение»</b> yoki <b>«Добавить на главный экран»</b> ni tanlang.</li>
         <li><b>Установить</b> ni bosing.</li></ol>`}
-      <p>Shundan keyin telefoningiz ekranida <b style="color:var(--ink)">😊 Tabassum</b> ikonkasi paydo bo'ladi.</p>
+      <p>Shundan keyin telefoningiz ekranida <b style="color:var(--ink)">Mundil.uz</b> ikonkasi paydo bo'ladi.</p>
       <button class="btn btn-brand btn-block" data-close>Tushunarli</button>
       <button class="btn btn-soft btn-block" id="install-hide">Boshqa ko'rsatmang</button>`);
     $("#install-hide").onclick = () => { store.set("dod_install_hide", "1"); closeSheet(); showInstallCard(); };

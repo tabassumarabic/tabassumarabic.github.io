@@ -1,6 +1,6 @@
 {
-  "name": "Tabassum — online markaz",
-  "short_name": "Tabassum",
+  "name": "Mundil.uz — online markaz",
+  "short_name": "Mundil.uz",
   "description": "Arab tilini o'yin orqali o'rganing: kunlik missiya, duel, tinglash va reyting.",
   "lang": "uz",
   "id": "./",
@@ -8,8 +8,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#EBD9BC",
-  "theme_color": "#6B4423",
+  "background_color": "#EEF0E4",
+  "theme_color": "#0B3D2E",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

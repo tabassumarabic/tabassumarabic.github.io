@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0C1218">
+<meta name="theme-color" content="#0B3D2E">
 <script>
-  // 🏜 Tabassum ikonkasi endi markaz saytini ochadi (chap menyu); bu ilova esa uning ichida «📚 Arab tili» bo'lib turadi (ustoz, 2026-10-06).
+  // 🏜 Ilova ikonkasi endi markaz saytini ochadi (chap menyu); bu ilova esa uning ichida «📚 Arab tili» bo'lib turadi (ustoz, 2026-10-06).
   // Yo'naltirilmaydi: markaz ichidagi oyna (iframe), «?app» havolasi, Telegram bot, ustoz havolasi (#ustoz=), taklif havolasi (?ref=).
   (function () {
     var q = location.search, h = location.hash;
@@ -16,19 +16,19 @@
 <script>
   // Dizayn: "premium" (asosiy) yoki "krem" — Profilda tanlanadi
   (function () {
-    var s = "sahro"; try { s = localStorage.getItem("tb_style") || s; } catch (e) { /* */ }
-    if (s === "neon") s = "sahro";   // neon uslubi olib tashlandi (ustoz, 2026-10-07)
+    var s = "mundil"; try { s = localStorage.getItem("tb_style") || s; } catch (e) { /* */ }
+    if (s === "neon" || s === "sahro") s = "mundil";   // neon (2026-10-07) va sahro (2026-10-17) uslublari o'rniga — Mundil.uz
     document.documentElement.dataset.style = s;
-    document.querySelector('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "sahro" ? "#6B4423" : "#0C1218";
+    document.querySelector('meta[name="theme-color"]').content = s === "krem" ? "#1F4D3A" : s === "mundil" ? "#0B3D2E" : "#0C1218";
   })();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Tabassum">
+<meta name="apple-mobile-web-app-title" content="Mundil.uz">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Tabassum — arab tili</title>
+<title>Mundil.uz — arab tili</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230E5A4A'/%3E%3Ctext x='32' y='44' font-size='38' text-anchor='middle' fill='white' font-family='serif'%3E%D8%B6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -515,11 +515,11 @@
   .world-info small { color: var(--muted); font-size: 12.5px; }
   .new-badge.lost { background: var(--bad-soft); color: var(--bad); }
   .w-credit { color: var(--muted); font-size: 11px; text-align: center; }
-  /* 😊 Tabassum brendi */
+  /* Brend (Mundil.uz) */
   .logo.logo-img { padding: 0; overflow: hidden; background: none; border: 0; }
   .logo.logo-img img { width: 100%; height: 100%; display: block; }
   .tb-motto { text-align: center; color: var(--gold); font-weight: 700; margin: 6px 0 2px; }
-  /* 😊 Bosh sahifa: «تَبَسُّم» yozuvi, «ت»-tabassum belgisi va shior (avvalgi «لُغَةُ الضَّادِ» o'rnida) */
+  /* Bosh sahifa brend qatori: oltin «Mundil.uz» yozuvi */
   .mission::after, [data-style="premium"] .mission::after { content: none; display: none; }
   .mission, [data-style="premium"] .mission { padding-top: 22px !important; }
   .tb-hero { display: grid; justify-items: center; gap: 6px; }
@@ -832,6 +832,47 @@
   .fn-bigstar { font-size: 150px; line-height: 1; color: #F5CF62; text-shadow: 0 0 50px rgba(240,194,75,.8); animation: fn-pop .7s cubic-bezier(.2,1.6,.4,1); } @keyframes fn-pop { from { transform: scale(0) rotate(-40deg); } }
   .fn-bigletter { font-family: var(--f-ar, "Amiri", serif); font-size: 54px; line-height: 1; color: #0B3D2E; margin-top: -112px; margin-bottom: 52px; position: relative; }
 
+  /* ---------- 🟢 Mundil.uz uslubi (MAKET, 2026-10-17): to'q yashil + to'q oltin. Hozircha hech kimga yoqilmagan ---------- */
+  :root[data-style="mundil"] {
+    color-scheme: light;
+    --bg: #EEF0E4; --surface: #FFFDF6; --surface-2: #E8EADB; --ink: #10261D; --muted: #5E6E62; --line: #D6DCC6;
+    --brand: #0B3D2E; --brand-2: #0F4D3A; --brand-ink: #FFFFFF; --brand-soft: #DCEBE2;
+    --gold: #B8902F; --gold-soft: #F6ECCB; --gold-line: #DCC27A; --good: #2F7A4A; --good-soft: #DDEFE2; --bad: #B4472F; --bad-soft: #F6DDD5;
+    --shadow: 0 5px 0 rgba(11,61,46,.14);
+    --f-display: "Nunito", "Onest", system-ui, sans-serif; --f-body: "Nunito", "Onest", "Amiri", system-ui, sans-serif;
+    --mg: #0B3D2E; --mg2: #06281F; --mgold: #C9982F; --mgold2: #E7C566;
+  }
+  [data-style="mundil"] body { background: linear-gradient(#F6F5EA, #EEF0E4 45%) fixed; font-weight: 600; }
+  [data-style="mundil"] .hello strong, [data-style="mundil"] .section-title h3, [data-style="mundil"] .sheet h3 { font-weight: 900; color: var(--mg); }
+  [data-style="mundil"] .section-title h3::before { background: var(--mgold); }
+  [data-style="mundil"] .hello .logo { display: none; }
+  [data-style="mundil"] .big-ava { background: var(--mg); color: #FFF6DA; border: 2.5px solid var(--mgold); border-radius: 50%; }
+  [data-style="mundil"] .chip { box-shadow: 0 3px 0 rgba(11,61,46,.15); font-weight: 900; }
+  [data-style="mundil"] .card, [data-style="mundil"] .tile, [data-style="mundil"] .rankline, [data-style="mundil"] .mcard { border: 0; border-radius: 18px; box-shadow: var(--shadow); }
+  /* Brend qatori: muhr va shior o'rniga oltin «Mundil.uz» */
+  [data-style="mundil"] .mission, [data-style="mundil"] .mission.brandrow { background: linear-gradient(160deg, var(--mg2), var(--mg) 70%) !important; border: 0 !important; border-radius: 18px !important; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+  [data-style="mundil"] .mission::before { display: none; }
+    .mz-brand { display: block; width: 100%; text-align: center; font-family: "Lora", Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.15; padding: 6px 0;
+    background: linear-gradient(180deg, #F3D98B, #D4A63A 55%, #A87B1F); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .mz-brand i { font-style: normal; font-size: .62em; }
+  [data-style="mundil"] .mcard.big { border: 0; box-shadow: 0 0 0 3px var(--mgold), 0 6px 0 rgba(11,61,46,.18); }
+  [data-style="mundil"] .eyebrow { color: var(--mgold); font-weight: 900; }
+  [data-style="mundil"] .btn { font-weight: 900; border-radius: 14px; }
+  [data-style="mundil"] .btn-brand { background: var(--mg); box-shadow: 0 5px 0 #031a13; }
+  [data-style="mundil"] .btn-brand:active { transform: translateY(3px); box-shadow: 0 2px 0 #031a13; }
+  [data-style="mundil"] .btn-light { background: linear-gradient(180deg, #E7C566, #C9982F); color: #10261D; box-shadow: 0 5px 0 #8E6A1A; }
+  [data-style="mundil"] .btn-soft { background: var(--surface-2); color: var(--mg); box-shadow: 0 4px 0 #cfd5bd; }
+  [data-style="mundil"] .tiles .ic { border: 0 !important; color: #fff !important; }
+  [data-style="mundil"] .tiles .ic.blue, [data-style="mundil"] .tiles .ic.green { background: var(--mg) !important; }
+  [data-style="mundil"] .tiles .ic.red, [data-style="mundil"] .tiles .ic.gold { background: linear-gradient(160deg, #D9B14E, #B8902F) !important; }
+  [data-style="mundil"] .tile b { font-weight: 900; color: var(--mg); }
+  [data-style="mundil"] .tabbar { background: color-mix(in srgb, #FFFDF6 95%, transparent); border-top: 0; box-shadow: 0 -4px 14px rgba(11,61,46,.12); }
+  [data-style="mundil"] .tab { font-weight: 800; color: var(--muted); }
+  [data-style="mundil"] .tab[aria-current="page"] { color: var(--mg); }
+  [data-style="mundil"] .champ { background: linear-gradient(150deg, var(--mg), #2F7A4A); }
+  [data-style="mundil"] .opt { border: 0; box-shadow: 0 4px 0 rgba(11,61,46,.14); font-weight: 800; }
+  [data-style="mundil"] .kv-ban { background: linear-gradient(135deg, #C9982F, #0F4D3A 85%); }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -854,17 +895,7 @@
     <!-- «Tozalangan» bosh sahifa (2026-10-05): muhr kichik, shior bilan bitta qatorda -->
     <article class="mission brandrow">
       <div class="tb-hero">
-        <!-- Tabassum muhri: qo'sh oltin halqa ichida yoysimon «تَبَسُّم», ostida ko'zlar va tabassum, pastda TABASSUM (ustoz tanlagan) -->
-        <svg class="tb-seal" viewBox="0 0 260 260" role="img" aria-label="Tabassum">
-          <defs><linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D58A"/><stop offset=".6" stop-color="#D6A94E"/><stop offset="1" stop-color="#B8862E"/></linearGradient>
-            <path id="tb-arc-top" d="M46 136 A86 86 0 0 1 214 136"/><path id="tb-arc-bot" d="M36 136 A94 94 0 0 0 224 136"/></defs>
-          <circle cx="130" cy="130" r="122" fill="none" stroke="url(#tbg)" stroke-width="4"/>
-          <circle cx="130" cy="130" r="113" fill="none" stroke="url(#tbg)" stroke-width="1.5" opacity=".45"/>
-          <text x="130" y="100" text-anchor="middle" font-family="Amiri, 'Noto Naskh Arabic', serif" font-size="46" fill="url(#tbg)">تَبَسُّم</text>
-          <text x="130" y="196" text-anchor="middle" font-family="Amiri, 'Noto Naskh Arabic', serif" font-weight="700" font-size="104" fill="url(#tbg)">ت</text>
-          <text font-family="Onest, sans-serif" font-weight="700" font-size="12" letter-spacing="5" fill="#E9C877" text-anchor="middle"><textPath href="#tb-arc-bot" startOffset="50%">TABASSUM</textPath></text>
-        </svg>
-        <div class="tb-motto2">Bu yerga faqat tabassum bilan kiriladi 😊</div>
+        <div class="mz-brand" aria-hidden="true">Mundil<i>.uz</i></div>
       </div>
     </article>
 
@@ -881,7 +912,7 @@
 
     <button class="card install" id="install" hidden>
       <img src="icon-192.png" alt="" width="44" height="44">
-      <span><b>📲 Telefonga o'rnating</b><small>Tabassum ekraningizda alohida ilova bo'lib turadi, bir bosishda ochiladi</small></span>
+      <span><b>📲 Telefonga o'rnating</b><small>Mundil.uz ekraningizda alohida ilova bo'lib turadi, bir bosishda ochiladi</small></span>
       <span aria-hidden="true">→</span>
     </button>
 
@@ -1008,7 +1039,7 @@
     <div class="card style-pick">
       <b>🎨 Ko'rinish</b>
       <div class="seg" role="group" aria-label="Ko'rinishni tanlang" style="margin:0">
-        <button type="button" data-style-pick="sahro">🐪 Sahro</button>
+        <button type="button" data-style-pick="mundil">🟢 Mundil</button>
         <button type="button" data-style-pick="premium">🌙 Qorong'u</button>
         <button type="button" data-style-pick="krem">☀️ Yorug'</button>
       </div>
@@ -1052,8 +1083,7 @@
 <!-- KIRISH -->
 <section class="auth" id="auth" hidden>
   <div class="auth-in">
-    <div class="auth-brand"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><b>Tabassum</b><small>Arab tilini o'yin orqali o'rganing</small></div></div>
-    <p class="tb-motto">😊 Bu yerga faqat tabassum bilan kiriladi</p>
+    <div class="auth-brand"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><b>Mundil.uz</b><small>Arab tilini o'yin orqali o'rganing</small></div></div>
     <div class="seg auth-tabs" role="tablist">
       <button type="button" id="auth-tab-join" aria-pressed="true">Birinchi marta</button>
       <button type="button" id="auth-tab-login" aria-pressed="false">Menda hisob bor</button>
@@ -1077,7 +1107,7 @@
 <section class="teacher" id="teacher" hidden>
   <div class="app" style="padding-bottom:40px">
     <header class="top">
-      <div class="hello"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><small>Ustoz paneli</small><strong id="tc-group">Tabassum</strong></div></div>
+      <div class="hello"><div class="logo logo-img" aria-hidden="true"><img src="icon-192.png" alt=""></div><div><small>Ustoz paneli</small><strong id="tc-group">Mundil.uz</strong></div></div>
       <button class="btn btn-soft" id="tc-refresh" style="padding:10px 12px" aria-label="Yangilash">🔄</button>
     </header>
     <div class="card tc-pass" id="tc-pass-card" hidden>
@@ -1138,8 +1168,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=b3ef7deac9"></script>
-<script src="avatar.js?v=b3ef7deac9"></script>
-<script src="app.js?v=b3ef7deac9"></script>
+<script src="data.js?v=2ce6b318c6"></script>
+<script src="avatar.js?v=2ce6b318c6"></script>
+<script src="app.js?v=2ce6b318c6"></script>
 </body>
 </html>

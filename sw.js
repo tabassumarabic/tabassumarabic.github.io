@@ -1,8 +1,8 @@
-/* Tabassum xizmat fayli (service worker): ilovani telefonga to'liq o'rnatish, tez ochilish va sekin internetda ishlash uchun.
+/* Mundil.uz xizmat fayli (service worker): ilovani telefonga to'liq o'rnatish, tez ochilish va sekin internetda ishlash uchun.
    - HTML sahifalar: avval internetdan (yangi versiya), bo'lmasa keshdan.
    - JS/rasm/ovoz/shriftlar: avval keshdan (tez), yo'q bo'lsa yuklab keshga qo'yiladi. JS fayllar ?v=… bilan keladi, shuning uchun yangilanish o'zi ishlaydi.
    - Supabase (baza) so'rovlari keshlanmaydi. */
-const CACHE = "tabassum-v1";
+const CACHE = "mundil-v1";   // nom almashganda eski kesh (eski ikonka va h.k.) o'chiriladi
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil((async () => {
@@ -46,7 +46,7 @@ self.addEventListener("fetch", e => {
 self.addEventListener("push", e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Tabassum 😊", {
+  e.waitUntil(self.registration.showNotification(d.title || "Mundil.uz", {
     body: d.body || "Bugungi missiya sizni kutyapti!", icon: "icon-192.png", badge: "icon-192.png", data: { url: d.url || "./" },
   }));
 });
