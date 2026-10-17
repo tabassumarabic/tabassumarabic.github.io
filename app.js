@@ -324,7 +324,9 @@
   const PARTS = [...DAILY, ["writing", "✍️", "Yozish"]];
   const partLabel = p => PARTS.find(x => x[0] === p).slice(1).join(" ");
   // Kunlik tizim vaqtincha o'chiq (ustoz qarori, 2026-10-01: guruhlar yig'ilganda yoqiladi). O'chiq paytda A1 oddiy dars bo'lib ishlaydi.
-  const DAILY_ON = true;   // «📅 Bugun» yorlig'i (2026-10-17: kunlik dars hamma uchun)
+  const DAILY_ON = true;
+  const GRAM_LOCK = store.get("tb_gram_open") !== "1";   // 🔒 Grammatika vaqtincha yopiq: ko'rinadi, lekin kirilmaydi. Kunlik dars, missiya va duel — Fonetikadan (ustoz, 2026-10-17)
+  const gramToast = () => toast("☀️ Grammatika tez orada ochiladi 🔒");   // «📅 Bugun» yorlig'i (2026-10-17: kunlik dars hamma uchun)
   const hasParts = () => false;   // eski «unit = 3 kun, sana bo'yicha jadval» tizimi o'chiq; A1 matnlari keyin kunlik darsga qo'shiladi
   // Kun ma'lumoti: unitning so'zlari va grammatikasi kunlarga teng bo'linadi, matnlar kunning o'zidan
   const share = (arr, k, of) => { if (!arr) return arr; const n = Math.ceil(arr.length / of); return arr.slice(k * n, (k + 1) * n); };
@@ -474,6 +476,7 @@
   const CFG = {
     mission: { title: "Kunlik missiya", timed: true },
     fonmission: { title: "🌙 Fonetika missiyasi", timed: true },
+    poyga: { title: "🐫 Haftalik poyga", timed: true },
     lesson: { title: "Dars testi", timed: false },
     listen: { title: "Tinglash", timed: false },
     review: { title: "Xatolarim", timed: false },
@@ -553,7 +556,7 @@
         <div class="m-stat" id="mstat">⏱ 0 s · ❌ 0</div>`
       : `<div class="opts">${q.options.map((o, k) => `<button class="opt" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span class="v ${isAr(o) ? "ar" : ""}">${esc(o)}</span></button>`).join("")}</div>`}
       <div id="fb"></div>`;
-    $("[data-quit]").onclick = () => (run.kind === "duel" ? toast("⚔️ Duelni oxirigacha o'ynang") : run.i > 0 && run.kind !== "review" ? confirmExit() : closeRun());
+    $("[data-quit]").onclick = () => (run.kind === "duel" || run.kind === "poyga" ? toast(run.kind === "duel" ? "⚔️ Duelni oxirigacha o'ynang" : "🐫 Poygani oxirigacha o'ynang — bitta urinish") : run.i > 0 && run.kind !== "review" ? confirmExit() : closeRun());
     const sb = $("[data-say]"); if (sb) sb.onclick = () => play(q.audio);
     $$(".opt").forEach(b => (b.onclick = () => answer(+b.dataset.k)));
     if (q.type === "order" || q.type === "spell") bindOrder(q);
@@ -711,6 +714,7 @@
     if (ok) { run.right++; gain = XP_OK; if ((run.timed && secs <= FAST) || extra.fast) { gain += XP_FAST; run.fast++; } }
     if (run.noXp) gain = 0;   // Practice box: o'tib ketgan kun mashqi — ballsiz
     if (run.kind !== "duel") run.practice += gain;   // duelda XP faqat natijaga qarab beriladi
+    if (run.kind === "poyga" && ok) run.score = (run.score || 0) + 100 + Math.round(50 * Math.max(0, 1 - secs / TIMER));
     run.answers.push({ s: q.skill, t: q.topic, c: ok });
     const sk = run.bySkill[q.skill] || (run.bySkill[q.skill] = [0, 0]);
     sk[0] += ok ? 1 : 0; sk[1]++;
@@ -752,6 +756,7 @@
     $("#quiz-in").innerHTML = `<div class="result"><div class="q-meta">${esc(r.title)}</div><div class="score">${r.right}/${n}</div><p class="muted">Natija saqlanmoqda…</p></div>`;
 
     if (r.kind === "duel") return finishDuel(r);
+    if (r.kind === "poyga") return finishPoyga(r);
 
     if (r.kind === "mission") {
       if (r.fast) pills.push(`<span class="pill gold">⚡ ${r.fast} ta tez javob</span>`);
@@ -1499,7 +1504,7 @@
       <button class="btn btn-soft btn-block" data-close>Bekor qilish</button>`);
     $$("[data-opp]").forEach(b => (b.onclick = async () => {
       const lessons = groupLessons().slice(-DUEL_LAST_LESSONS);
-      const qs = buildVaried(lessons, DUEL_QUESTIONS);
+      const qs = GRAM_LOCK ? shuffle(fonMissionQs()).slice(0, DUEL_QUESTIONS) : buildVaried(lessons, DUEL_QUESTIONS);
       try {
         const d = await rpc("duel_create", { p_token: TOKEN, p_opponent: b.dataset.opp, p_questions: qs });
         closeSheet();
@@ -1751,6 +1756,7 @@
   // Kun so'zi: har kuni hamma uchun bitta so'z (sana bo'yicha tanlanadi)
   function seeded(seed) { let x = 0; for (const ch of seed) x = (x * 31 + ch.charCodeAt(0)) >>> 0; return () => ((x = (x * 1103515245 + 12345) >>> 0) / 4294967296); }
   function renderWotd() {
+    if (GRAM_LOCK) { $("#wotd").innerHTML = `<div class="lock-card"><span class="big">🔒</span><b>Kun so'zi</b><span class="muted">Grammatika ochilganda qaytadi</span></div>`; $("#wotd").classList.add("gram-locked"); $("#wotd-note").textContent = ""; return; }
     const words = groupLessons().flatMap(l => l.words);
     const r = seeded(today());
     const w = words[Math.floor(r() * words.length)];
@@ -1922,8 +1928,42 @@
     const name = KD.find(x => x[0] === p);
     startRun("daily", kdQs(t.n, t.k, p), { kd: true, lesson: t.n, day: t.k, part: p, date: today(), title: `📅 ${lname(t.n)} · ${t.k + 1}-kun · ${name[2]}` });
   }
+  // 📅 Fonetika kunlik darsi (Grammatika yopiq paytda): bugungi dars = navbatdagi harf (6 qadami). Tugatilsa — 🔥 olov, +20 XP.
+  // Hamma harf o'tilgan bo'lsa — harflar navbat bilan takrorlanadi (S.fonRev).
+  function fdToday() {
+    const d = (S.daily || {})[today()]; if (d && d.fon != null) return d;
+    let i = FON.harflar.findIndex(h => !fonComplete(h));
+    if (i < 0) i = (S.fonRev || 0) % FON.harflar.length;
+    return { fon: i };
+  }
+  function fonDailyAward(i, dIdx, fresh) {
+    if (!GRAM_LOCK || dIdx !== i || ((S.daily || {})[today()] || {}).bonus || dow(today()) === 0) return "";
+    const review = !fresh && FON.harflar.every(fonComplete);   // hamma harf o'tilgan — takrorlash navbati
+    S.daily = S.daily || {}; S.daily[today()] = { fon: i, bonus: true };
+    if (review) S.fonRev = (S.fonRev || 0) + 1;
+    if (S.lastMission !== today()) { S.streak = S.lastMission === prevWorkday(today()) && S.lastMission >= olovSince() ? S.streak + 1 : 1; S.lastMission = today(); }
+    saveResult(0, XP_MISSION, "daily_ok", [{ s: "daily", t: FON.harflar[i].char, c: true }]).then(() => render());
+    return `<p class="fn-daily">🔥 Bugungi dars bajarildi! Olov: ${S.streak} kun · +${XP_MISSION} XP</p>`;
+  }
+  function renderTodayFon(box, weekHtml) {
+    if (dow(today()) === 0) { box.innerHTML = weekHtml + `<div class="card"><h3 style="margin:0 0 6px">😌 Bugun dam olish kuni</h3><p style="margin:0" class="muted">Yakshanba kunlik dars yo'q, olovingiz o'chmaydi. Ertaga davom etamiz!</p></div>`; return; }
+    const t = fdToday(), h = FON.harflar[t.fon], steps = fonStepsOf(h), got = fonGot(h.char), done = !!t.bonus;
+    const n = steps.filter(([k]) => got.includes(k)).length;
+    box.innerHTML = weekHtml + `
+      <div class="t-head"><div><small>🌙 Fonetika · ${t.fon + 1}/${FON.harflar.length}-harf</small><b>«${esc(h.name)}» harfi</b></div><span class="fd-letter">${h.char}</span></div>
+      <div class="t-sum"><div><b>${done ? "🎉 Bugungi dars bajarildi!" : "Bugungi dars"}</b><span>${done ? steps.length : n}/${steps.length}</span></div><div class="bar"><i style="width:${(done ? 1 : n / steps.length) * 100}%"></i></div></div>
+      <div class="tcard">${steps.map(([k, ic, name]) => { const ok = done || got.includes(k);
+        return `<div class="trow sub ${ok ? "done" : ""}"><span class="t-ic">${ok ? "✓" : ic}</span><span class="t-main"><b>${name}</b></span></div>`; }).join("")}</div>
+      <button class="btn btn-brand btn-block" id="fd-go" style="margin-top:12px">${done ? "🔁 Yana mashq qilish" : n ? "Davom etish →" : "Boshlash →"}</button>
+      <p class="muted t-note">${done ? "Olovingiz bugun yondi 🔥 Ertaga — keyingi harf." : `Harfning hamma qadamlarini bajaring — olov yonadi 🔥 va +${XP_MISSION} XP. Yakshanba — dam olish.`}</p>`;
+    $("#fd-go").onclick = () => fonLetter(t.fon, done || n === steps.length ? 0 : undefined);
+  }
   function renderToday() {
     const box = $("#today-box"); if (!box || !ME) return;
+    if (GRAM_LOCK) {
+      const td = today(), mon = addDays(td, -((dow(td) + 6) % 7)), week = Array.from({ length: 7 }, (_, i) => addDays(mon, i)), lit = d => !!(((S.daily || {})[d] || {}).bonus);
+      return renderTodayFon(box, `<div class="week">${week.map(d => `<div class="wd ${dow(d) === 0 ? "rest" : lit(d) ? "done" : d === td ? "todo" : d < td ? "missed" : "future"} ${d === td ? "today sel" : ""}"><small>${WEEK[dow(d)]}</small><span>${dow(d) === 0 ? "😌" : lit(d) ? "🔥" : +d.slice(8)}</span></div>`).join("")}</div>`);
+    }
     const td = today(), mon = addDays(td, -((dow(td) + 6) % 7)), week = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
     const lit = d => !!(((S.daily || {})[d] || {}).bonus);
     const weekHtml = `<div class="week">${week.map(d => `<div class="wd ${dow(d) === 0 ? "rest" : lit(d) ? "done" : d === td ? "todo" : d < td ? "missed" : "future"} ${d === td ? "today sel" : ""}">
@@ -2000,6 +2040,7 @@
 
   let wordLesson = 1, hideMeaning = false;
   function renderWords() {
+    if (GRAM_LOCK) { $("#w-list").innerHTML = `<div class="card lock-card" style="grid-column:1/-1"><span class="big">🔒</span><b>Lug'at</b><span class="muted">Grammatika ochilganda qaytadi</span></div>`; $("#w-seg").innerHTML = $("#w-phrases").innerHTML = ""; $("#w-count").textContent = ""; $("#w-hide").hidden = true; return; }
     const open = groupLessons().map(l => l.number);
     if (!open.includes(wordLesson)) wordLesson = open[open.length - 1];
     $("#w-seg").innerHTML = D.lessons.map(l => `<button aria-pressed="${l.number === wordLesson}" data-wl="${l.number}" ${open.includes(l.number) ? "" : "disabled"}>${l.number > 100 ? `A1·${l.number - 100}` : l.number}. <span class="ar">${esc(l.title)}</span></button>`).join("");
@@ -2181,11 +2222,16 @@
   // «Darslar»ning tepasida quyosh (Grammatika — hozirgi darslar xaritasi) va oy (Fonetika — alohida, yangicha uslubda; tayyorlanmoqda).
   // Missiya, duel va reyting Fonetikaga qo'shilmaydi. Tanlov «tb_course» da eslab qolinadi.
   function setCourse(c) {
+    if (GRAM_LOCK && c === "gram") c = "fon";
     $$("[data-course]").forEach(b => b.setAttribute("aria-pressed", b.dataset.course === c));
     $("#course-gram").hidden = c !== "gram"; $("#course-fon").hidden = c !== "fon";
   }
-  $$("[data-course]").forEach(b => (b.onclick = () => { sfx("tap"); store.set("tb_course", b.dataset.course); setCourse(b.dataset.course); }));
-  setCourse(store.get("tb_course") === "fon" ? "fon" : "gram");
+  $$("[data-course]").forEach(b => (b.onclick = () => { if (GRAM_LOCK && b.dataset.course === "gram") return gramToast(); sfx("tap"); store.set("tb_course", b.dataset.course); setCourse(b.dataset.course); }));
+  setCourse(GRAM_LOCK || store.get("tb_course") === "fon" ? "fon" : "gram");
+  if (GRAM_LOCK) {
+    $('[data-course="gram"]').classList.add("gram-locked"); $("#m-start").closest(".mc-half").classList.add("gram-locked");
+    $$('[data-act="listen"], [data-act="speak"]').forEach(b => b.classList.add("gram-locked"));
+  }
 
   // Telefonda ilova yopilmay, kunlab ochiq turadi. Qaytib kirilganda sana, XP va ustoz ochgan darslar yangilanadi
   // (aks holda ertasi kuni ham «bugungi missiya bajarildi» deb turadi va olov yonmaydi). O'quv holati (S) ga tegilmaydi.
@@ -2227,6 +2273,7 @@
     loadMyAttendance();
     loadMyProgress();
     loadKarvon();
+    loadPoyga();
     if (TROPHY_ON()) loadTrophies();
     loadSpeakBadge();
     // Taklif havolasi orqali kelgan bo'lsa — taklif qilganni bog'laymiz (faqat yangi hisob uchun ishlaydi)
@@ -2732,11 +2779,13 @@
   }
 
   // ---------- Hodisalar ----------
-  $("#m-start").onclick = startMission;
+  $("#m-start").onclick = () => (GRAM_LOCK ? gramToast() : startMission());
   $("#mf-start").onclick = startFonMission;
+  $("#pg-open").onclick = poygaSheet;
   $$("[data-act]").forEach(b => (b.onclick = () => {
     const a = b.dataset.act;
-    if (a === "listen") lisPath();
+    if (GRAM_LOCK && (a === "listen" || a === "speak")) gramToast();
+    else if (a === "listen") lisPath();
     else if (a === "review") startReview();
     else if (a === "speak") spkPath();
     else if (a === "duel") { duelSheet(); loadInbox().then(() => { if ($("#duel-new")) duelSheet(); }); }
@@ -2898,6 +2947,65 @@
   }
   function startFonMission() { startRun("fonmission", fonMissionQs()); }
 
+  // ---------- 🐫 Haftalik poyga (2026-10-17, A varianti): har hafta bir marta, 20 savol — o'quvchining o'zi o'tgan harflaridan ----------
+  // Reyting guruh ichida; ball = to'g'ri ×100 + tezlik. Qatnashganga +50 XP, hafta yakunida 1–3-o'rin +500/+300/+200 (server beradi).
+  const POYGA_N = 20;
+  let POYGA = null;
+  function poygaQs() {
+    const out = [], seen = new Set();
+    for (let t = 0; out.length < POYGA_N && t < 6; t++) for (const q of shuffle(fonMissionQs())) if (out.length < POYGA_N && !seen.has(q.key)) { seen.add(q.key); out.push(q); }
+    while (out.length < POYGA_N) out.push(pick(fonMissionQs()));   // harf juda kam bo'lsa — takror bo'lsa ham 20 ta
+    return out;
+  }
+  async function loadPoyga() {
+    try { POYGA = await rpc("poyga_status", { p_token: TOKEN }); } catch { return null; }
+    const sub = $("#pg-sub");
+    if (sub) sub.textContent = POYGA.mine ? `✅ Siz o'ynadingiz: ${POYGA.mine.score} ball · ${poygaRank()}-o'rin` : "20 savol · bir urinish · tuyangizni marraga yetkazing";
+    return POYGA;
+  }
+  const poygaRank = () => (POYGA && POYGA.mine ? POYGA.board.findIndex(r => r.id === POYGA.me) + 1 : 0);
+  function poygaTrack(p) {
+    const max = Math.max(1, ...p.board.map(r => r.score)), meIn = p.board.findIndex(r => r.id === p.me);
+    let rows = p.board.slice(0, 5);
+    if (meIn >= 5) rows = [...rows.slice(0, 4), p.board[meIn]];
+    if (meIn < 0) rows = [...rows.slice(0, 4), { id: p.me, name: "Siz", score: 0, me: true }];
+    return `<div class="pg-track"><div class="pg-fin"></div>${rows.map(r => { const me = r.id === p.me, i = p.board.indexOf(r);
+      return `<div class="pg-lane ${me ? "me" : ""}"><span class="nm">${i >= 0 && i < 3 ? ["🥇", "🥈", "🥉"][i] : me ? "⭐" : ""} ${esc(me ? "Siz" : r.name)}</span>
+        <div class="road"><span class="cam" style="left:${Math.round(r.score * 96 / max)}%">${me ? "🐫" : "🐪"}</span></div></div>`; }).join("")}</div>`;
+  }
+  async function poygaSheet() {
+    sheet(`<h3>🐫 Haftalik poyga</h3><p class="muted">Yuklanmoqda…</p>`);
+    const p = await loadPoyga();
+    if (!p) return sheet(`<h3>🐫 Haftalik poyga</h3><p>${ERRORS.NET}</p><button class="btn btn-soft btn-block" data-close>Yopish</button>`);
+    const end = new Date(p.ends + "T23:59:59+05:00"), left = Math.max(0, end - Date.now()), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), m = Math.floor(left % 36e5 / 6e4);
+    sheet(`<h3>🐫 Haftalik poyga</h3>
+      <p>Har hafta yangi 20 ta savol — o'zingiz o'tgan harflardan. Har kim o'z vaqtida, <b style="color:var(--ink)">bir marta</b> o'ynaydi. Tez va to'g'ri javob — tuyangiz oldinga!</p>
+      <div class="pg-timer"><div><b>${d}</b><span>kun</span></div><div><b>${h}</b><span>soat</span></div><div><b>${m}</b><span>daqiqa</span></div><div style="flex:2"><span>Poyga tugaydi</span><b style="font-size:14px">Yakshanba 23:59</b></div></div>
+      ${poygaTrack(p)}
+      ${p.mine ? `<div class="card" style="text-align:center"><b>✅ Siz bu hafta o'ynadingiz: ${p.mine.score} ball (${p.mine.correct}/${p.mine.total})</b><br><small class="muted">${poygaRank()}-o'rin · keyingi poyga dushanba kuni</small></div>`
+        : `<button class="btn btn-light btn-block" id="pg-go">🐫 Poygani boshlash</button><small class="muted" style="text-align:center;display:block">20 savol · har biriga 15 soniya · faqat 1 urinish</small>`}
+      <div class="pg-prize"><div><b>🥇</b>+500 XP</div><div><b>🥈</b>+300 XP</div><div><b>🥉</b>+200 XP</div><div><b>🐪</b>har kimga +50</div></div>
+      ${p.board.length ? `<div class="card">${p.board.map((r, i) => `<div class="prog-row"><span class="rk">${["🥇", "🥈", "🥉"][i] || i + 1}</span>${avaHtml(r.ava, r.name)}<span class="nm"><b>${esc(r.name)}${r.id === p.me ? " (siz)" : ""}</b><small>${r.correct}/${r.total}</small></span><span class="val">${r.score}</span></div>`).join("")}</div>` : `<p class="muted" style="text-align:center">Bu hafta hali hech kim o'ynamadi — birinchi bo'ling! 🐫</p>`}
+      ${p.prev && p.prev.length ? `<p class="muted" style="font-size:12.5px">O'tgan hafta g'oliblari: ${p.prev.map((r, i) => `${["🥇", "🥈", "🥉"][i]} ${esc(r.name)}`).join(" · ")}</p>` : ""}
+      <button class="btn btn-soft btn-block" data-close>Yopish</button>`);
+    const go = $("#pg-go");
+    if (go) go.onclick = () => { closeSheet(); startRun("poyga", poygaQs()); };
+  }
+  async function finishPoyga(r) {
+    let res; try { res = await rpc("poyga_submit", { p_token: TOKEN, p_score: r.score || 0, p_correct: r.right, p_total: r.qs.length }); } catch (e) { res = { error: e.message }; }
+    await saveResult(res.error === "ALREADY" ? 0 : r.practice, 0, "poyga", r.answers);
+    await loadPoyga();
+    if (!run || run !== r) return;
+    sfx(r.right * 100 / r.qs.length >= PASS ? "win" : "done");
+    const head = res.error === "ALREADY" ? "Bu hafta avval o'ynagansiz — natija hisoblanmadi" : res.error ? errText(new Error(res.error)) : `🐫 Tuyangiz ${res.rank}-o'rinda!`;
+    $("#quiz-in").innerHTML = `<div class="result"><div class="q-meta">🐫 Haftalik poyga</div><div class="score">${r.right}/${r.qs.length}</div>
+      <div style="font-family:var(--f-display);font-weight:600;font-size:17px">${head}</div>
+      <div class="gain"><span class="pill green">⭐ +${(res.error ? 0 : r.practice) + (res.bonus || 0)} XP</span><span class="pill gold">🏁 ${r.score || 0} ball</span>${r.fast ? `<span class="pill gold">⚡ ${r.fast} ta tez javob</span>` : ""}</div>
+      <div class="actions"><button class="btn btn-brand btn-block" id="pg-again">🐫 Poyga reytingi</button><button class="btn btn-soft btn-block" data-home>Bosh sahifa</button></div></div>`;
+    $("[data-home]").onclick = closeRun;
+    $("#pg-again").onclick = () => { closeRun(); poygaSheet(); };
+  }
+
   function renderFon() {
     const box = $("#fon-sky"); if (!box) return;
     const order = Array.from(FON.tartib), lit = FON.harflar.filter(fonComplete).length;
@@ -2926,19 +3034,20 @@
     $("#fn-x").onclick = closeFon; $("#fon").scrollTop = 0;
     const ok = () => { const b = $("#fn-next"); if (b && b.disabled) { b.disabled = false; sfx("ok"); } };
     $("#fn-next").onclick = () => {
-      const was = fonComplete(h);
+      const was = fonComplete(h), dIdx = GRAM_LOCK ? fdToday().fon : -1;   // bugungi dars harfi (yangilanishdan oldin)
       S.fon = S.fon || {}; const a = (S.fon[h.char] = S.fon[h.char] || []); if (!a.includes(key)) a.push(key);
       saveResult(0, 0, "fon", []);
       if (k + 1 < steps.length) return fonLetter(i, k + 1);
-      fonFinish(i, !was);
+      fonFinish(i, !was, dIdx);
     };
     FON_STEP[key](h, $("#fn-body"), ok, i);
   }
-  function fonFinish(i, fresh) {
+  function fonFinish(i, fresh, dIdx) {
     const h = FON.harflar[i], next = FON.harflar[i + 1];
     sfx("win");
+    const daily = fonDailyAward(i, dIdx, fresh);
     $("#fon-in").innerHTML = `<div class="fn-done"><div class="fn-bigstar">★</div><div class="ar fn-bigletter">${h.char}</div>
-      <h3>${fresh ? "Yulduz yondi!" : "Yana bir bor mustahkamlandi!"}</h3><p>«${esc(h.name)}» harfini o'rgandingiz. Barakalla! 🌙</p>
+      <h3>${fresh ? "Yulduz yondi!" : "Yana bir bor mustahkamlandi!"}</h3><p>«${esc(h.name)}» harfini o'rgandingiz. Barakalla! 🌙</p>${daily}
       ${next ? `<button class="fn-next" id="fn-go">Keyingi yulduz: ${esc(next.name)} →</button>` : `<p class="fs-note">Keyingi harflar tez orada qo'shiladi 🐪</p>`}
       <button class="fn-ghost" id="fn-sky">Osmonga qaytish</button></div>`;
     const go = $("#fn-go"); if (go) go.onclick = () => fonLetter(i + 1);
