@@ -109,7 +109,9 @@
   const bump = (k, by = 1) => (S.c[k] = (S.c[k] || 0) + by);
   // Olov musobaqasi ustoz «0 dan boshlagan» sanadan (group.olov_since) oldingi kunlarni hisoblamaydi
   const olovSince = () => (ME && ME.group && ME.group.olov_since) || "";
-  const streakNow = () => (S.lastMission && S.lastMission >= yesterday() && S.lastMission >= olovSince() ? S.streak : 0);
+  // 🔥 Olov endi KUNLIK DARS bilan yonadi (2026-10-17). S.lastMission — olov yongan oxirgi kun. Yakshanba — dam olish, zanjirni uzmaydi
+  const prevWorkday = d => { let x = addDays(d, -1); if (new Date(x + "T00:00:00Z").getUTCDay() === 0) x = addDays(x, -1); return x; };
+  const streakNow = () => (S.lastMission && S.lastMission >= prevWorkday(today()) && S.lastMission >= olovSince() ? S.streak : 0);
   const rankOf = xp => RANKS.filter(r => xp >= r[0]).pop()[1];
 
   // Natija saqlanmay qolsa (internet yo'q), navbatga qo'yiladi va keyin yuboriladi
@@ -154,6 +156,7 @@
   // ---------- Ovoz ----------
   let player = null;
   function play(text) {
+    if (!D.audio[text] && !D.audio["F|" + text] && FON_AUDIO.has(text)) return fonPlay(text);   // fonetika ovozlari alohida (f_<kod>.mp3)
     const file = D.audio[text] || D.audio["F|" + text];   // suhbat javoblari faqat ayol ovozida yozilgan
     if (!file) return;
     playSeq.id = (playSeq.id || 0) + 1;   // ketma-ket o'qish ketayotgan bo'lsa, to'xtaydi
@@ -321,8 +324,8 @@
   const PARTS = [...DAILY, ["writing", "✍️", "Yozish"]];
   const partLabel = p => PARTS.find(x => x[0] === p).slice(1).join(" ");
   // Kunlik tizim vaqtincha o'chiq (ustoz qarori, 2026-10-01: guruhlar yig'ilganda yoqiladi). O'chiq paytda A1 oddiy dars bo'lib ishlaydi.
-  const DAILY_ON = false;
-  const hasParts = n => DAILY_ON && !!(lesson(n) || {}).days;
+  const DAILY_ON = true;   // «📅 Bugun» yorlig'i (2026-10-17: kunlik dars hamma uchun)
+  const hasParts = () => false;   // eski «unit = 3 kun, sana bo'yicha jadval» tizimi o'chiq; A1 matnlari keyin kunlik darsga qo'shiladi
   // Kun ma'lumoti: unitning so'zlari va grammatikasi kunlarga teng bo'linadi, matnlar kunning o'zidan
   const share = (arr, k, of) => { if (!arr) return arr; const n = Math.ceil(arr.length / of); return arr.slice(k * n, (k + 1) * n); };
   const dayData = (n, k) => { const u = lesson(n), of = u.days.length; return { ...u, ...u.days[k], allWords: u.words, words: share(u.words, k, of), fills: share(u.fills, k, of) }; };
@@ -470,6 +473,7 @@
   const RING = 2 * Math.PI * 19;
   const CFG = {
     mission: { title: "Kunlik missiya", timed: true },
+    fonmission: { title: "🌙 Fonetika missiyasi", timed: true },
     lesson: { title: "Dars testi", timed: false },
     listen: { title: "Tinglash", timed: false },
     review: { title: "Xatolarim", timed: false },
@@ -744,21 +748,46 @@
     const pills = [], lines = [];
     let headline = pct === 100 ? "Mukammal! 💯" : pct >= PASS ? "Zo'r natija!" : "Yaxshi urinish!";
     let actions = `<button class="btn btn-soft btn-block" data-home>Bosh sahifa</button>`;
-    let bonus = 0, flash = false;
+    let bonus = 0, flash = false, kdKind = null;
     $("#quiz-in").innerHTML = `<div class="result"><div class="q-meta">${esc(r.title)}</div><div class="score">${r.right}/${n}</div><p class="muted">Natija saqlanmoqda…</p></div>`;
 
     if (r.kind === "duel") return finishDuel(r);
 
     if (r.kind === "mission") {
       if (r.fast) pills.push(`<span class="pill gold">⚡ ${r.fast} ta tez javob</span>`);
-      if (S.lastMission !== today()) {
-        S.streak = S.lastMission === yesterday() && S.lastMission >= olovSince() ? S.streak + 1 : 1;
-        S.lastMission = today(); bonus += XP_MISSION;
-        pills.push(`<span class="pill gold">🔥 Olov yondi: ${S.streak} kun</span>`, `<span class="pill gold">🎁 +${XP_MISSION} bonus</span>`, chestPill(giveChest("silver")));
+      if (S.missionDay !== today()) {
+        S.missionDay = today(); bonus += XP_MISSION;
+        pills.push(`<span class="pill gold">🎁 +${XP_MISSION} bonus</span>`, chestPill(giveChest("silver")));
       } else pills.push(`<span class="pill soft">Bugungi missiya avval bajarilgan, bu mashq</span>`);
+      if (S.lastMission !== today()) pills.push(`<span class="pill soft">🔥 Olov kunlik darsni bajarsangiz yonadi</span>`);
       flash = r.fast >= 5;
       actions = `<button class="btn btn-brand btn-block" data-again>➕ Yana 5 ta savol</button>` + actions;
-      if (!pushOn() && pushSupported() && store.get("tb_push") !== "0") actions += `<button class="btn btn-soft btn-block" data-push>🔔 Olovim o'chmasin — eslatmani yoqish</button>`;
+    } else if (r.kind === "fonmission") {
+      if (r.fast) pills.push(`<span class="pill gold">⚡ ${r.fast} ta tez javob</span>`);
+      if (S.fonMission !== today()) { S.fonMission = today(); bonus += XP_MISSION; pills.push(`<span class="pill gold">🎁 +${XP_MISSION} bonus</span>`); }
+      else pills.push(`<span class="pill soft">Bugungi fonetika missiyasi avval bajarilgan, bu mashq</span>`);
+      actions = `<button class="btn btn-brand btn-block" data-again>➕ Yana 12 ta savol</button>` + actions;
+    } else if (r.kind === "daily" && r.kd) {
+      // 📅 Kunlik dars: 4 qism; hammasi 80%+ bo'lsa — olov yonadi, +20 bonus, darsning keyingi kuni ochiladi
+      const t = S.daily[r.date], p = r.part, wasDone = !!t.bonus;
+      t.parts[p] = Math.max(t.parts[p] || 0, pct);
+      const left = KD.filter(([q]) => (t.parts[q] || 0) < PASS);
+      if (!wasDone && !left.length) {
+        t.bonus = true; bonus += XP_MISSION; kdKind = "daily_ok";
+        S.dprog = S.dprog || {}; S.dprog[t.n] = kdProg(t.n) + 1;
+        if (S.dprog[t.n] >= KD_DAYS && !passed(t.n)) S.lessons[t.n] = Math.max(S.lessons[t.n] || 0, PASS);   // 3 kun tugadi — dars o'tildi
+        if (S.lastMission !== today()) { S.streak = S.lastMission === prevWorkday(today()) && S.lastMission >= olovSince() ? S.streak + 1 : 1; S.lastMission = today(); }
+        headline = "🎉 Bugungi dars bajarildi!";
+        pills.push(`<span class="pill gold">🔥 Olov yondi: ${S.streak} kun</span>`, `<span class="pill gold">🎁 +${XP_MISSION} bonus</span>`);
+        if (!pushOn() && pushSupported() && store.get("tb_push") !== "0") actions += `<button class="btn btn-soft btn-block" data-push>🔔 Olovim o'chmasin — eslatmani yoqish</button>`;
+      } else if (pct >= PASS) {
+        headline = left.length ? `✅ ${KD.find(x => x[0] === p)[2]} bajarildi! Yana ${left.length} ta qism qoldi` : "Bugungi dars avval bajarilgan — bu mashq 💪";
+        if (left.length) actions = `<button class="btn btn-brand btn-block" data-kd="${left[0][0]}">Keyingisi: ${left[0][1]} ${left[0][2]} →</button>` + actions;
+      } else {
+        headline = `${KD.find(x => x[0] === p)[2]}: ${PASS}% kerak edi`;
+        actions = `<button class="btn btn-brand btn-block" data-kd="${p}">🔁 Qayta urinish</button>` + actions;
+      }
+      actions += `<button class="btn btn-soft btn-block" data-gotoday>📅 Bugungi dars</button>`;
     } else if (r.kind === "daily") {
       const { lesson: ln, day: k, part: p, date } = r, wasPassed = passed(ln);
       const best = (((S.days = S.days || {})[ln] = S.days[ln] || {})[k] = S.days[ln][k] || {});
@@ -846,7 +875,7 @@
     }
 
     const newBadges = checkBadges(flash);
-    const res = await saveResult(r.practice, bonus, r.kind, r.answers);
+    const res = await saveResult(r.practice, bonus, kdKind || r.kind, r.answers);
     const earned = (res.granted || 0) + (res.bonus || 0);
     if (r.kind === "lesson" && pct >= PASS && !res.offline) refClaim();
     if (res.capped) pills.push(`<span class="pill soft">🎯 Bugungi ${DAILY_CAP} XP chegarasi to'ldi, mashq davom etsin 💪</span>`);
@@ -871,11 +900,12 @@
 
   function bindResultButtons(kind) {
     $("[data-home]").onclick = closeRun;
-    const again = $("[data-again]"); if (again) again.onclick = () => ({ mission: startMission, listen: startListen, review: startReview, cards: startCards })[kind]();
+    const again = $("[data-again]"); if (again) again.onclick = () => ({ mission: startMission, fonmission: startFonMission, listen: startListen, review: startReview, cards: startCards })[kind]();
     const nextL = $("[data-lesson]"); if (nextL) nextL.onclick = () => startLesson(+nextL.dataset.lesson);
     const pu = $("[data-push]"); if (pu) pu.onclick = () => { pushEnable(); pu.remove(); };
     const dp = $("[data-dpart]"); if (dp) dp.onclick = () => startDaily(+dp.dataset.n, +dp.dataset.k, dp.dataset.dpart, dp.dataset.date || null);
     const gt = $("[data-gotoday]"); if (gt) gt.onclick = () => { closeRun(); showTab("today"); };
+    const kdb = $("[data-kd]"); if (kdb) kdb.onclick = () => startKD(kdb.dataset.kd);
     const pb = $("[data-practice]"); if (pb) pb.onclick = () => { closeRun(); practiceSheet(); };
     const ls = $("[data-lstage]"); if (ls) { const ln = run.lesson; ls.onclick = () => startLisStage(ln, +ls.dataset.lstage); }
     const lx = $("[data-lnext]"); if (lx) lx.onclick = () => { closeRun(); lisLessonSheet(+lx.dataset.lnext); };
@@ -1692,11 +1722,14 @@
     $("#h-streak").textContent = st; $("#chip-fire").classList.toggle("off", !st);
     $("#h-xp").textContent = ME.xp;
 
-    const doneToday = S.lastMission === today();
-    $("#m-title").textContent = doneToday ? "Bugungi missiya bajarildi ✅" : "5 ta savol, 15 soniyadan";
+    const doneToday = S.missionDay === today();
+    $("#m-title").textContent = doneToday ? "Bajarildi ✅" : "5 ta savol";
+    const fonDoneToday = S.fonMission === today();
+    $("#mf-title").textContent = fonDoneToday ? "Bajarildi ✅" : "12 ta savol";
+    $("#mf-start").textContent = fonDoneToday ? "Mashq →" : "Boshlash →";
     $("#m-sub").textContent = doneToday ? "Ertaga yana keling. Hozir qo'shimcha mashq qilsangiz ham bo'ladi."
       : st ? `Bajarsangiz, olov ${st + 1}-kunga yonadi. Tez javob uchun ⚡ bonus.` : "Bajaring va olovni yoqing 🔥 Tez javob uchun ⚡ bonus.";
-    $("#m-start").textContent = doneToday ? "Mashq qilish →" : "Boshlash →";
+    $("#m-start").textContent = doneToday ? "Mashq →" : "Boshlash →";
     $$("#m-dots i").forEach(i => i.classList.toggle("on", doneToday));
 
     const next = RANKS.find(r => r[0] > ME.xp), cur = RANKS.filter(r => ME.xp >= r[0]).pop();
@@ -1855,68 +1888,58 @@
       title: `${unitName(n)} · ${k + 1}-kun · ${partLabel(p)}${live ? "" : " (mashq)"}` });
   }
 
-  let todaySel = null;
+  // ---------- 📅 Kunlik dars (2026-10-17, ustoz tasdiqlagan): hamma darajalar uchun, tayyor darslardan ----------
+  // Har o'quvchining bugungi darsi — o'zi turgan navbatdagi dars (ustoz ochgan, hali o'tilmagan). Bitta dars = 3 kun.
+  // Har kuni 4 qism: lug'at · grammatika · tinglash · o'qish. Hammasi 80%+ — olov yonadi (+20 XP). Yakshanba — dam olish.
+  // Hamma darslar o'tilgan bo'lsa — eski darslar navbat bilan takrorlanadi.
+  const KD = [["vocab", "📚", "Lug'at"], ["grammar", "✏️", "Grammatika"], ["listening", "🎧", "Tinglash"], ["reading", "📖", "O'qish"]];
+  const KD_DAYS = 3;
+  let todaySel = null;   // eski kod bilan moslik uchun
+  const kdProg = n => ((S.dprog || {})[n] || 0);
+  function kdLesson() {
+    const open = ORDER.filter(n => isOpen(n));
+    const cur = open.find(n => !passed(n) && kdProg(n) < KD_DAYS);
+    if (cur != null) return cur;
+    return open.length ? open.reduce((a, b) => (kdProg(b) < kdProg(a) ? b : a)) : null;
+  }
+  function kdToday() {
+    const t = (S.daily || {})[today()];
+    if (t && t.kd) return t;
+    const n = kdLesson(); if (n == null) return null;
+    return { kd: 1, n, k: kdProg(n) % KD_DAYS, parts: {} };
+  }
+  function kdQs(n, k, p) {
+    const L = lesson(n), a1 = n > 100, part = { ...L, words: share(L.words, k, KD_DAYS) };
+    const src = { vocab: [{ ...part, letters: null, phrases: null, shown: null, fills: null, dialogs: null }, ["reading"], 8],
+      grammar: [part, ["grammar"], 6], listening: [part, ["listening"], 6], reading: [{ ...L, words: [] }, ["reading"], 6] }[p];
+    let qs = build([src[0]], src[2], src[1], a1);
+    if (qs.length < 4) qs = build([L], src[2], src[1], a1);   // kun bo'lagi kichik bo'lsa — butun darsdan
+    return qs;
+  }
+  function startKD(p) {
+    const t = kdToday(); if (!t) return toast("📅 Ustoz hali dars ochmagan");
+    S.daily = S.daily || {}; S.daily[today()] = t;
+    const name = KD.find(x => x[0] === p);
+    startRun("daily", kdQs(t.n, t.k, p), { kd: true, lesson: t.n, day: t.k, part: p, date: today(), title: `📅 ${lname(t.n)} · ${t.k + 1}-kun · ${name[2]}` });
+  }
   function renderToday() {
     const box = $("#today-box"); if (!box || !ME) return;
-    if (!DAILY_ON) {
-      box.innerHTML = `<div class="card t-soon"><div class="ar">قَرِيبًا</div><b>Tez orada</b>
-        <p class="muted">Har kunlik topshiriqlar: ✏️ grammatika, 📚 lug'at, 🎧 tinglash, 📖 o'qish va ✍️ yozish. Hozircha darslarni «Darslar» bo'limida o'ting.</p>
-        <button class="btn btn-brand btn-block" id="t-lessons">📚 Darslarga o'tish</button></div>`;
-      $("#t-lessons").onclick = () => showTab("lessons");
-      return;
-    }
-    const td = today(), sel = todaySel || td;
-    const mon = addDays(td, -((dow(td) + 6) % 7));
-    const week = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
-    const status = d => {
-      const t = taskFor(d);
-      if (t.rest) return "rest";
-      if (!t.n || t.locked) return "none";
-      if (d > td) return "future";
-      const got = dayDoneOnTime(d);
-      return got === PARTS.length ? "done" : got ? "part" : d === td ? "todo" : "missed";
-    };
-    const t = taskFor(sel);
-    let body;
-    if (t.none && !S.dstart) body = openCount("A1") > 0
-      ? `<div class="card t-start"><h3>📅 A1 kunlik dasturi</h3><p>Har kuni yangi topshiriqlar: ✏️ grammatika, 📚 lug'at, 🎧 tinglash, 📖 o'qish va ✍️ yozish. Bitta unit — 3 kun, yakshanba — dam olish.</p>
-          <p><b>Muhim:</b> topshiriq faqat o'sha kuni ball beradi. O'tib ketgan kunlarni Practice box'da ballsiz ishlash mumkin.</p>
-          <button class="btn btn-brand btn-block" id="t-go">▶ Bugundan boshlash</button></div>`
-      : `<div class="card"><p style="margin:0">📅 Kunlik topshiriqlar ustoz A1 darajasini ochgach boshlanadi.</p></div>`;
-    else if (t.none) body = `<div class="card"><p style="margin:0">📅 Sizning jadvalingiz ${fmtDate(S.dstart)} kuni boshlangan.</p></div>`;
-    else if (t.rest) body = `<div class="card"><h3 style="margin:0 0 6px">😌 Dam olish kuni</h3><p style="margin:0" class="muted">Yakshanba topshiriq yo'q. Xohlasangiz, Practice box'da o'tgan kunlarni takrorlang.</p></div>`;
-    else if (t.soon) body = `<div class="card"><p style="margin:0">⏳ Bu kun uchun topshiriqlar tez orada qo'shiladi${t.n ? ` (${unitName(t.n)})` : ""}.</p></div>`;
-    else if (t.locked) body = `<div class="card"><p style="margin:0">🔒 ${unitName(t.n)}ni ustoz hali ochmagan.</p></div>`;
-    else {
-      const { n, k } = t, day = lesson(n).days[k], live = sel === td, future = sel > td;
-      const got = dayDoneOnTime(sel), dailyGot = DAILY.filter(([p]) => (onTime(sel, p) || 0) >= PASS).length;
-      const row = ([p, ic, name], sub) => {
-        const sc = onTime(sel, p), ok = (sc || 0) >= PASS;
-        return `<button class="trow ${sub ? "sub" : ""} ${ok ? "done" : ""}" data-tp="${p}" ${live ? "" : "disabled"}>
-          ${sub ? `<span class="arrow">↳</span>` : ""}<span class="t-ic">${ok ? "✓" : ic}</span>
-          <span class="t-main"><b>${name}</b><span class="bar"><i style="width:${Math.min(100, sc || 0)}%"></i></span></span>
-          <span class="t-pct">${future ? "🔒" : `${sc || 0}%`}</span></button>`;
-      };
-      body = `
-        <div class="t-head"><div><small>${unitName(n)} · ${k + 1}-kun</small><b>${esc(day.title_uz)}</b></div><span class="ar">${esc(lesson(n).title)}</span></div>
-        <div class="t-sum"><div><b>${live ? "Bugungi topshiriqlar" : future ? `${fmtDate(sel)} kuni ochiladi` : `${fmtDate(sel)} natijasi`}</b><span>${got}/${PARTS.length}</span></div>
-          <div class="bar"><i style="width:${got * 100 / PARTS.length}%"></i></div></div>
-        <div class="tcard"><div class="tcard-h"><span class="t-ic big">📋</span><span class="t-main"><b>Daily Tasks</b><small>${dailyGot}/4 qism bajarildi · 🎁 +${XP_MISSION} bonus</small></span></div>
-          ${DAILY.map(x => row(x, true)).join("")}</div>
-        <div class="tcard">${row(PARTS[4], false)}</div>
-        ${!live && !future ? `<p class="muted t-note">⏰ Bu kun o'tib ketdi. Faqat o'sha kuni bajarilgan topshiriqlar hisoblanadi. Mashqlarni Practice box'da ballsiz ishlashingiz mumkin.</p>` : ""}
-        ${live ? `<p class="muted t-note">Faqat bugun bajarilgan topshiriqlar hisoblanadi. Har qismdan ${PASS}% oling.</p>` : ""}`;
-    }
-    box.innerHTML = `
-      <div class="week">${week.map(d => `<button class="wd ${status(d)} ${d === sel ? "sel" : ""} ${d === td ? "today" : ""}" data-date="${d}">
-        <small>${WEEK[dow(d)]}</small><span>${+d.slice(8)}</span></button>`).join("")}</div>
-      ${body}
-      <button class="tcard pbox" id="pbox"><span class="t-ic big">🧺</span><span class="t-main"><b>Practice box</b><small>O'tgan kunlar mashqlarini ballsiz takrorlang</small></span><span class="go">›</span></button>`;
-    $$(".wd").forEach(b => (b.onclick = () => { todaySel = b.dataset.date; renderToday(); }));
-    $$(".trow[data-tp]").forEach(b => (b.onclick = () => startDaily(t.n, t.k, b.dataset.tp, sel)));
-    $("#pbox").onclick = practiceSheet;
-    const go = $("#t-go");
-    if (go) go.onclick = () => { S.dstart = today(); todaySel = null; saveResult(0, 0, "state", []); renderToday(); toast("📅 Dastur boshlandi! Omad 💪"); };
+    const td = today(), mon = addDays(td, -((dow(td) + 6) % 7)), week = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+    const lit = d => !!(((S.daily || {})[d] || {}).bonus);
+    const weekHtml = `<div class="week">${week.map(d => `<div class="wd ${dow(d) === 0 ? "rest" : lit(d) ? "done" : d === td ? "todo" : d < td ? "missed" : "future"} ${d === td ? "today sel" : ""}">
+      <small>${WEEK[dow(d)]}</small><span>${dow(d) === 0 ? "😌" : lit(d) ? "🔥" : +d.slice(8)}</span></div>`).join("")}</div>`;
+    if (dow(td) === 0) { box.innerHTML = weekHtml + `<div class="card"><h3 style="margin:0 0 6px">😌 Bugun dam olish kuni</h3><p style="margin:0" class="muted">Yakshanba kunlik dars yo'q, olovingiz o'chmaydi. Ertaga davom etamiz!</p></div>`; return; }
+    const t = kdToday();
+    if (!t) { box.innerHTML = weekHtml + `<div class="card"><p style="margin:0">📅 Ustoz dars ochgach, kunlik dars shu yerda chiqadi.</p></div>`; return; }
+    const parts = t.parts || {}, got = KD.filter(([p]) => (parts[p] || 0) >= PASS).length, L = lesson(t.n);
+    box.innerHTML = weekHtml + `
+      <div class="t-head"><div><small>${lname(t.n)} · ${t.k + 1}/${KD_DAYS}-kun</small><b>${esc(D.lessonTitles[t.n] || "")}</b></div><span class="ar">${esc(L.title)}</span></div>
+      <div class="t-sum"><div><b>${t.bonus ? "🎉 Bugungi dars bajarildi!" : "Bugungi dars"}</b><span>${got}/${KD.length}</span></div><div class="bar"><i style="width:${got * 100 / KD.length}%"></i></div></div>
+      <div class="tcard">${KD.map(([p, ic, name]) => { const sc = parts[p], ok = (sc || 0) >= PASS;
+        return `<button class="trow sub ${ok ? "done" : ""}" data-tp="${p}"><span class="t-ic">${ok ? "✓" : ic}</span>
+          <span class="t-main"><b>${name}</b><span class="bar"><i style="width:${Math.min(100, sc || 0)}%"></i></span></span><span class="t-pct">${sc || 0}%</span></button>`; }).join("")}</div>
+      <p class="muted t-note">${t.bonus ? "Olovingiz bugun yondi 🔥 Xohlasangiz, qismlarni qayta ishlab mashq qiling." : `To'rttala qismdan ${PASS}% oling — olov yonadi 🔥 va +${XP_MISSION} XP bonus. Yakshanba — dam olish.`}</p>`;
+    $$(".trow[data-tp]").forEach(b => (b.onclick = () => startKD(b.dataset.tp)));
   }
 
   // 🧺 Practice box: jadvalda o'tib ketgan (yoki bugungi) kunlar ro'yxati
@@ -2710,6 +2733,7 @@
 
   // ---------- Hodisalar ----------
   $("#m-start").onclick = startMission;
+  $("#mf-start").onclick = startFonMission;
   $$("[data-act]").forEach(b => (b.onclick = () => {
     const a = b.dataset.act;
     if (a === "listen") lisPath();
@@ -2832,7 +2856,7 @@
   // ---------- 🌙 Fonetika: «Yulduzlar yo'li» (Mundil.uz; «Savodim» kitobi asosida; ustoz, 2026-10-12) ----------
   // Har harf — osmondagi bitta yulduz (kitobdagi tartibda). Harfning barcha qadamlari bajarilsa, yulduz yonadi.
   // Bu yerda ball, soat va reyting yo'q (ustoz qarori). Ma'lumot: content/fonetika/harflar.json → python build_fon.py
-  const FON = /*FON_DATA*/{"tartib":"ارزمتنيبكلوهفقشسثصطجخحغعدضذظ","harflar":[{"char":"ا","name":"Alif","maxraj":"Halqumda.","tip":"Arab tilida a, i, u unlilari harf bilan emas, kichik belgilar — harakatlar bilan yoziladi.","harakat":true,"syll":["اَ","اِ","اُ"],"words":[],"join":[]},{"char":"ر","name":"Ro","maxraj":"Tilning oldi qismi ro'parasidagi yuqori tanglayga (qaynoq suv ichganda kuyadigan joy) tekkanda chiqadi.","tip":"Ro harfida yengil titroq bor. Lekin «traktorrrr» degandek qattiq titratib yubormang.","sifat":[1,0,0,0],"special":"Biroz titroq — takrir","syll":["رَ","رِ","رُ"],"words":["اَرْ","اِرْ","اُرْ"],"join":[["اَ","رْ"],["اِ","رْ"],["اُ","رْ"]]},{"char":"ز","name":"Za","maxraj":"Tilning uchi pastki old tishlarning ichki qismiga tekkanda chiqadi.","tip":"Za harfida hushtakka o'xshash ovoz bor: «zzz» deb cho'zib ko'ring.","sifat":[2,0,0,0],"special":"Hushtaksimon — sofir","syll":["زَ","زِ","زُ"],"words":["اَزْ","اِزْ","اُزْ","زَرْ","زِرْ","زُرْ","اَزْرُ","اِزْرُ","اُرْزُ"],"join":[["اَ","زْ"],["زَ","رُ"],["اِ","زْ","رُ"],["اُ","رْ","زُ"]]},{"char":"م","name":"Mim","maxraj":"Ikki lab bir-biriga tekkanda, ya'ni yopilganda chiqadi.","tip":"Mim aytilganda ovoz burundan chiqadi. Burningizni qisib ko'ring — ovoz to'xtab qoladi.","sifat":[1,0,0,0],"special":"Burundan chiqadigan tovush — g'unna","syll":["مَ","مِ","مُ"],"words":["اَمْ","اِمْ","اُمْ","مُرْ","مُزْ","رُمْ","اَمَرَ","اُمِرَ","اَمْرُ","رَمْزُ","مَرْمَرْ","زَمْزَمْ"],"join":[["اَ","مَ","رَ"],["رَ","مْ","زُ"],["مَ","رْ","مَ","رْ"],["زَ","مْ","زَ","مْ"]]}]}/*FON_END*/;
+  const FON = /*FON_DATA*/{"tartib":"ارزمتنيبكلوهفقشسثصطجخحغعدضذظ","harflar":[{"char":"ا","name":"Alif","joy":"tomoq","maxraj":"Halqumda.","tip":"Arab tilida a, i, u unlilari harf bilan emas, kichik belgilar — harakatlar bilan yoziladi.","harakat":true,"syll":["اَ","اِ","اُ"],"words":[],"join":[]},{"char":"ر","name":"Ro","joy":"tish","maxraj":"Tilning oldi qismi ro'parasidagi yuqori tanglayga (qaynoq suv ichganda kuyadigan joy) tekkanda chiqadi.","tip":"Ro harfida yengil titroq bor. Lekin «traktorrrr» degandek qattiq titratib yubormang.","sifat":[1,0,0,0],"special":"Biroz titroq — takrir, burilish — inxirof","syll":["رَ","رِ","رُ"],"words":["اَرْ","اِرْ","اُرْ"],"join":[["اَ","رْ"],["اِ","رْ"],["اُ","رْ"]]},{"char":"ز","name":"Za","joy":"tish","maxraj":"Tilning uchi pastki old tishlarning ichki qismiga tekkanda chiqadi.","tip":"Za harfida hushtakka o'xshash ovoz bor: «zzz» deb cho'zib ko'ring.","sifat":[2,0,0,0],"special":"Hushtaksimon — sofir","syll":["زَ","زِ","زُ"],"words":["اَزْ","اِزْ","اُزْ","زَرْ","زِرْ","زُرْ","اَزْرُ","اِزْرُ","اُرْزُ"],"join":[["اَ","زْ"],["زَ","رُ"],["اِ","زْ","رُ"],["اُ","رْ","زُ"]]},{"char":"م","name":"Mim","joy":"lab","maxraj":"Ikki lab bir-biriga tekkanda, ya'ni yopilganda chiqadi.","tip":"Mim aytilganda ovoz burundan chiqadi. Burningizni qisib ko'ring — ovoz to'xtab qoladi.","sifat":[1,0,0,0],"special":"Burundan chiqadigan tovush — g'unna","syll":["مَ","مِ","مُ"],"words":["اَمْ","اِمْ","اُمْ","مُرْ","مُزْ","رُمْ","اَمَرَ","اُمِرَ","اَمْرُ","رَمْزُ","مَرْمَرْ","زَمْزَمْ"],"join":[["اَ","مَ","رَ"],["رَ","مْ","زُ"],["مَ","رْ","مَ","رْ"],["زَ","مْ","زَ","مْ"]]},{"char":"ت","name":"Ta","joy":"tish","maxraj":"Tilning uchi yuqori old tishlarning milkiga tutashgan ichki qismiga tekkanda chiqadi.","tip":"Kaftingizni og'zingizga yaqin tuting: Ta aytganda havo kaftingizga urilsa — bu jarangsiz (hams) harf.","sifat":[0,1,0,0],"syll":["تَ","تِ","تُ"],"words":["مَتْ","مِتْ","مُتْ","زُرْتَ","اَمَرْتِ","مَرَرْتُ","اُمِرْتُ","اَمَرَتْ","اَمَرْتُمْ","مَرَرْتُمْ"],"join":[["تَ","مْ","رُ"],["تَ","رِ","مُ"],["تَ","زِ","رُ"],["اَ","مَ","رَ","تْ"],["اُ","مِ","رْ","تُ","مْ"]]},{"char":"ن","name":"Nun","joy":"tish","maxraj":"Tilning uchi yuqori old tishlar milkining ichki qismiga tekkanda chiqadi.","tip":"Nun ham Mim kabi g'unnali harf: ovoz burundan chiqadi.","sifat":[1,0,0,0],"special":"Burundan chiqadigan tovush — g'unna","syll":["نَ","نِ","نُ"],"words":["اَنْ","اِنْ","زِنْ","مَنْ","مِنْ","نَمْ","اَنْتَ","نِمْتَ","اَنْتُمْ","نَزِنُ","اَمَرْنَ"],"join":[["مِ","نْ"],["اَ","نْ","تَ"],["اَ","نْ","تُ","مْ"],["نَ","مْ","نَ","مَ"]]},{"char":"ي","name":"Ya","joy":"til o'rtasi","maxraj":"Tilning o'rta qismi ro'parasidagi yuqori tanglayga ko'tarilganda chiqadi.","tip":"Ya sirg'aluvchi va yumshoq (lin) harf: tovush to'silmay, erkin oqib chiqadi.","sifat":[2,0,0,0],"special":"Yumshoq — lin","syll":["يَ","يِ","يُ"],"words":["اَيْ","اَيْمُ","زَيْتُ","مَيْتُ","رَمْيُ","يَمَنْ","مَرْيَمْ","اَيْمَنْ","اَمْرَيْنِ","زَيْتَيْنِ"],"join":[["اَ","يْ","نَ"],["زَ","يْ","نُ"],["زَ","يْ","تُ"],["يَ","مَ","نُ"],["يَ","زِ","نُ"]]},{"char":"ب","name":"Ba","joy":"lab","maxraj":"Ikki lab bir-biriga tekkanda, ya'ni yopilganda chiqadi.","tip":"Ba sukunli kelsa, tovush biroz tebranib «otilib» chiqadi — bu qalqala.","sifat":[0,0,0,0],"special":"Tebranish — qalqala","syll":["بَ","بِ","بُ"],"words":["اَبْ","اِبْنُ","بِنْتُ","بَيْتُ","بَيْنُ","رَيْبُ","زَيْنَبْ","بَرْبَرْ","مِنْبَرْ","بِبَيْتَيْنِ"],"join":[["بَ","يْ","تُ"],["بِ","نْ","تُ"],["رَ","يْ","بُ"],["نَ","بَ","تَ"]]},{"char":"ك","name":"Kaf","joy":"til orqasi","maxraj":"Tilning orqa qismi yuqori qattiq va yumshoq tanglayning kesishgan joyiga tekkanda chiqadi.","tip":"Kaf portlovchi va jarangsiz: tovush birdan chiqadi, kaftingizga havo urilishini sezasiz.","sifat":[0,1,0,0],"syll":["كَ","كِ","كُ"],"words":["كَمْ","كُنْ","كَيْ","بَكْرُ","كَنْزُ","تَرْكُ","كَتَبَ","يَكْتُبُ","تَرَكَ","كُنْتُ","مُمْكِنْ"],"join":[["كَ","تَ","بَ"],["كُ","نْ","تُ"],["رَ","كِ","بَ"],["يَ","رْ","كَ","بُ"]]},{"char":"ل","name":"Lam","joy":"tish","maxraj":"Tilning oldi qismi yuqori old tishlar milki va tanglay tutashgan joyiga yoyilib tekkanda chiqadi.","tip":"Lamda tilning oldi qismi yoyilib tegadi; tovush biroz cho'ziladi (oraliq harf).","sifat":[1,0,0,0],"special":"Burilish — inxirof","syll":["لَ","لِ","لُ"],"words":["اَلْ","بَلْ","لَمْ","لَنْ","كِلْ","نَزَلَ","لَزِمَ","كَمُلَ","اَكَلَتْ","اَكَلْتُ","بُلْبُلْ"],"join":[["لَ","بَ","نُ"],["لَ","يْ","لُ"],["نَ","مْ","لُ"],["يَ","لْ","زَ","مُ"]]},{"char":"و","name":"Vov","joy":"lab","maxraj":"Ikki lab orasini ochib cho'chchaytirganda va til orqasi biroz ko'tarilganda chiqadi.","tip":"Vov aytganda lablar xuddi atirgul g'unchasiday dumaloq bo'ladi.","sifat":[2,0,0,0],"special":"Yumshoq — lin","syll":["وَ","وِ","وُ"],"words":["اَوْ","لَوْ","وَرَمْ","وَتَرْ","وَمَنْ","وَكَمْ","يَوْمُ","كَوْنُ","وَزْنُ","كَوْكَبْ","مَوْكِبْ"],"join":[["وَ","زَ","نَ"],["يَ","وْ","مُ"],["نَ","وْ","مُ"],["مَ","وْ","زُ"],["لَ","وْ","نُ"],["يَ","زِ","نُ"]]},{"char":"ه","name":"Ha (ه)","joy":"tomoq","maxraj":"Halqumning quyi qismidan chiqadi.","tip":"Ha (ه) jarangsiz va sirg'aluvchi: tomoqning eng pastidan yengil nafas bilan ayting.","sifat":[2,1,0,0],"syll":["هَ","هِ","هُ"],"words":["هَبْ","هَمْ","هَلْ","هُوَ","هِيَ","هُمْ","وَهَبْ","لَهَبْ","بِهِمْ","مِنْهُ","مِنْهُمْ"],"join":[["هَ","رَ","بَ"],["هَ","لْ"],["هُ","وَ"],["هِ","يَ"],["هُ","مْ"],["يَ","هْ","رُ","بُ"]]},{"char":"ف","name":"Fa","joy":"lab","maxraj":"Pastki labning o'rta qismi yuqori tishlarning uchiga tekkanda chiqadi.","tip":"Pastki labni yuqori tishlar uchiga yengil tekkizing; Fa jarangsiz, havo kaftingizga urilib chiqadi.","sifat":[2,1,0,0],"syll":["فَ","فِ","فُ"],"words":["فَمْ","فَنْ","كَفْ","فَلَكْ","كَفَنْ","نَفَرْ","فَوْزُ","فَهْمُ","فِكْرُ","فُلْفُلْ","فَهِمَ","يَفْهَمُ"],"join":[["فَ","هِ","مَ"],["فَ","وْ","زُ"],["فِ","كْ","رُ"],["يَ","فْ","هَ","مُ"],["اِ","فْ","هَ","مْ"]]},{"char":"ق","name":"Qof","joy":"til orqasi","maxraj":"Tilning orqa qismi yuqori yumshoq tanglayga tekkanda chiqadi.","tip":"Qof yo'g'on harf, Kafdan orqaroqda — yumshoq tanglayda chiqadi. كَمَرْ va قَمَرْ ni farqlab o'qing.","sifat":[0,0,1,0],"special":"Tebranish — qalqala","syll":["قَ","قِ","قُ"],"words":["زُقْ","قُمْ","قِفْ","قَلْبُ","قَبْلُ","فَوْقُ","قَلَمْ","قَمَرْ","لَقَبْ","فَلَقْ","فَرْقُ"],"join":[["قَ","بْ","لَ"],["قَ","لَ","مُ"],["وَ","قَ","فَ"],["رَ","زَ","قَ"],["نَ","قَ","لَ"]]},{"char":"ش","name":"Shin","joy":"til o'rtasi","maxraj":"Tilning o'rta qismi yuqori tanglayga ko'tarilganda chiqadi.","tip":"Shinda havo og'iz ichida yoyilib chiqadi — bu yoyilish (tafashshiy) sifati.","sifat":[2,1,0,0],"special":"Yoyilish — tafashshiy","syll":["شَ","شِ","شُ"],"words":["رَشْ","شَرْ","شَمْ","بِشْرُ","شَرِبَ","شَهْرُ","نَشْرُ","شُكْرُ","مَشْرَبْ","مَشْرِقْ"],"join":[["شَ","رِ","بَ"],["شَ","كَ","رَ"],["نَ","شَ","رَ"],["فَ","شَ","لَ"],["يَ","شْ","رَ","بُ"],["شَ","هْ","رُ"]]},{"char":"س","name":"Sin","joy":"tish","maxraj":"Tilning uchi pastki old tishlarning ichki qismi ostiga tekkanda chiqadi.","tip":"Sinni aytganda lablaringizni biroz yoyib, tabassum qiling — harf ingichka va chiroyli chiqadi.","sifat":[2,1,0,0],"special":"Hushtaksimon — sofir","syll":["سَ","سِ","سُ"],"words":["بَسْ","سَمْ","سِرْ","سِنْ","سَفَرْ","سَبَقْ","سَمَكْ","فَرَسْ","مَسْكَنْ","مُسْلِمْ","سِمْسِمْ"],"join":[["سَ","كَ","نَ"],["سَ","فَ","رَ"],["لَ","بِ","سَ"],["كَ","سَ","بَ"],["نَ","فْ","سُ"],["شَ","مْ","سُ"]]},{"char":"ث","name":"Sa","joy":"tish","maxraj":"Tilning uchi tepa tishning uchi bilan tengma-teng turganda chiqadi.","tip":"Tilni yuqori tishlar uchiga shunchaki tekkizing, qattiq tishlamang. Hushtak chiqsa, til uchini yuqoriga ko'taring.","sifat":[2,1,0,0],"syll":["ثَ","ثِ","ثُ"],"words":["بَثْ","ثَمْ","ثَمَرْ","ثَمَنْ","ثَوْرُ","ثَوْبُ","مِثْلُ","مَثَلْ","كَوْثَرْ","اَكْثَرَ","ثَبْتُ"],"join":[["ثَ","بَ","تَ"],["ثَ","قُ","لَ"],["ثَ","مَ","نُ"],["وَ","رِ","ثَ"],["مَ","ثَ","لُ"],["ثَ","مَ","رُ"]]},{"char":"ص","name":"Sod","joy":"tish","maxraj":"Tilning uchi pastki old tishlarning ichki qismiga tekkanda va til orqasi ko'tarilganda chiqadi.","tip":"Sodni yo'g'on aytaman deb lablarni cho'chchaytirmang — yo'g'onlik faqat til orqasi ko'tarilishidan bo'lsin.","sifat":[2,1,1,1],"special":"Hushtaksimon — sofir","syll":["صَ","صِ","صُ"],"words":["صُمْ","صِفْ","صَرَفْ","صَبَرْ","بَصَرْ","قَصَبْ","نَصَرَ","يَنْصُرُ","صَفَرْ","صَيْفُ"],"join":[["صَ","بَ","رَ"],["نَ","صَ","رَ"],["فَ","صَ","لَ"],["وَ","صَ","لَ"],["صَ","يْ","فُ"],["قَ","صَ","بْ"]]},{"char":"ط","name":"To","joy":"tish","maxraj":"Tilning uchi yuqori old tishlarning ichki qismiga tekkanda va til orqasi ko'tarilganda chiqadi.","tip":"To Tadan jarangli va yo'g'onligi bilan farq qiladi. تَرَفْ va طَرَفْ ni farqlab o'qing.","sifat":[0,0,1,1],"special":"Tebranish — qalqala","syll":["طَ","طِ","طُ"],"words":["طَلْ","قَطْ","فَقَطْ","وَطَنْ","طَلَبْ","طَرَفْ","طِفْلُ","مَطَرْ","مَطْلَبْ","مَوْطِنْ","سَبْطُ"],"join":[["طَ","لَ","بَ"],["طَ","يْ","رُ"],["طِ","فْ","لُ"],["رَ","بَ","طَ"],["سَ","قَ","طَ"],["مَ","طَ","رْ"]]},{"char":"ج","name":"Jim","joy":"til o'rtasi","maxraj":"Tilning o'rta qismi ro'parasidagi yuqori tanglayga tekkanda chiqadi.","tip":"Jimni jarangsiz «ch» yoki ruscha «J» kabi sirg'atib aytmang — u portlovchi va qalqalali harf.","sifat":[0,0,0,0],"special":"Tebranish — qalqala","syll":["جَ","جِ","جُ"],"words":["جَمْ","جَرْ","جِنْ","جَبْ","جَبَلْ","جَمَلْ","اَجْرُ","فَجْرُ","جَوْهَرْ","جَوْرَبْ"],"join":[["جَ","لَ","سَ"],["جِ","سْ","مُ"],["فَ","جَ","رَ"],["جَ","بَ","لُ"],["وَ","جْ","هُ"],["ثَ","لْ","جُ"]]},{"char":"خ","name":"Xo","joy":"tomoq","maxraj":"Halqumning yuqori qismidan chiqadi.","tip":"Xo tomoqning yuqori qismidan chiqadi va yo'g'on o'qiladi; havo to'silmay oqadi.","sifat":[2,1,1,0],"syll":["خَ","خِ","خُ"],"words":["خَبْ","خَلْ","خَرَجْ","خَبَرْ","خَشَبْ","خَلَفْ","خَيْرُ","خَتْمُ","خَوْفُ","مَخْرَجْ"],"join":[["خَ","رَ","جَ"],["خَ","لَ","قَ"],["خَ","يْ","رُ"],["خُ","بْ","زُ"],["طَ","بَ","خَ"],["مَ","طْ","بَ","خُ"]]},{"char":"ح","name":"Ha (ح)","joy":"tomoq","maxraj":"Halqumning o'rta qismidan chiqadi.","tip":"Kaftingizni og'zingizga yaqin tutib «ahh» deng: iliq havo urilsa — to'g'ri. «x»ga o'xshab xirillasa, tomoq o'rtasiga tushing.","sifat":[2,1,0,0],"syll":["حَ","حِ","حُ"],"words":["حَيْ","حِلْ","حَجْ","حَسَنْ","حَسَبْ","مُحْسِنْ","مَحْفَلْ","اَحْسَنَ","حَلْقُ","حَتْمُ"],"join":[["بَ","حْ","رُ"],["لَ","حْ","مُ"],["فَ","تَ","حَ"],["مَ","سَ","حَ"],["نَ","جَ","حَ"],["شَ","رَ","حَ"]]},{"char":"غ","name":"G'oyn","joy":"tomoq","maxraj":"Halqumning yuqori qismidan chiqadi.","tip":"G'oyn Xo bilan bir joydan chiqadi, lekin jarangli: ovoz paychalari titraydi.","sifat":[2,0,1,0],"syll":["غَ","غِ","غُ"],"words":["غَمْ","غَبْ","غِلْ","غَيْرُ","بَغْلُ","فَرْغُ","غَبْغَبْ","مَبْلَغْ","مَغْرِبْ","اِغْفِرْ"],"join":[["غَ","سَ","لَ"],["غَ","لَ","بَ"],["غَ","رِ","قَ"],["بَ","لَ","غَ"],["شَ","غَ","لَ"],["فَ","رْ","غُ"]]},{"char":"ع","name":"Ayn","joy":"tomoq","maxraj":"Halqumning o'rta qismidan chiqadi.","tip":"Ayn — bu «A» emas: tomoq o'rtasidagi mushaklar havoni mayin qisadi, xuddi to'r ichidan qisilib o'tgan to'p kabi.","sifat":[1,0,0,0],"syll":["عَ","عِ","عُ"],"words":["بِعْ","عَنْ","عَمْ","مَعَ","عَرَبَ","عَجَبْ","عَمَلْ","عِلْمُ","عُمْرُ","جَمْعُ","عَيْنُ","بَعْلُ"],"join":[["عَ","لِ","مَ"],["عَ","مَ","لَ"],["عَ","رَ","فَ"],["عَ","يْ","نُ"],["سَ","مِ","عَ"],["يَ","عْ","لَ","مُ"]]},{"char":"د","name":"Dal","joy":"tish","maxraj":"Tilning uchi yuqori old tishlarning milki bilan tutashgan ichki qismiga tekkanda chiqadi.","tip":"Dal portlovchi harf: sukunli kelsa, qalqala bilan biroz tebranib chiqadi — اُشْدُدْ.","sifat":[0,0,0,0],"special":"Tebranish — qalqala","syll":["دَ","دِ","دُ"],"words":["دُمْ","دُفْ","زِدْ","دَرْسُ","دَفْعُ","دَهْرُ","دُهْنُ","دُلْدُلْ","هُدْهُدْ","اُشْدُدْ"],"join":[["دَ","خَ","لَ"],["دَ","رَ","سَ"],["وَ","لَ","دَ"],["بَ","دْ","رُ"],["وَ","رَ","دَ"],["اَ","دْ","رَ","كَ"]]},{"char":"ض","name":"Dod","joy":"tish","maxraj":"Tilning ikki yoni yoki bir yoni yuqori jag' tishlarining ichki devoriga qattiq, til uchi yuqori old tishlarning ichki qismiga yengil tekkanda va til orqasi ko'tarilganda chiqadi.","tip":"Dod sirg'aluvchi, yo'g'on va yopiq; Dalda esa bu sifatlarning ziddi bor. دَرْسُ va ضَرْسُ ni farqlab o'qing.","sifat":[2,0,1,1],"special":"Cho'zilgan — iste'tola","syll":["ضَ","ضِ","ضُ"],"words":["ضَيْفُ","عَضْلُ","ضَبْطُ","ضَعْفُ","عَرْضُ","مَضْرِبْ","اِضْرِبْ","تَضْرِبُ","ضَرْسُ","بَعْضُ"],"join":[["ضَ","حِ","كَ"],["ضَ","عُ","فَ"],["حَ","ضَ","رَ"],["غَ","ضَ","بَ"],["مَ","رِ","ضَ"],["عَ","رَ","ضَ"]]},{"char":"ذ","name":"Zal","joy":"tish","maxraj":"Tilning uchi tepa tishning uchi bilan tengma-teng turganda chiqadi.","tip":"Zalni aytganda tilingizni qattiq tishlamang, aks holda «d» tovushiga o'xshab qoladi.","sifat":[2,0,0,0],"syll":["ذَ","ذِ","ذُ"],"words":["اِذْ","مُذْ","خُذْ","مُنْذُ","اِذْنُ","ذِكْرُ","ذِهْنُ","ذَهَبْ","مَذْهَبْ","بَذَلَ","ذِفْرُ"],"join":[["ذَ","هَ","بَ"],["ذَ","نَ","بُ"],["ذِ","كْ","رُ"],["اَ","خَ","ذَ"],["مُ","نْ","ذُ"],["بَ","ذَ","لَ"]]},{"char":"ظ","name":"Zo","joy":"tish","maxraj":"Tilning uchi tepa tishning uchi bilan tengma-teng turganda va til orqasi ko'tarilganda chiqadi.","tip":"Zo Zal bilan bir joydan chiqadi, lekin yo'g'on va yopiq: aytganda til orqasini ko'taring.","sifat":[2,0,1,1],"syll":["ظَ","ظِ","ظُ"],"words":["ظِلْ","ظَنْ","حَظْ","ظَفَرْ","نَظَرْ","نَظْمُ","ظُهْرُ","ظُلْمُ","مُظْلِمْ","مَنْظَرْ","اَعْظَمْ"],"join":[["ظَ","هَ","رَ"],["ظَ","رْ","فُ"],["نَ","ظَ","رَ"],["حَ","فِ","ظَ"],["يَ","ظْ","لِ","مُ"],["لَ","فَ","ظَ"]]}]}/*FON_END*/;
   const FON_STEPS = [["meet", "👋", "Tanishuv"], ["sifat", "🧩", "Sifatlari"], ["listen", "🎧", "Tinglab top"], ["read", "📖", "O'qish"], ["join", "🔗", "Yig'ish"], ["write", "✍️", "Yozish"]];
   const FON_SIFAT = [
     ["Tovush qanday chiqadi?", [["Portlovchi", "shidda", "cho'zib bo'lmaydi"], ["Oraliq", "bayniya", "biroz cho'ziladi"], ["Sirg'aluvchi", "rohova", "cho'ziladi"]]],
@@ -2848,6 +2872,31 @@
   const fonStepsOf = h => FON_STEPS.filter(([k]) => (k === "sifat" ? h.sifat || h.harakat : k === "read" ? h.words.length : k === "join" ? h.join.length : true));
   const fonComplete = h => fonStepsOf(h).every(([k]) => fonGot(h.char).includes(k));
   const fonOpen = i => i < FON.harflar.length && (i === 0 || fonComplete(FON.harflar[i - 1]));
+  const FON_AUDIO = new Set(FON.harflar.flatMap(h => [...h.syll, ...h.words]));
+
+  // 🌙 Fonetika missiyasi: har o'quvchiga o'zi o'tgan harflaridan (+ hozir o'rganayotgani; kamida 2 ta harf), 12 savol:
+  // 🎧 tinglab top ×3 · 🧩 sifat ×3 · 📍 maxraj ×3 · 🔗 yig'ish ×3. Har savolga 15 soniya (ustoz, 2026-10-17)
+  const FON_JOY = [["lab", "👄 Lablar"], ["tish", "🦷 Til uchi va tishlar"], ["til o'rtasi", "👅 Tilning o'rtasi"], ["til orqasi", "👅 Tilning orqasi"], ["tomoq", "🗣 Tomoq"]];
+  function fonMissionQs() {
+    let cur = FON.harflar.findIndex(h => !fonComplete(h)); if (cur < 0) cur = FON.harflar.length - 1;
+    const pool = FON.harflar.slice(0, Math.max(2, cur + 1)), texts = [...new Set(pool.flatMap(h => [...h.syll, ...h.words]))];
+    const opts3 = (t, from) => { const o = shuffle([t, ...shuffle([...new Set(from)].filter(x => x !== t)).slice(0, 2)]); return [o, o.indexOf(t)]; };
+    const qs = [], seen = new Set(), add = q => { if (q && !seen.has(q.key)) { seen.add(q.key); qs.push(q); return true; } return false; };
+    const many = (fn, n) => { for (let k = 0, t = 0; k < n && t < 40; t++) if (add(fn())) k++; };
+    many(() => { const t = pick(texts); return Q("f_lis", "listening", t, "🎧 Eshiting. Nima aytildi?", opts3(t, texts), { audio: t, hint: `Aytilgani: ${t}` }); }, 3);
+    const withS = pool.filter(h => h.sifat);
+    many(() => { const h = pick(withS), r = rnd(4), [q, os] = FON_SIFAT[r], names = os.map(([uz, ar]) => `${uz} (${ar})`);
+      return Q("f_sif", "reading", h.char + r, `<b>${h.char}</b>\n\n«${h.name}» harfi: ${q}`, [names, h.sifat[r]], { hint: `${h.name}: ${names[h.sifat[r]]}` }); }, 3);
+    const withJ = pool.filter(h => h.joy);
+    many(() => { const h = pick(withJ), right = FON_JOY.find(j => j[0] === h.joy), o = shuffle([right, ...shuffle(FON_JOY.filter(j => j !== right)).slice(0, 3)]);
+      return Q("f_max", "reading", h.char + "#" + qs.length, `<b>${h.char}</b>\n\nBu harf qayerdan chiqadi?`, [o.map(j => j[1]), o.indexOf(right)], { hint: `${h.name}: ${h.maxraj}` }); }, 3);
+    const joins = pool.flatMap(h => h.join.map(p => [p, h]));
+    many(() => { if (!joins.length) return null; const [parts] = pick(joins), t = parts.join("");
+      return Q("f_join", "grammar", t, `<b>${parts.join(" + ")}</b>\n\nQo'shilsa qaysi so'z chiqadi?`, opts3(t, [...texts, ...joins.map(([p]) => p.join(""))]), { audio: t }); }, 3);
+    many(() => { const t = pick(texts); return Q("f_lis", "listening", t, "🎧 Eshiting. Nima aytildi?", opts3(t, texts), { audio: t, hint: `Aytilgani: ${t}` }); }, 12 - qs.length);
+    return qs;
+  }
+  function startFonMission() { startRun("fonmission", fonMissionQs()); }
 
   function renderFon() {
     const box = $("#fon-sky"); if (!box) return;

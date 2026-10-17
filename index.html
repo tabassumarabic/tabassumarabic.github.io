@@ -543,6 +543,10 @@
   .mcard.big .mc-t b { font-family: var(--f-display); font-size: 19px; }
   .mcard.big .mc-t .eyebrow { font-size: 11.5px; }
   .mcard.big .mc-go { width: 100%; padding: 14px; font-size: 16px; }
+  .mc-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .mc-half { display: grid; gap: 4px; align-content: start; background: var(--surface-2); border-radius: 14px; padding: 10px; }
+  .mc-half b { font-family: var(--f-display); font-size: 16px; } .mc-half small { font-size: 12.5px; color: var(--muted); min-height: 1.3em; }
+  .mcard.big .mc-half .mc-go { width: 100%; padding: 11px 6px; font-size: 14.5px; margin-top: 4px; }
   .mc-xp { display: grid; gap: 6px; } .mc-xp .l { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); } .mc-xp .l b { color: var(--ink); }
   .mc-xp .bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; } .mc-xp .bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
   .home-tiles { margin-top: 12px; }
@@ -900,10 +904,14 @@
     </article>
 
     <!-- Kunlik missiya — brend yuzidan alohida, ixcham karta (ustoz taklifi) -->
+    <!-- Kunlik missiya: chapda 🌙 Fonetika, o'ngda ☀️ Grammatika (ustoz, 2026-10-17) -->
     <div class="mcard big">
-      <div class="mc-t"><small class="eyebrow">🎯 Kunlik missiya</small><b id="m-title"></b><span id="m-sub" hidden></span>
-        <div class="dots" id="m-dots" hidden aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
-      <button class="btn btn-light mc-go" id="m-start"></button>
+      <small class="eyebrow">🎯 Kunlik missiya</small>
+      <div class="mc-two">
+        <div class="mc-half"><b>🌙 Fonetika</b><small id="mf-title"></small><button class="btn btn-light mc-go" id="mf-start"></button></div>
+        <div class="mc-half"><b>☀️ Grammatika</b><small id="m-title"></small><button class="btn btn-light mc-go" id="m-start"></button></div>
+      </div>
+      <span id="m-sub" hidden></span><div class="dots" id="m-dots" hidden aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <div class="mc-xp" id="m-xp"></div>
     </div>
 
@@ -1168,8 +1176,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=2ce6b318c6"></script>
-<script src="avatar.js?v=2ce6b318c6"></script>
-<script src="app.js?v=2ce6b318c6"></script>
+<script src="data.js?v=7067b9615b"></script>
+<script src="avatar.js?v=7067b9615b"></script>
+<script src="app.js?v=7067b9615b"></script>
 </body>
 </html>
