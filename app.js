@@ -2399,12 +2399,14 @@
     if (c.dataset.tip) toast(c.dataset.tip);
   });
   // 🐪 Karvon poygasi: bosh sahifada banner (bildirishnomasiz ham ko'rinadi) va 🏅 «Karvon sardori» belgisi
+  const KARVON_BANNER = false;
   let SARDOR = new Set();
   async function loadKarvon() {
     if (!TOKEN || (ME && ME.group && ME.group.journal)) return;
     try { SARDOR = new Set(await rpc("karvon_sardors", { p_token: TOKEN })); } catch { /* */ }
     const ps = $("#p-sardor"); if (ps) ps.hidden = !(ME && SARDOR.has(ME.id));
     const box = $("#kv-banner"); if (!box) return;
+    if (!KARVON_BANNER) { box.innerHTML = ""; return; }   // Mundil markazi individual dars beradi — jamoaviy Karvon banneri olib tashlandi (ustoz, 2026-10-17)
     let k; try { k = await rpc("karvon_status", { p_token: TOKEN }); } catch { return; }
     const sunday = k.today === k.sunday, txt = k.game && k.game.status !== "done" ? ["🐪", "Karvon poygasi boshlandi!", "Hoziroq kiring →"]
       : sunday && k.registered ? ["🐪", "Bugun soat 20:00 da Karvon poygasi!", "Jamoangizni ko'rish →"]
