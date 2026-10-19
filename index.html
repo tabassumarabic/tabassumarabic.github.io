@@ -564,6 +564,17 @@
   .pg-lane.me .nm { color: var(--brand); } .pg-lane.me .cam { filter: drop-shadow(0 0 5px #fff); }
   .pg-fin { position: absolute; right: 10px; top: 6px; bottom: 6px; width: 9px; background: repeating-linear-gradient(#10261D 0 7px, #fff 7px 14px); border-radius: 3px; }
   .pg-prize { display: flex; gap: 6px; } .pg-prize div { flex: 1; background: var(--gold-soft); border-radius: 12px; padding: 6px 2px; text-align: center; font-size: 11.5px; font-weight: 800; } .pg-prize b { display: block; font-size: 18px; }
+  /* 🌙 Ustoz paneli: Fonetika natijalari (2026-10-19) */
+  .tf-row { width: 100%; text-align: left; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 2px; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; color: inherit; cursor: pointer; }
+  .tf-row:last-child { border-bottom: 0; } .tf-row .nm b { display: block; font-size: 15px; } .tf-row .nm small { color: var(--muted); font-size: 12px; font-weight: 700; }
+  .tf-row .bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; margin: 4px 0 3px; } .tf-row .bar i { display: block; height: 100%; background: var(--gold); }
+  .tf-cur { text-align: center; min-width: 54px; } .tf-cur .ar { font-family: var(--f-ar, "Amiri", serif); font-size: 30px; line-height: 1.2; color: var(--brand); display: block; } .tf-cur small { font-size: 11px; font-weight: 800; color: var(--muted); }
+  .tf-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; direction: rtl; }
+  .tf-grid span { border-radius: 10px; text-align: center; font-family: var(--f-ar, "Amiri", serif); font-size: 22px; line-height: 1.6; background: var(--surface-2); color: var(--muted); }
+  .tf-grid span.done { background: linear-gradient(#F5CF62, #D4A63A); color: #10261D; } .tf-grid span.cur { box-shadow: 0 0 0 2px var(--brand); color: var(--brand); background: var(--surface); }
+  .tf-days { display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; } .tf-days span { text-align: center; font-size: 10px; color: var(--muted); font-weight: 800; }
+  .tf-days span i { display: block; font-style: normal; font-size: 15px; }
+  .tf-steps { display: flex; flex-wrap: wrap; gap: 6px; } .tf-steps span { border-radius: 99px; padding: 4px 10px; font-size: 12.5px; font-weight: 800; background: var(--surface-2); color: var(--muted); } .tf-steps span.on { background: var(--good-soft); color: var(--good); }
   .mc-xp { display: grid; gap: 6px; } .mc-xp .l { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); } .mc-xp .l b { color: var(--ink); }
   .mc-xp .bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; } .mc-xp .bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
   .home-tiles { margin-top: 12px; }
@@ -1143,6 +1154,7 @@
     </div>
     <div class="seg tc-tabs" role="tablist">
       <button type="button" data-tct="home" aria-pressed="true">📊 Umumiy</button>
+      <button type="button" data-tct="fon" aria-pressed="false">🌙 Fonetika</button>
       <button type="button" data-tct="progress" aria-pressed="false">📈 Progress</button>
       <button type="button" data-tct="students" aria-pressed="false">👥 Talabalar</button>
       <button type="button" data-tct="attend" aria-pressed="false">📝 Davomat</button>
@@ -1170,6 +1182,7 @@
       <details class="card tc-more"><summary>🤝 Takliflar <small class="muted" id="tc-refs-sum"></small></summary><div id="tc-refs"></div></details>
     </div>
 
+    <div data-tcp="fon" hidden><div id="tc-fon"></div></div>
     <div data-tcp="progress" hidden><div id="tc-prog"></div></div>
 
     <div data-tcp="attend" hidden><div id="tc-att"></div></div>
@@ -1194,8 +1207,8 @@
 <div id="sheet-root"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="data.js?v=a0483ad0f5"></script>
-<script src="avatar.js?v=a0483ad0f5"></script>
-<script src="app.js?v=a0483ad0f5"></script>
+<script src="data.js?v=c21974442e"></script>
+<script src="avatar.js?v=c21974442e"></script>
+<script src="app.js?v=c21974442e"></script>
 </body>
 </html>

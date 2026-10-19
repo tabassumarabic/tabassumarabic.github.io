@@ -2391,6 +2391,51 @@
     };
   }
 
+  // ---------- 🌙 Ustoz paneli: Fonetika natijalari (ustoz, 2026-10-19) ----------
+  // Har o'quvchi qaysi harfda, nechta yulduz yoqqan, bugungi darsni bajardimi, olov, poyga bali; bosilsa — batafsil.
+  let tfSort = "harf", TFD = null;
+  const tfOf = s => {
+    const got = ch => (s.fon || {})[ch] || [], done = h => fonStepsOf(h).every(([k]) => got(h.char).includes(k));
+    const n = FON.harflar.filter(done).length, cur = FON.harflar.findIndex(h => !done(h));
+    const idle = s.last_seen ? Math.floor((Date.now() - new Date(s.last_seen)) / 864e5) : null;
+    return { ...s, n, cur, got, done, idle, today: !!((s.daily || {})[TFD.today] || {}).bonus };
+  };
+  // Xato mavzusini o'qiladigan qilish: «ز2» — sifat, «ز#5» — maxraj, qolgani — eshitish/yig'ish so'zi
+  const tfErr = t => { let m = t.match(/^(.)(\d)$/); if (m) return `«${m[1]}» sifati: ${FON_SIFAT[+m[2]] ? FON_SIFAT[+m[2]][0].toLowerCase() : ""}`; m = t.match(/^(.)#/); if (m) return `«${m[1]}» maxraji`; return `«${t}» (eshitish / yig'ish)`; };
+  async function teacherFonLoad() {
+    const box = $("#tc-fon");
+    try { TFD = await rpc("teacher_fonetika", { p_token: TT }); } catch (e) { box.innerHTML = `<div class="card"><p>${esc(errText(e))}</p></div>`; return; }
+    const rows = TFD.students.map(tfOf), N = FON.harflar.length;
+    const by = { harf: (a, b) => b.n - a.n, olov: (a, b) => b.streak - a.streak, kirmadi: (a, b) => (b.idle ?? 999) - (a.idle ?? 999) }[tfSort];
+    rows.sort((a, b) => by(a, b) || a.name.localeCompare(b.name));
+    const todayN = rows.filter(r => r.today).length;
+    box.innerHTML = `
+      <div class="tc-stats" style="margin-top:0"><div class="tc-stat"><b>${rows.length}</b><small>o'quvchi</small></div><div class="tc-stat"><b>${todayN}</b><small>bugun dars qildi</small></div>
+        <div class="tc-stat"><b>${rows.length ? Math.round(rows.reduce((a, r) => a + r.n, 0) / rows.length) : 0}</b><small>o'rtacha harf</small></div></div>
+      <div class="seg" role="group" aria-label="Saralash" style="margin:0 0 10px">${[["harf", "🌙 Harf bo'yicha"], ["olov", "🔥 Olov"], ["kirmadi", "😴 Kirmaganlar"]].map(([k, n]) => `<button type="button" data-tfs="${k}" aria-pressed="${k === tfSort}">${n}</button>`).join("")}</div>
+      <div class="card">${rows.length ? rows.map(r => { const h = FON.harflar[r.cur];
+        return `<button class="tf-row" data-tf="${r.id}">${avaHtml(r.ava, r.name)}
+          <span class="nm"><b>${esc(r.name)}</b><span class="bar"><i style="width:${Math.round(r.n * 100 / N)}%"></i></span>
+            <small>${r.n}/${N} harf · ${r.today ? "✅ bugungi dars bajarildi" : r.idle >= 2 ? `😴 ${r.idle} kun kirmadi` : "⏳ bugungi dars hali yo'q"} · 🔥 ${r.streak}${r.poyga != null ? ` · 🐫 ${r.poyga}` : ""}</small></span>
+          <span class="tf-cur">${h ? `<span class="ar">${h.char}</span><small>${r.cur + 1}-harf</small>` : `<span class="ar">★</span><small>tugatdi</small>`}</span></button>`; }).join("")
+        : `<p class="muted">Guruhda hali o'quvchi yo'q.</p>`}</div>`;
+    $$("[data-tfs]").forEach(b => (b.onclick = () => { tfSort = b.dataset.tfs; teacherFonLoad(); }));
+    $$("[data-tf]").forEach(b => (b.onclick = () => teacherFonSheet(rows.find(r => r.id === b.dataset.tf))));
+  }
+  function teacherFonSheet(r) {
+    const h = FON.harflar[r.cur], days = Array.from({ length: 15 }, (_, i) => addDays(TFD.today, i - 14));
+    sheet(`<h3>🌙 ${esc(r.name)}</h3>
+      <p>${r.n}/${FON.harflar.length} harf o'tilgan · 🔥 olov ${r.streak} kun${r.poyga != null ? ` · 🐫 poyga ${r.poyga} ball` : ""}${r.idle != null ? ` · oxirgi kirish: ${r.idle === 0 ? "bugun" : r.idle === 1 ? "kecha" : r.idle + " kun oldin"}` : ""}</p>
+      <div class="tf-grid">${FON.harflar.map((x, i) => `<span class="${r.done(x) ? "done" : i === r.cur ? "cur" : ""}" title="${esc(x.name)}">${x.char}</span>`).join("")}</div>
+      ${h ? `<h3 style="font-size:15px;margin:6px 0 0">Hozirgi harf: «${esc(h.name)}» <span class="ar">${h.char}</span></h3>
+        <div class="tf-steps">${fonStepsOf(h).map(([k, ic, n]) => `<span class="${r.got(h.char).includes(k) ? "on" : ""}">${ic} ${n}</span>`).join("")}</div>` : `<p><b>🎉 28 ta harfning hammasini tugatgan!</b></p>`}
+      <h3 style="font-size:15px;margin:6px 0 0">📅 Kunlik dars (oxirgi 15 kun)</h3>
+      <div class="tf-days">${days.map(d => `<span><i>${dow(d) === 0 ? "😌" : ((r.daily || {})[d] || {}).bonus ? "🔥" : "·"}</i>${+d.slice(8)}</span>`).join("")}</div>
+      <h3 style="font-size:15px;margin:6px 0 0">❌ Ko'p adashgan joylari (30 kun)</h3>
+      ${r.errs && r.errs.length ? `<div class="card">${r.errs.map(e => `<div class="hard"><span>${esc(tfErr(e.t))}</span><b>${e.n} marta</b></div>`).join("")}</div>` : `<p class="muted">Missiya va poygada xato yo'q 👏</p>`}
+      <button class="btn btn-soft btn-block" data-close>Yopish</button>`);
+  }
+
   // O'quvchi: profildagi «Mening progressim»
   // Kartalar bosilganda «qimirlab» qo'yadi va qisqa izoh chiqaradi (ustoz, 2026-10-07)
   document.addEventListener("click", e => {
@@ -2759,12 +2804,13 @@
     $(".tabbar").hidden = true;
     $("#tc-exam").onclick = () => teacherSet(null, !TC.group.exam_open);
     $("#tc-report").onclick = () => teacherReport(0);
-    $("#tc-refresh").onclick = () => { teacherLoad(); teacherSpeakLoad(); if (!$('[data-tcp="attend"]').hidden) teacherAttLoad(); if (!$('[data-tcp="progress"]').hidden) teacherProgLoad(); if (!$('[data-tcp="journal"]').hidden) teacherJournalLoad(); };
+    $("#tc-refresh").onclick = () => { if (!$('[data-tcp="fon"]').hidden) teacherFonLoad(); teacherLoad(); teacherSpeakLoad(); if (!$('[data-tcp="attend"]').hidden) teacherAttLoad(); if (!$('[data-tcp="progress"]').hidden) teacherProgLoad(); if (!$('[data-tcp="journal"]').hidden) teacherJournalLoad(); };
     $$("[data-tct]").forEach(b => (b.onclick = () => {
       $$("[data-tct]").forEach(x => x.setAttribute("aria-pressed", x === b));
       $$("[data-tcp]").forEach(p => (p.hidden = p.dataset.tcp !== b.dataset.tct));
       if (b.dataset.tct === "attend") teacherAttLoad();
       if (b.dataset.tct === "progress") teacherProgLoad();
+      if (b.dataset.tct === "fon") teacherFonLoad();
       if (b.dataset.tct === "journal") teacherJournalLoad();
       window.scrollTo({ top: 0 });
     }));
