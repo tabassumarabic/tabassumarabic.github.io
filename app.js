@@ -325,7 +325,7 @@
   const partLabel = p => PARTS.find(x => x[0] === p).slice(1).join(" ");
   // Kunlik tizim vaqtincha o'chiq (ustoz qarori, 2026-10-01: guruhlar yig'ilganda yoqiladi). O'chiq paytda A1 oddiy dars bo'lib ishlaydi.
   const DAILY_ON = true;
-  const GRAM_LOCK = store.get("tb_gram_open") !== "1";   // 🔒 Grammatika vaqtincha yopiq: ko'rinadi, lekin kirilmaydi. Kunlik dars, missiya va duel — Fonetikadan (ustoz, 2026-10-17)
+  const GRAM_LOCK = store.get("tb_gram_lock") === "1";   // 2026-10-20: ustoz Grammatikani yana ochdi (qulf kodi saqlangan; yopish uchun shu yerda true qilinadi)   // 🔒 Grammatika vaqtincha yopiq: ko'rinadi, lekin kirilmaydi. Kunlik dars, missiya va duel — Fonetikadan (ustoz, 2026-10-17)
   const gramToast = () => toast("☀️ Grammatika tez orada ochiladi 🔒");   // «📅 Bugun» yorlig'i (2026-10-17: kunlik dars hamma uchun)
   const hasParts = () => false;   // eski «unit = 3 kun, sana bo'yicha jadval» tizimi o'chiq; A1 matnlari keyin kunlik darsga qo'shiladi
   // Kun ma'lumoti: unitning so'zlari va grammatikasi kunlarga teng bo'linadi, matnlar kunning o'zidan
